@@ -28,7 +28,7 @@ def pce():
 @pytest.fixture(scope="module")
 def builtin():
     from busepanel.sim.universal_db import build_universal
-    return build_universal(None)
+    return build_universal(None, font="builtin")
 
 
 # ---------------------------------------------------------------- protocol
@@ -176,3 +176,11 @@ def test_builtin_overflow_and_align(builtin):
     b, _ = p.encode_value(p.data["destinations"]["003"])
     w = len(compose(p.geometry, p.fonts, None, T.encode({"text": "VPRAVO", "font": 3, "spacing": 1}, p.fonts)[0])[0].cols)
     assert b[2:4] == bytes([0x1B, ord("s")]) and b[4] - 0x10 + 1 > 24
+
+
+def test_gbuse_font_universal():
+    from busepanel.sim.universal_db import build_universal
+    db = build_universal(None)                      # default = original gBUSE fonts
+    assert [f.id for f in db.fonts.fonts][:4] == [0, 1, 2, 3]
+    b, probs = T.encode({"text": "Příští zastávka: Žluťoučký kůň", "font": 0}, db.fonts)
+    assert not probs

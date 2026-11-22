@@ -5,7 +5,7 @@ Ověřeno na vnitřním panelu **BS 120**. Běží na Windows, Linuxu i macOS.
 
 > Projekt nijak nesouvisí s firmou BUSE ani s jejími nástupci. Protokol a formát dat byly zjištěny
 > analýzou kvůli interoperabilitě. Popis je v [docs/PROTOKOL.md](docs/PROTOKOL.md).
-> Repozitář neobsahuje žádná data dopravců ani původní software. Ke spuštění stačí vestavěný font.
+> Repozitář neobsahuje žádná data dopravců ani původní software. Obsahuje originální font gBUSE (fonty 0–3 a 15), výchozí pro univerzální databázi; volitelně vestavěný font (`--font builtin`).
 
 ## Co umí
 
@@ -46,7 +46,7 @@ busepanel serve                     # otevře http://127.0.0.1:8090
 ```
 
 `quickstart` vytvoří:
-- `databaze/univerzalni/projekt.yaml`: univerzální databázi s vestavěným fontem (tenký 0, tučný 3), ikonami (font 14) a čísly linek. Ostatní texty pak aplikace posílá dynamicky volným textem.
+- `databaze/univerzalni/projekt.yaml`: univerzální databázi s originálním fontem gBUSE (tenký 0, normální 3; `--font builtin` = vestavěný font), ikonami (font 14) a čísly linek. Ostatní texty pak aplikace posílá dynamicky volným textem.
 - `trasy/`: ukázkovou trasu regionální linky 607 Pardubice → Chlumec nad Cidlinou s tarifními zónami IDS IREDO. Zdroj: veřejná data CIS JŘ a IREDO.
 - `vozidla/autobus.yaml`: vozidlo s náhledem a se skutečným panelem na nalezeném převodníku.
 

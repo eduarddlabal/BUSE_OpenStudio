@@ -220,11 +220,12 @@ def cmd_live_build(a):
 
 
 def cmd_quickstart(a):
-    """Prepare a working folder on a clean computer: universal database (built-in fonts),
+    """Prepare a working folder on a clean computer: universal database (original gBUSE fonts),
     example route, vehicle with the detected USB adapter; optionally upload to the panel."""
     import shutil
     from .core.project import dump_yaml
     from .sim.route import Route
+    from .core.gbuse_font import FONT_SOURCES
     from .sim.universal_db import build_universal
     from .server.sim_api import EXAMPLE_VEHICLE
     wd = os.path.abspath(a.workdir)
@@ -238,7 +239,7 @@ def cmd_quickstart(a):
         if not os.path.exists(dst):
             shutil.copy(os.path.join(ex, "trasy", f), dst)
         lines.append(Route.load(dst).line)
-    db = build_universal(None, extra_lines=lines, ibis_address=a.address)
+    db = build_universal(None, extra_lines=lines, ibis_address=a.address, font=a.font)
     db_path = os.path.join(wd, "databaze", "univerzalni", "projekt.yaml")
     db.save(db_path)
     veh = dict(EXAMPLE_VEHICLE)
@@ -247,7 +248,7 @@ def cmd_quickstart(a):
                       "port": port, "address": a.address, "enabled": True}]
     dump_yaml(veh, os.path.join(wd, "vozidla", "autobus.yaml"))
     print(f"Pracovní složka: {wd}")
-    print(f"  databaze/univerzalni/projekt.yaml  (vestavěný font, ikony, linky; mapa linek {db.data['line_map']})")
+    print(f"  databaze/univerzalni/projekt.yaml  ({FONT_SOURCES[a.font]}, ikony, linky; mapa linek {db.data['line_map']})")
     print(f"  trasy/  ({', '.join(lines)})")
     print(f"  vozidla/autobus.yaml  (panel na {port}, IBIS adresa {a.address})")
     if a.upload:
@@ -333,6 +334,8 @@ def main(argv=None):
     s = dev(sub.add_parser("quickstart", help="připravit pracovní složku na čistém počítači (databáze, ukázková trasa, vozidlo)"))
     s.add_argument("--workdir", default=".")
     s.add_argument("--upload", action="store_true", help="rovnou nahrát univerzální databázi do panelu")
+    s.add_argument("--font", default="gbuse", choices=["gbuse", "builtin"],
+                   help="fonty databáze: gbuse = originální font gBUSE (výchozí), builtin = vestavěný")
     s.set_defaults(f=cmd_quickstart)
     s = sub.add_parser("serve", help="spustit grafické rozhraní v prohlížeči")
     s.add_argument("--host", default="127.0.0.1"); s.add_argument("--port-http", type=int, default=8090)

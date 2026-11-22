@@ -15,7 +15,7 @@ async function loadSimFiles() {
   $("#vehSelect").innerHTML = opt(f.vehicles) || "<option value=''>(žádná vozidla)</option>";
   $("#dbSelect").innerHTML = opt(f.databases) || "<option value=''>(žádné databáze)</option>";
   const all = await api("/api/files");
-  $("#dbBase").innerHTML = `<option value="builtin">vestavěný font (BUSE Studio)</option>` + opt(all.files.filter((x) => x.endsWith(".hex") || x.endsWith(".yaml")));
+  $("#dbBase").innerHTML = `<option value="gbuse">originální font gBUSE</option><option value="builtin">vestavěný font (BUSE Studio)</option>` + opt(all.files.filter((x) => x.endsWith(".hex") || x.endsWith(".yaml")));
   if (f.route_path) $("#routePath").value = f.route_path;
   if (f.vehicle_path) $("#vehPath").value = f.vehicle_path;
   $("#simDb").textContent = f.db_path ? "databáze: " + f.db_path : "⚠ není vybraná databáze panelu (vpravo dole)";

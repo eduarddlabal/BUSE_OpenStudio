@@ -205,13 +205,15 @@ class BuildReq(BaseModel):
 
 @router.post("/api/sim/db/build")
 def db_build(r: BuildReq):
-    if r.base in ("", "builtin", "vestavěný"):
-        base = None                                   # built-in fonts (no operator data needed)
+    font = "gbuse"
+    if r.base in ("", "gbuse", "builtin", "vestavěný"):
+        base = None                                   # font set shipped with BUSE Studio
+        font = "builtin" if r.base in ("builtin", "vestavěný") else "gbuse"
     else:
         b = SIM.path(r.base)
         base = Project.from_hex(b) if b.lower().endswith(".hex") else Project.load(b)
     extra = sorted({Route.load(SIM.path(f)).line for f in _list("trasy")} | {SIM.route.line} | set(r.extra_lines))
-    db = build_universal(base, version=r.version, extra_lines=extra)
+    db = build_universal(base, version=r.version, extra_lines=extra, font=font)
     db.save(SIM.path(r.out))
     SIM.db, SIM.db_path = Project.load(SIM.path(r.out)), r.out
     _rebuild()

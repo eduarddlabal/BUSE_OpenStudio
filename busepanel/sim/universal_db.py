@@ -34,11 +34,12 @@ def plan_lines(extra_lines=()) -> tuple[dict, dict]:
 
 
 def build_universal(base: Project | None = None, version: str = "UNIV", extra_lines=(), line_font: int = 3,
-                    panel_type: str = "BS120", ibis_address: int = 10) -> Project:
-    """base = project/HEX whose fonts to use; None = built-in fonts (own design, no operator data)."""
+                    panel_type: str = "BS120", ibis_address: int = 10, font: str = "gbuse") -> Project:
+    """base = project/HEX whose fonts to use; None = font set `font`:
+    'gbuse' (original gBUSE fonts, default) or 'builtin' (own design)."""
     if base is None:
-        from ..core.builtin_font import builtin_fontset
-        fonts = builtin_fontset()
+        from ..core.gbuse_font import fontset
+        fonts = fontset(font)
     else:
         fonts = base.fonts
     add_icon_font(fonts)
