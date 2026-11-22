@@ -46,7 +46,7 @@ busepanel serve                     # otevře http://127.0.0.1:8090
 ```
 
 `quickstart` vytvoří:
-- `databaze/univerzalni/projekt.yaml`: univerzální databázi s originálním fontem gBUSE (tenký 0, normální 3; `--font builtin` = vestavěný font), ikonami (přímo v textových fontech na kódech 0xAA–0xAE, 0xF0, 0xFA–0xFE) a čísly linek. Ostatní texty pak aplikace posílá dynamicky volným textem.
+- `databaze/univerzalni/projekt.yaml`: univerzální databázi s originálním fontem gBUSE (tenký 0, normální 3; `--font builtin` = vestavěný font), ikonami (přímo v textových fontech na kódech 0xAA–0xAE, 0xF0, 0xF5–0xFE) a čísly linek. Ostatní texty pak aplikace posílá dynamicky volným textem.
 - `trasy/`: ukázkovou trasu regionální linky 607 Pardubice → Chlumec nad Cidlinou s tarifními zónami IDS IREDO. Zdroj: veřejná data CIS JŘ a IREDO.
 - `vozidla/autobus.yaml`: vozidlo s náhledem a se skutečným panelem na nalezeném převodníku.
 
@@ -107,7 +107,8 @@ rozšíření, každé ve vlastním balíčku v `busepanel/extras/` s vlastním 
 ### LCD panel PID (`busepanel/extras/lcd`)
 
 Výstup simulace „LCD“ není panel BUSE, ale webová stránka ve stylu informačních LCD PID: číslo linky, pásmo,
-příští zastávky s piktogramy a minutami, čas a konečná; zastávka, ve které vůz stojí, je zvýrazněná.
+příští zastávky s minutami, čas a konečná; zastávka, ve které vůz stojí, je zvýrazněná, zastávka na znamení
+má zvonek.
 Hodí se třeba pro OMSI nebo tablet ve vozidle. Každý LCD panel vozidla má vlastní HTTP port:
 
 ```yaml
@@ -117,9 +118,13 @@ panels:
 ```
 
 Stejná stránka je i na hlavním portu na `/lcd/`. Minuty se zobrazí, když mají zastávky v trase `minutes`
-(minuty od začátku spoje). Ikony pro LCD: `metro-A`/`metro-B`/`metro-C` (logo metra a linka), `vlak`, `vlak-S9`,
-`S`, `bus`, `tramvaj`, `trolejbus`, `letadlo`, `vozik`, `prestup`, `pozor`. LED panely z nich použijí základní
-piktogram (`metro-C` → `metro`), ostatní vynechají.
+(minuty od začátku spoje).
+
+### Ikony zastávek
+
+Ikony zastávek (`metro-A` … `metro-D` → stylizované `[B]`, `vlak`/`S9` → vlak, `letadlo`, `privoz`, `vyluka`,
+`cd`, `sipka` podle PID; `bus`, `tramvaj`, `trolejbus`, `vozik`, `prestup`, `pozor` vlastní) zobrazují jen LED panely.
+LCD panel piktogramy nezobrazuje, jen zvonek u zastávky na znamení (`request: true`).
 
 ## ESP brány
 

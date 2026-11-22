@@ -1,4 +1,5 @@
-"""Add-on: LCD panel in the PID style as a web page (line, zone, next stops with minutes, clock, terminal).
+"""Add-on: LCD panel in the PID style as a web page (line, zone, next stops with minutes, clock, terminal;
+the only pictogram is the bell of a stop on request).
 
 Not a BUSE panel – an extra output of the simulation, e.g. for OMSI or a tablet in the vehicle.
 Hooks into the core:

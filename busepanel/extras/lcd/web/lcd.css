@@ -67,16 +67,6 @@ body { display: flex; align-items: center; justify-content: center;
 .atstop #zone, .ended #zone { color: var(--dark); }
 .atstop #rail, .ended #rail { background: var(--fg); }
 
-/* pictograms (one group = e.g. metro logo + line letter, without a gap) */
-.ig { display: inline-flex; align-items: center; flex: none; height: 0.72em; }
-.ic { display: inline-flex; align-items: center; justify-content: center; flex: none; box-sizing: border-box;
-      height: 0.72em; min-width: 0.72em; padding: 0 0.08em; font-size: 1em; font-weight: 800; line-height: 1; }
-.ic svg { height: 100%; width: auto; display: block; }
-.ic .l { font-size: 0.6em; }
-.ic.blk { background: #000; color: #fff; }
-.ic.mA { background: #00a562; color: #fff; } .ic.mB { background: #f8b322; color: #000; } .ic.mC { background: #cf003d; color: #fff; }
-.ic.s { background: #000; color: #fff; border-radius: 50%; min-width: 0.72em; }
-.ic.txt { background: #000; color: #fff; padding: 0 0.12em; }
-.ic.plain { background: none; color: inherit; padding: 0; }      /* bell: no background */
-.first .ic, .stop .ic { height: 0.72em; }
-.terminal .ic.blk { background: #000; }
+/* bell of a stop on request – the only pictogram on the LCD */
+.ic { display: inline-flex; align-items: center; flex: none; height: 0.72em; width: 0.72em; color: inherit; }
+.ic svg { height: 100%; width: 100%; display: block; }

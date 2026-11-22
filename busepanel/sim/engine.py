@@ -182,15 +182,22 @@ class SimEngine:
     # ---- page composition -----------------------------------------------------
     @staticmethod
     def _icons(stop) -> str:
-        """LED icons of a stop. Detailed names for the LCD (metro-C, vlak-S …) fall back to the base
-        pictogram (metro, vlak); names without an LED pictogram are left out."""
+        """LED icons of a stop (PID style). metro-A … metro-D become the stylised letter(s) [AB],
+        S lines / vlak-S9 the train pictogram; names without an LED pictogram are left out."""
         from ..core.icons import ICONS
-        out = []
+        letters, out = "", []
         for i in stop.icons:
-            base = str(i).split("-")[0].lower()
-            if base in ICONS and base not in out:
-                out.append(base)
-        return "".join(" {icon:%s}" % i for i in out)
+            base, _, sub = str(i).partition("-")
+            b = base.lower()
+            if b == "metro" and sub.upper() in ("A", "B", "C", "D"):
+                letters += "" if sub.upper() in letters else sub.upper()
+                continue
+            if b == "s" or (base[:1] == "S" and base[1:].isdigit()):
+                b = "vlak"
+            if b in ICONS and b not in out:
+                out.append(b)
+        text = " {icon:metro_l}%s{icon:metro_r}" % letters if letters else ""
+        return text + "".join(" {icon:%s}" % i for i in out)
 
     def _context(self, now: float) -> dict:
         st = self.route.stops

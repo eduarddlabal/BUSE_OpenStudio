@@ -471,4 +471,8 @@ Ověřeno na panelu (volný text `v`, x9997):
 | 0xAF, 0xF1–0xF5 (originální piktogramy gBUSE) | OK |
 | 0xC0–0xDF | nic (zahozeno) |
 
-BUSE Studio proto dává ikony do každého textového fontu na kódy 0xAA–0xAE, 0xF0, 0xFA–0xFE (`core/icons.py`) a `{icon:…}` posílá jako jediný znak.
+BUSE Studio proto dává ikony do každého textového fontu na kódy 0xAA–0xAE, 0xF0, 0xF5–0xFE (`core/icons.py`) a `{icon:…}` posílá jako jediný znak.
+Bitmapy metra, vlaku, letadla, šipky, zvonku, přívozu, výluky, ČD a rohů stylizovaného písmene metra jsou převzaté
+ze standardu PID (SK bus, příloha 2, „seznam požadovaných znaků“, sloupec vnitřní panely, kódy 0x3C, 0x7E, 0x5C,
+0x3E, 0xAA, 0x8A, 0x24, 0x25, 0x5B/0x5D). PID tam má piktogramy přímo na místě znaků; BUSE Studio je kvůli
+zachování kódové tabulky dává na volné kódy výše.

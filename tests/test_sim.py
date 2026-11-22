@@ -192,7 +192,7 @@ def test_icon_codes_are_characters_for_bs120():
     for c in ICON_CODES.values():
         assert 0x20 <= c < 0xB0 or 0xF0 <= c < 0xFF
     assert len(set(ICON_CODES.values())) == len(ICON_CODES)
-    assert not {0xAF, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5} & set(ICON_CODES.values())   # original pictograms
+    assert not {0xAF, 0xF1, 0xF2, 0xF3, 0xF4} & set(ICON_CODES.values())   # original pictograms (0xF5 slash reused)
 
 
 # ---------------------------------------------------------------- LCD panel (web page)
@@ -236,10 +236,13 @@ def test_led_ignores_lcd_icon_details(univ):
     e = SimEngine(_pid_route(), clock=lambda: 0.0)
     e.event("start"); e.event("depart")
     icons = e._context(0.0)["icons"]
-    assert icons == " {icon:metro}"
+    assert icons == " {icon:metro_l}C{icon:metro_r}"                   # PID: stylised letter [C]
     d = {"line": None, "text": "Ládví" + icons, "font": 3, "spacing": 1}
     tel = spec_telegrams(d, profile("BS120"), univ.fonts, {})       # encodes without error
-    assert bytes([ICON_CODES["metro"]]) in tel[-1]
+    assert bytes([ICON_CODES["metro_l"], ord("C"), ICON_CODES["metro_r"]]) in tel[-1]
+    from busepanel.sim.route import Stop
+    assert SimEngine._icons(Stop("Vysočanská", icons=["metro-B", "vlak", "S"])) == " {icon:metro_l}B{icon:metro_r} {icon:vlak}"
+    assert SimEngine._icons(Stop("Můstek", icons=["metro-A", "metro-B"])) == " {icon:metro_l}AB{icon:metro_r}"
 
 
 def test_lcd_server_runs_on_own_port():
