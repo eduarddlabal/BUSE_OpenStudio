@@ -287,3 +287,54 @@ def test_lcd_server_port_in_use_is_reported():
             time.sleep(0.1)
         assert "obsazený" in srv.error(port)
         srv.stop_all()
+
+
+# ---------------------------------------------------------------- sending to real panels
+def test_pages_are_not_skipped_when_sending_lags(route):
+    """Heading pages last 2 s; when every send takes 3 s the panel must still get every page in order."""
+    seqs = {"next": [{"text": "příští zastávka/next:", "role": "heading", "seconds": 2},
+                     {"text": "{name}", "seconds": 4},
+                     {"text": "směr/direction:", "role": "heading", "seconds": 2},
+                     {"text": "{destination}", "seconds": 4}]}
+    e = SimEngine(route, {"interior": {"items": ["next"], "sequences": seqs}}, clock=lambda: 0.0)
+    e.event("start"); e.event("depart")
+    cur, shown, t = {}, [], 0.0
+    for _ in range(12):
+        txt = e.display("interior", now=t, cursor=cur)["text"]
+        if not shown or shown[-1] != txt:
+            shown.append(txt)
+            cur["t"] = t + 3.0            # sending took 3 s – page visible from then
+        t += 3.5
+    assert shown[:5] == ["příští zastávka/next:", "Masarykovo nám.", "směr/direction:", "Sídliště Dukla",
+                         "příští zastávka/next:"]
+
+
+def test_stop_start_runs_a_single_loop(univ):
+    import threading
+    import time
+    from busepanel.sim.vehicle import Vehicle
+
+    class Probe:
+        kind = "virtual"
+        def __init__(self):
+            self.active, self.max_active, self.lock = 0, 0, threading.Lock()
+        def send(self, *t):
+            with self.lock:
+                self.active += 1
+                self.max_active = max(self.max_active, self.active)
+            time.sleep(0.05)
+            with self.lock:
+                self.active -= 1
+        def status(self):
+            return {}
+
+    from busepanel.sim.vehicle import PanelSlot
+    e = SimEngine(Route.from_dict({"line": "7", "stops": [{"name": "A"}, {"name": "B"}]}))
+    probe = Probe()
+    v = Vehicle(e, univ.fonts, [PanelSlot("p", "interior", profile("BS120"), probe)])
+    v.start(); time.sleep(0.1)
+    v.stop(); v.start()                   # quick Stop -> Start: the old loop must not resume
+    time.sleep(0.8)
+    alive = [t for t in threading.enumerate() if t.is_alive() and getattr(t, "_target", None) == v.run]
+    v.stop(); time.sleep(0.6)
+    assert len(alive) <= 1 and probe.max_active == 1

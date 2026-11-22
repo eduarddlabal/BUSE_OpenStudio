@@ -260,6 +260,18 @@ class SimEngine:
                 units.append((None, p))
                 i += 1
         durs = [self._duration(u[1], two_line) for u in units]
+        cur = getattr(self, "_cursor", None)
+        if cur is not None:
+            # per-panel pacing: next page only after the current one has been shown for its time
+            # (counted from when it really reached the panel) – no page is skipped when sending lags
+            key = (self.since, self.phase, self.pos, self.message, len(units))
+            if cur.get("key") != key:
+                cur.update(key=key, i=0, t=now)
+            elif now - cur["t"] >= durs[cur["i"] % len(units)]:
+                cur["i"] = (cur["i"] + 1) % len(units)
+                cur["t"] = now
+            head, page = units[cur["i"] % len(units)]
+            return {**page, "heading": head["text"] if head else None, "heading_font": head["font"] if head else None}
         t = (now - self.since) % sum(durs)
         for (head, page), d in zip(units, durs):
             if t < d:
@@ -307,5 +319,10 @@ class SimEngine:
         ctx = self._context(now)
         return self._spec(self._pick(self._pages("exterior", ctx, s), now, two_line), self.route.line)
 
-    def display(self, role: str, now: float | None = None, two_line: bool = False) -> dict:
-        return self.interior(now, two_line) if role == "interior" else self.exterior(now, two_line)
+    def display(self, role: str, now: float | None = None, two_line: bool = False, cursor: dict | None = None) -> dict:
+        """cursor: per-panel dict for page pacing (see _pick); None = pages purely by the clock."""
+        self._cursor = cursor
+        try:
+            return self.interior(now, two_line) if role == "interior" else self.exterior(now, two_line)
+        finally:
+            self._cursor = None

@@ -95,6 +95,7 @@ class PanelSlot:
         self.mode = None              # last x99xx switch sent to this panel
         self.last = None
         self.error = None
+        self.cursor = {}              # page pacing of this panel (SimEngine._pick)
 
     def status(self) -> dict:
         st = {"name": self.name, "role": self.role, "profile": self.profile.name, **self.output.status()}
@@ -126,6 +127,8 @@ class Vehicle:
         self.log = log or (lambda m: None)
         self.running = False
         self.thread = None
+        self._gen = 0                 # loop generation: a stopped loop never resumes (Stop -> Start)
+        self._lock = threading.Lock() # one tick at a time (loop thread, state requests)
 
     @staticmethod
     def from_config(cfg: dict, engine, project, log=None) -> "Vehicle":
@@ -150,13 +153,18 @@ class Vehicle:
     def tick(self, now: float | None = None, virtual_only: bool = False):
         """Send changed content to the panels. virtual_only=True refreshes only the virtual
         previews (used while the simulation is stopped – real panels must stay untouched)."""
+        with self._lock:
+            self._tick(now, virtual_only)
+
+    def _tick(self, now, virtual_only):
         for slot in self.panels:
             if virtual_only and slot.output.kind != "virtual":
                 continue
             if slot.output.kind == "lcd":            # add-on LCD: the web page reads the state itself
                 continue
             try:
-                spec = self.engine.display(slot.role, now, two_line=slot.profile.geometry.rows > 8)
+                spec = self.engine.display(slot.role, now, two_line=slot.profile.geometry.rows > 8,
+                                           cursor=slot.cursor)
                 tel = spec_telegrams(spec, slot.profile, self.fonts, self.line_map)
                 if tel != slot.last:
                     from ..live.modes import order_for_panel
@@ -167,6 +175,8 @@ class Vehicle:
                         slot.shadow.send(*out)
                     slot.last = tel
                     slot.error = None
+                    if now is None:
+                        slot.cursor["t"] = time.time()     # the page is shown from now on
                     from ..outputs.base import tel_text
                     self.log(f"{slot.name}: " + "  ".join(tel_text(t, self.fonts) for t in tel))
             except Exception as e:      # noqa: BLE001 – keep the other panels running
@@ -177,17 +187,21 @@ class Vehicle:
         for s in self.panels:
             s.last = None
             s.mode = None
+            s.cursor.clear()
 
-    def run(self, period: float = 0.5):
-        self.running = True
-        while self.running:
+    def run(self, period: float = 0.5, gen: int | None = None):
+        gen = self._gen if gen is None else gen
+        while self.running and self._gen == gen:
             self.tick()
             time.sleep(period)
 
     def start(self):
         if not self.running:
-            self.thread = threading.Thread(target=self.run, daemon=True)
+            self._gen += 1                       # an old loop still sleeping will end, not resume
+            self.running = True
+            self.thread = threading.Thread(target=self.run, kwargs={"gen": self._gen}, daemon=True)
             self.thread.start()
 
     def stop(self):
         self.running = False
+        self._gen += 1
