@@ -42,7 +42,7 @@ busepanel scan                      # najde panel a jeho IBIS adresu (např. "ad
 busepanel quickstart -a 10          # připraví pracovní složku (viz níže)
 busepanel upload databaze/univerzalni/projekt.yaml -a 10
 #   -> panel VYPNOUT A ZAPNOUT (čísla linek se z nových dat načtou až po restartu)
-busepanel serve                     # otevře http://127.0.0.1:8080
+busepanel serve                     # otevře http://127.0.0.1:8090
 ```
 
 `quickstart` vytvoří:

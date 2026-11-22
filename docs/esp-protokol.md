@@ -8,7 +8,7 @@ Veškerou logiku dělá server:
 - přepínání režimů `x99xx`.
 
 ## Spojení
-- ESP se připojí jako WebSocket klient na `ws://<server>:8080/ws/device/<id>`.
+- ESP se připojí jako WebSocket klient na `ws://<server>:8090/ws/device/<id>`.
   - `<id>` je jméno panelu, například `celni`, `vnitrni-1` nebo `bus12-zadni`.
   - Stejné `<id>` se zadává v BUSE Studiu u panelu s výstupem „ESP (WebSocket)“.
 - Po spadnutí spojení se má ESP znovu připojit, například každých 5 s.

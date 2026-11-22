@@ -1,11 +1,47 @@
+# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
+*.egg
 build/
 dist/
+.eggs/
+pip-wheel-metadata/
+
+# virtual environments
 .venv/
 venv/
+env/
+
+# tests / tooling caches
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# local configuration / secrets
+.env
+.env.*
+
+# editors and IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Claude Code local settings
+.claude/settings.local.json
 
 # working data created by `busepanel quickstart` / the app – keep them out of the repository
 /databaze/

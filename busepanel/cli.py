@@ -335,7 +335,7 @@ def main(argv=None):
     s.add_argument("--upload", action="store_true", help="rovnou nahrát univerzální databázi do panelu")
     s.set_defaults(f=cmd_quickstart)
     s = sub.add_parser("serve", help="spustit grafické rozhraní v prohlížeči")
-    s.add_argument("--host", default="127.0.0.1"); s.add_argument("--port-http", type=int, default=8080)
+    s.add_argument("--host", default="127.0.0.1"); s.add_argument("--port-http", type=int, default=8090)
     s.add_argument("--workdir", default="."); s.add_argument("--no-browser", action="store_true")
     s.set_defaults(f=cmd_serve)
 

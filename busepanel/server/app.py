@@ -533,7 +533,7 @@ def index():
 app.mount("/static", StaticFiles(directory=WEB), name="static")
 
 
-def serve(host="127.0.0.1", port=8080, workdir=".", open_browser=True):
+def serve(host="127.0.0.1", port=8090, workdir=".", open_browser=True):
     import uvicorn
     global S
     S = State(workdir)
