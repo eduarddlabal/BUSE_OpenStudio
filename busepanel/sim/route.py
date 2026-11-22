@@ -4,7 +4,7 @@ line: "7"
 destination: Sídliště Dukla
 stops:
   - {name: Hlavní nádraží, zone: P, icons: [vlak, bus], request: false}
-  - {name: Masarykovo nám., zone: P}
+  - {name: Masarykovo nám., zone: P, minutes: 3}
 messages:
   odklon: Spoj jede odklonem přes ul. Pražskou
 """
@@ -17,6 +17,15 @@ from dataclasses import dataclass, field
 import yaml
 
 
+def _minutes(v):
+    if v is None or str(v).strip() == "":
+        return None
+    try:
+        return float(str(v).replace(",", "."))
+    except ValueError:
+        return None
+
+
 @dataclass
 class Stop:
     name: str
@@ -25,6 +34,7 @@ class Stop:
     request: bool = False          # stop on request ("na znamení")
     note: str = ""
     zone_name: str = ""            # e.g. "Pardubice" for IREDO zone 600
+    minutes: float | None = None   # optional: minutes from the start of the trip (LCD "3 min")
 
     def to_dict(self) -> dict:
         d = {"name": self.name}
@@ -38,6 +48,8 @@ class Stop:
             d["request"] = True
         if self.note:
             d["note"] = self.note
+        if self.minutes is not None:
+            d["minutes"] = int(self.minutes) if float(self.minutes).is_integer() else self.minutes
         return d
 
 
@@ -59,7 +71,8 @@ class Route:
             if isinstance(icons, str):
                 icons = [i.strip() for i in icons.replace(",", " ").split() if i.strip()]
             stops.append(Stop(str(s["name"]), str(s.get("zone", "") or ""), icons, bool(s.get("request")),
-                              str(s.get("note", "") or ""), str(s.get("zone_name", "") or "")))
+                              str(s.get("note", "") or ""), str(s.get("zone_name", "") or ""),
+                              _minutes(s.get("minutes"))))
         return Route(str(d.get("line", "")), str(d.get("destination", "") or (stops[-1].name if stops else "")),
                      stops, dict(d.get("messages") or {}), str(d.get("via", "") or ""))
 
@@ -82,7 +95,7 @@ class Route:
 
     @staticmethod
     def from_csv(text: str, line: str = "", destination: str = "") -> "Route":
-        """CSV: poradi;zastavka;pasmo;ikony;na_znameni"""
+        """CSV: poradi;zastavka;pasmo;ikony;na_znameni[;minuty]"""
         try:
             dialect = csv.Sniffer().sniff(text[:2000], delimiters=";,\t")
         except csv.Error:
@@ -97,6 +110,7 @@ class Route:
             rows.append((int(order) if order.isdigit() else len(rows), {
                 "name": name, "zone": r.get("pasmo") or r.get("pásmo") or r.get("zone") or "",
                 "icons": r.get("ikony") or r.get("icons") or "",
-                "request": (r.get("na_znameni") or r.get("request") or "").lower() in ("1", "ano", "a", "x", "true", "yes")}))
+                "request": (r.get("na_znameni") or r.get("request") or "").lower() in ("1", "ano", "a", "x", "true", "yes"),
+                "minutes": r.get("minuty") or r.get("minutes") or r.get("min")}))
         rows.sort(key=lambda x: x[0])
         return Route.from_dict({"line": line, "destination": destination, "stops": [r for _, r in rows]})

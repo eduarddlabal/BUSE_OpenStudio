@@ -193,3 +193,94 @@ def test_icon_codes_are_characters_for_bs120():
         assert 0x20 <= c < 0xB0 or 0xF0 <= c < 0xFF
     assert len(set(ICON_CODES.values())) == len(ICON_CODES)
     assert not {0xAF, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5} & set(ICON_CODES.values())   # original pictograms
+
+
+# ---------------------------------------------------------------- LCD panel (web page)
+def _pid_route():
+    return Route.from_dict({"line": "152", "destination": "Českomoravská", "stops": [
+        {"name": "Sídliště Čimice", "zone": "P", "minutes": 0},
+        {"name": "Ládví", "zone": "P", "icons": ["metro-C"], "minutes": 1},
+        {"name": "Štěpničná", "zone": "P", "minutes": 3},
+        {"name": "Vysočanská", "zone": "P", "icons": ["metro-B", "vlak-S"], "request": True, "minutes": 13},
+        {"name": "Českomoravská", "zone": "P", "icons": ["metro-B"], "minutes": 16}]})
+
+
+def test_lcd_view():
+    from busepanel.extras.lcd.view import lcd_view
+    t = [1000.0]
+    e = SimEngine(_pid_route(), clock=lambda: t[0])
+    e.event("start")
+    v = lcd_view(e)
+    assert v["line"] == "152" and v["zone"] == "P" and v["first"]["name"] == "Sídliště Čimice"
+    assert v["first"]["minutes"] is None                      # at a stop: no countdown
+    assert [r["name"] for r in v["rows"]] == ["Ládví", "Štěpničná", "Vysočanská"]
+    assert v["terminal"]["name"] == "Českomoravská" and v["terminal"]["minutes"] == 16
+    e.event("depart")
+    v = lcd_view(e)
+    assert v["first"]["name"] == "Ládví" and v["first"]["minutes"] == 1
+    assert v["rows"][0]["minutes"] == 3 and v["terminal"]["minutes"] == 16
+    t[0] += 60                                                 # one minute later
+    assert lcd_view(e)["terminal"]["minutes"] == 15
+    e.event("end")
+    v = lcd_view(e)
+    assert v["first"]["name"] == "Českomoravská" and v["rows"] == [] and v["terminal"] is None
+
+
+def test_stop_minutes_roundtrip():
+    r = _pid_route()
+    assert r.stops[1].minutes == 1 and r.to_dict()["stops"][1]["minutes"] == 1
+    assert "minutes" not in Route.from_dict({"line": "1", "stops": [{"name": "A"}]}).to_dict()["stops"][0]
+
+
+def test_led_ignores_lcd_icon_details(univ):
+    e = SimEngine(_pid_route(), clock=lambda: 0.0)
+    e.event("start"); e.event("depart")
+    icons = e._context(0.0)["icons"]
+    assert icons == " {icon:metro}"
+    d = {"line": None, "text": "Ládví" + icons, "font": 3, "spacing": 1}
+    tel = spec_telegrams(d, profile("BS120"), univ.fonts, {})       # encodes without error
+    assert bytes([ICON_CODES["metro"]]) in tel[-1]
+
+
+def test_lcd_server_runs_on_own_port():
+    import json
+    import socket
+    import time
+    import urllib.request
+    from busepanel.extras.lcd.server import LcdServers
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+    srv = LcdServers()
+    srv.sync({port: "127.0.0.1"})
+    try:
+        for _ in range(50):
+            try:
+                page = urllib.request.urlopen(f"http://127.0.0.1:{port}/", timeout=1).read().decode()
+                break
+            except OSError:
+                time.sleep(0.1)
+        assert "lcd.js" in page
+        st = json.loads(urllib.request.urlopen(f"http://127.0.0.1:{port}/api/lcd", timeout=2).read())
+        assert "rows" in st
+    finally:
+        srv.stop_all()
+    assert not srv.servers
+
+
+def test_lcd_server_port_in_use_is_reported():
+    import socket
+    import time
+    from busepanel.extras.lcd.server import LcdServers
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        s.listen()
+        port = s.getsockname()[1]
+        srv = LcdServers()
+        srv.sync({port: "127.0.0.1"})
+        for _ in range(50):
+            if srv.error(port):
+                break
+            time.sleep(0.1)
+        assert "obsazený" in srv.error(port)
+        srv.stop_all()

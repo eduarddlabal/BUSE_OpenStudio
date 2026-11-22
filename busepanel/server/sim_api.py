@@ -237,8 +237,19 @@ def _rebuild(keep_state: bool = True):
     cfg = dict(SIM.vehicle_cfg)
     cfg["panels"] = [p for p in cfg.get("panels") or [] if p.get("enabled", True)]
     SIM.vehicle = Vehicle.from_config(cfg, SIM.engine, SIM.db, log=SIM._log)
+    _sync_lcd()
     if running:
         SIM.vehicle.start()
+
+
+def _sync_lcd():
+    """Add-on LCD (busepanel/extras/lcd): an HTTP server for every LCD panel of the vehicle."""
+    from ..extras.lcd.server import LCD
+    wanted = {}
+    for s in (SIM.vehicle.panels if SIM.vehicle else []):
+        if s.output.kind == "lcd":
+            wanted[s.output.port] = s.output.host
+    LCD.sync(wanted)
 
 
 @router.post("/api/sim/start")

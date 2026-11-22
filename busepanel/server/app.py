@@ -551,6 +551,8 @@ def index():
     return FileResponse(os.path.join(WEB, "index.html"))
 
 
+from ..extras.lcd.server import add_routes as _lcd_routes   # noqa: E402  add-on: LCD page at /lcd/
+_lcd_routes(app, "/lcd")
 app.mount("/static", StaticFiles(directory=WEB), name="static")
 
 

@@ -98,7 +98,7 @@ class PanelSlot:
 
     def status(self) -> dict:
         st = {"name": self.name, "role": self.role, "profile": self.profile.name, **self.output.status()}
-        st["error"] = self.error
+        st["error"] = self.error or st.get("error")
         return st
 
 
@@ -113,6 +113,9 @@ def make_output(cfg: dict, project=None):
         return SerialOutput(name, cfg.get("port") or default_port(), int(cfg.get("address", 10)))
     if kind == "esp":
         return WebSocketOutput(name, cfg.get("device", name))
+    if kind == "lcd":                     # add-on: LCD web page (busepanel/extras/lcd)
+        from ..extras.lcd.output import DEFAULT_PORT, LcdOutput
+        return LcdOutput(name, int(cfg.get("http_port") or DEFAULT_PORT), cfg.get("host") or "127.0.0.1")
     return VirtualPanel(name, project, get_profile(cfg.get("profile")))
 
 
@@ -131,7 +134,7 @@ class Vehicle:
             prof = get_profile(p.get("profile"))
             out = make_output(p, project)
             shadow = None
-            if out.kind != "virtual":
+            if out.kind not in ("virtual", "lcd"):
                 from ..outputs.virtual import VirtualPanel
                 shadow = VirtualPanel(out.name + " (náhled)", project, prof)
             slots.append(PanelSlot(p.get("name", p.get("role", "panel")), p.get("role", "interior"), prof,
@@ -149,6 +152,8 @@ class Vehicle:
         previews (used while the simulation is stopped – real panels must stay untouched)."""
         for slot in self.panels:
             if virtual_only and slot.output.kind != "virtual":
+                continue
+            if slot.output.kind == "lcd":            # add-on LCD: the web page reads the state itself
                 continue
             try:
                 spec = self.engine.display(slot.role, now, two_line=slot.profile.geometry.rows > 8)

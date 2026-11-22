@@ -5,7 +5,7 @@ import { setProject, loadFiles } from "../gbuse/gbuse.js";
 
 const sim = { route: null, vehicle: null, views: {}, active: false, polling: null, profiles: [] };
 const ROLES = { interior: "vnitřní", front: "čelní", side: "boční", rear: "zadní" };
-const OUTPUTS = { virtual: "virtuální (náhled)", serial: "COM port", esp: "ESP (WebSocket)" };
+const OUTPUTS = { virtual: "virtuální (náhled)", serial: "COM port", esp: "ESP (WebSocket)", lcd: "LCD PID – webová stránka (doplněk)" };
 
 // ------------------------------------------------------------------ files
 async function loadSimFiles() {
@@ -31,11 +31,13 @@ function renderRoute() {
     <td><input data-f="zone" value="${esc(s.zone || "")}" style="width:3.5em"></td>
     <td><input data-f="icons" value="${esc((s.icons || []).join(" "))}" style="width:8em"></td>
     <td><input type="checkbox" data-f="request" ${s.request ? "checked" : ""}></td>
+    <td><input data-f="minutes" type="number" min="0" step="1" value="${s.minutes ?? ""}" style="width:4em"></td>
     <td class="nowrap"><button data-a="up" title="nahoru">↑</button><button data-a="go" title="skočit sem">⤷</button><button data-a="del" class="danger">×</button></td></tr>`).join("");
   $("#rStops").querySelectorAll("input").forEach((inp) => inp.onchange = () => {
     const i = +inp.closest("tr").dataset.i, f = inp.dataset.f, s = r.stops[i];
     if (f === "request") s.request = inp.checked;
     else if (f === "icons") s.icons = inp.value.split(/[\s,]+/).filter(Boolean);
+    else if (f === "minutes") { if (inp.value === "") delete s.minutes; else s.minutes = +inp.value; }
     else s[f] = inp.value;
     pushRoute();
   });
@@ -99,6 +101,7 @@ function renderVehicle() {
       <label>Výstup <select data-f="output">${opts(OUTPUTS, p.output || "virtual")}</select></label>
       ${p.output === "serial" ? `<label>Port / adresa <span class="row"><input data-f="port" value="${esc(p.port || "")}" placeholder="auto" style="width:8em"><input data-f="address" type="number" value="${p.address ?? 10}" style="width:4em"></span></label>` : ""}
       ${p.output === "esp" ? `<label>ID zařízení ESP <input data-f="device" value="${esc(p.device || "")}"></label>` : ""}
+      ${p.output === "lcd" ? `<label>HTTP port / adresa <span class="row"><input data-f="http_port" type="number" min="1024" max="65535" value="${p.http_port ?? 8091}" style="width:6em"><select data-f="host"><option value="127.0.0.1" ${(p.host || "127.0.0.1") === "127.0.0.1" ? "selected" : ""}>jen tento počítač</option><option value="0.0.0.0" ${p.host === "0.0.0.0" ? "selected" : ""}>i z jiných zařízení v síti</option></select></span></label>` : ""}
     </div></div>`).join("");
   $("#vehPanels").querySelectorAll("[data-f]").forEach((el) => el.onchange = () => {
     const p = v.panels[+el.closest(".vpanel").dataset.i], f = el.dataset.f;
@@ -246,8 +249,13 @@ function render(s) {
     const info = [ROLES[p.role] || p.role, p.profile, OUTPUTS[p.kind === "esp" ? "esp" : p.kind] || p.kind];
     if (p.frame) info.push("režim: " + p.frame.mode_title);
     if (p.frame && p.frame.mirror) info.push("náhled podle odeslaných povelů");
-    if (!p.frame && p.kind !== "virtual") info.push("zatím nic neodesláno – spusťte ▶ Start");
+    if (!p.frame && p.kind !== "virtual" && p.kind !== "lcd") info.push("zatím nic neodesláno – spusťte ▶ Start");
     if (p.kind === "esp") info.push(p.connected ? "připojeno" : "NEPŘIPOJENO");
+    if (p.kind === "lcd") {
+      let a = box.el.querySelector("a.lcdlink");
+      if (!a) { a = document.createElement("a"); a.className = "lcdlink"; a.target = "_blank"; box.el.append(a); }
+      a.href = p.url; a.textContent = "Otevřít LCD panel: " + p.url;
+    }
     if (p.error) info.push("⚠ " + p.error);
     box.el.querySelector(".muted").textContent = info.join(" · ");
     const cv = box.el.querySelector("canvas");

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BUSE Studio – LCD panel</title>
+<link rel="stylesheet" href="static/lcd.css">
+</head>
+<body>
+<div id="screen">
+  <div id="band"></div>
+  <div id="lineBox"><span id="line"></span></div>
+  <div id="zone"><span class="lbl">pásmo <i>zone</i></span> <b id="zoneVal"></b></div>
+  <div id="rail"></div>
+  <div id="first" class="stop first"></div>
+  <div id="list"></div>
+  <div id="msg" hidden></div>
+  <div id="bottom">
+    <span id="clock"></span>
+    <div id="terminal" class="stop terminal"></div>
+  </div>
+</div>
+<script type="module" src="static/lcd.js"></script>
+</body>
+</html>

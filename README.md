@@ -99,6 +99,28 @@ Port lze zadat přes `-p`, například `-p /dev/ttyUSB0` nebo `-p COM5`, přípa
 
 Profily jsou v [`busepanel/panels/profiles.yaml`](busepanel/panels/profiles.yaml). BS 220 (dvouřádkový) a BS 210 (vnější) jsou zatím jen odhad. Formát gBUSE0 (vnější panely) ani gBUSE1 1.12 s cykly zatím podporovaný není.
 
+## Doplňky
+
+Doplňky nejsou součástí hlavní funkce BUSE Studia (náhrada gBUSE a BSLoaderu, panely BUSE). Jsou to volitelné
+rozšíření, každé ve vlastním balíčku v `busepanel/extras/` s vlastním kódem i webovými soubory.
+
+### LCD panel PID (`busepanel/extras/lcd`)
+
+Výstup simulace „LCD“ není panel BUSE, ale webová stránka ve stylu informačních LCD PID: číslo linky, pásmo,
+příští zastávky s piktogramy a minutami, čas a konečná; zastávka, ve které vůz stojí, je zvýrazněná.
+Hodí se třeba pro OMSI nebo tablet ve vozidle. Každý LCD panel vozidla má vlastní HTTP port:
+
+```yaml
+panels:
+- {name: LCD, role: interior, output: lcd, http_port: 8091}           # http://127.0.0.1:8091/
+- {name: LCD tablet, role: interior, output: lcd, http_port: 8092, host: 0.0.0.0}   # i z jiných zařízení v síti
+```
+
+Stejná stránka je i na hlavním portu na `/lcd/`. Minuty se zobrazí, když mají zastávky v trase `minutes`
+(minuty od začátku spoje). Ikony pro LCD: `metro-A`/`metro-B`/`metro-C` (logo metra a linka), `vlak`, `vlak-S9`,
+`S`, `bus`, `tramvaj`, `trolejbus`, `letadlo`, `vozik`, `prestup`, `pozor`. LED panely z nich použijí základní
+piktogram (`metro-C` → `metro`), ostatní vynechají.
+
 ## ESP brány
 
 Panel s výstupem „ESP“ dostává hotové IBIS telegramy přes WebSocket. Protokol je v [docs/esp-protokol.md](docs/esp-protokol.md).
