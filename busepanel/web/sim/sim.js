@@ -97,7 +97,8 @@ function renderVehicle() {
       <input data-f="name" value="${esc(p.name || "")}" style="flex:1"><button class="danger" data-a="del">×</button></div>
     <div class="grid2">
       <label>Role <select data-f="role">${opts(ROLES, p.role)}</select></label>
-      <label>Typ panelu <select data-f="profile">${profOpts(p.profile || "BS120")}</select></label>
+      ${p.output === "lcd" ? `<label>Typ panelu <input value="LCD PID (webová stránka)" disabled></label>`
+        : `<label>Typ panelu <select data-f="profile">${profOpts(p.profile || "BS120")}</select></label>`}
       <label>Výstup <select data-f="output">${opts(OUTPUTS, p.output || "virtual")}</select></label>
       ${p.output === "serial" ? `<label>Port / adresa <span class="row"><input data-f="port" value="${esc(p.port || "")}" placeholder="auto" style="width:8em"><input data-f="address" type="number" value="${p.address ?? 10}" style="width:4em"></span></label>` : ""}
       ${p.output === "esp" ? `<label>ID zařízení ESP <input data-f="device" value="${esc(p.device || "")}"></label>` : ""}
@@ -106,7 +107,10 @@ function renderVehicle() {
   $("#vehPanels").querySelectorAll("[data-f]").forEach((el) => el.onchange = () => {
     const p = v.panels[+el.closest(".vpanel").dataset.i], f = el.dataset.f;
     p[f] = el.type === "checkbox" ? el.checked : el.type === "number" ? +el.value : el.value;
-    if (f === "output") renderVehicle();
+    if (f === "output") {                 // LCD has no LED panel type
+      if (p.output === "lcd") delete p.profile; else if (!p.profile) p.profile = "BS120";
+      renderVehicle();
+    }
   });
   $("#vehPanels").querySelectorAll("[data-a=del]").forEach((b) => b.onclick = () => { v.panels.splice(+b.closest(".vpanel").dataset.i, 1); renderVehicle(); });
   const s = v.settings || (v.settings = {}), i = s.interior || (s.interior = {}), e = s.exterior || (s.exterior = {});
@@ -246,7 +250,7 @@ function render(s) {
       $("#simPanels").append(el);
       box = sim.views[p.name] = { el, view: new LedView(el.querySelector("canvas")) };
     }
-    const info = [ROLES[p.role] || p.role, p.profile, OUTPUTS[p.kind === "esp" ? "esp" : p.kind] || p.kind];
+    const info = [ROLES[p.role] || p.role, p.kind === "lcd" ? null : p.profile, OUTPUTS[p.kind] || p.kind].filter(Boolean);
     if (p.frame) info.push("režim: " + p.frame.mode_title);
     if (p.frame && p.frame.mirror) info.push("náhled podle odeslaných povelů");
     if (!p.frame && p.kind !== "virtual" && p.kind !== "lcd") info.push("zatím nic neodesláno – spusťte ▶ Start");
