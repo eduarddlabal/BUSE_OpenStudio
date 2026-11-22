@@ -104,14 +104,32 @@ def _job(fn, *args) -> str:
 # ------------------------------------------------------------------ files / project
 @app.get("/api/files")
 def files():
+    """Panel databases in the workdir: HEX files and YAML projects (those with a 'fonts' key).
+
+    Routes, vehicles and other YAML files are left out, so they cannot be opened as a project."""
     out = []
-    for root, _dirs, fs in os.walk(S.workdir):
+    for root, dirs, fs in os.walk(S.workdir):
+        dirs[:] = [d for d in dirs if not d.startswith(".") and d not in _SKIP_DIRS]
         if len(out) > 300:
             break
         for f in fs:
-            if f.lower().endswith((".yaml", ".yml", ".hex")) and f != "fonts.yaml":
-                out.append(os.path.relpath(os.path.join(root, f), S.workdir).replace("\\", "/"))
+            full = os.path.join(root, f)
+            low = f.lower()
+            if low.endswith(".hex") or (low.endswith((".yaml", ".yml")) and f != "fonts.yaml"
+                                        and _is_project_yaml(full)):
+                out.append(os.path.relpath(full, S.workdir).replace("\\", "/"))
     return {"workdir": S.workdir, "files": sorted(out)}
+
+
+_SKIP_DIRS = {"__pycache__", "node_modules", "venv", "build", "dist"}
+
+
+def _is_project_yaml(path) -> bool:
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            return any(line.startswith("fonts:") for line in fh)
+    except OSError:
+        return False
 
 
 class OpenReq(BaseModel):
@@ -125,7 +143,10 @@ def project_open(r: OpenReq):
         S.project = Project.from_hex(path, ibis_address=S.address)
         S.path = os.path.splitext(path)[0] + ".yaml"
     else:
-        S.project = Project.load(path)
+        try:
+            S.project = Project.load(path)
+        except ValueError as e:
+            raise HTTPException(400, f"{os.path.basename(path)} není projekt panelu: {e}") from e
         S.path = path
     S.address = int((S.project.data.get("panel") or {}).get("ibis_address", S.address))
     return _project_json(S.project)

@@ -30,8 +30,6 @@ def default_port() -> str:
     real = [p for p in ports if (p["description"] or "n/a").lower() != "n/a"]   # skip placeholder ttyS*
     if real:
         return real[0]["port"]
-    if ports:
-        return ports[0]["port"]
     return "COM5" if os.name == "nt" else "/dev/ttyUSB0"
 
 
