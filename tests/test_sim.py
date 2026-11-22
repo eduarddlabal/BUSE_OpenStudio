@@ -36,13 +36,14 @@ def test_universal_db(univ):
     assert im.version == "UNIV"
     assert len(im.records["LIN"]) == 100
     assert len(I.hex_to_image(out)) < 0x8000
-    assert univ.fonts.font(ICON_FONT) is not None
+    assert univ.fonts.font(ICON_FONT) is None                    # icons live in the text fonts
+    assert all(ICON_CODES["vlak"] in univ.fonts.font(i).glyphs for i in (0, 1, 2, 3))
 
 
 def test_icon_markup(univ):
     b, probs = T.encode("{f3}Vlak {icon:vlak} zde", univ.fonts)
     assert not probs
-    assert bytes([0xE0 + ICON_FONT, ICON_CODES["vlak"], 0xE3]) in b
+    assert bytes([0x20, ICON_CODES["vlak"], 0x20]) in b and 0xE0 + ICON_FONT not in b
 
 
 # ---------------------------------------------------------------- virtual panel (real-panel behaviour)
@@ -97,7 +98,7 @@ def test_spec_telegrams(univ):
     tel = spec_telegrams({"line": "7", "text": "Sídliště Dukla"}, bs120, univ.fonts)
     assert tel[0] == "l007" and tel[1] == "x9997" and tel[2].startswith(b"v")
     tel = spec_telegrams({"line": None, "text": "Příští {icon:metro}"}, bs120, univ.fonts)
-    assert tel[0] == "x9996" and bytes([0xE0 + ICON_FONT, ICON_CODES["metro"]]) in tel[1]
+    assert tel[0] == "x9996" and bytes([ICON_CODES["metro"]]) in tel[1] and 0xE0 + ICON_FONT not in tel[1]
     tel = spec_telegrams({"line": "607", "text": "Chlumec"}, bs120, univ.fonts, univ.data["line_map"])
     assert tel[0] == "l099"
     tel = spec_telegrams({"line": "X7", "text": "Dukla"}, bs120, univ.fonts)
@@ -147,3 +148,48 @@ def test_order_for_panel():
     # back to line + text
     out, m = order_for_panel(["l099", "x9997", b"vC"], m)
     assert out == ["l099", "x9997", b"vC"] and m == "x9997"
+
+
+# ---------------------------------------------------------------- DPP format (preset)
+def test_dpp_preset(route, univ):
+    from busepanel.sim.engine import preset_settings
+    e = SimEngine(route, {"interior": preset_settings("dpp")}, clock=lambda: 0.0)
+    e.event("start")
+    d = e.interior()                                   # zastávka: šipka + cíl velkými písmeny
+    assert d["line"] == "7" and d["text"] == "{icon:sipka} SÍDLIŠTĚ DUKLA"
+    e.event("depart")                                  # mimo zastávku, příští je na znamení
+    d = e.interior()
+    assert d["line"] == "7" and d["run"]
+    assert d["text"] == "Masarykovo nám. - na znamení / request stop {icon:znameni}"
+    tel = spec_telegrams(d, profile("BS120"), univ.fonts, {})
+    assert tel[0] == "l007" and bytes([0x1B, 0x74, 0x11]) in tel[-1]
+    e.event("arrive"); e.event("depart")
+    d = e.interior()
+    assert d["line"] == "7" and d["text"] == "Sídliště Dukla" and not d["run"]
+    e.event("arrive")
+    d = e.interior()
+    assert e.phase == "ended" and d["line"] == "7" and d["text"].startswith("Konečná zastávka, prosíme vystupte")
+
+
+def test_default_line_only_at_stop(route):
+    e = SimEngine(route, clock=lambda: 0.0)
+    e.event("start"); e.event("depart")
+    assert e.interior()["line"] is None
+
+
+def test_universal_db_relocates_i_acute(univ):
+    # Í at 0x8B ends free text on the BS120 -> moved to 0xAA
+    b, probs = T.encode("{f3}HLAVNÍ", univ.fonts)
+    from busepanel.core.gbuse_font import fontset
+    assert not probs and 0x8B not in b and 0x40 in b
+    assert univ.fonts.font(3).glyphs[0x40].data == fontset("gbuse").font(3).glyphs[0x8B].data
+    assert T.encode("{f3}Ľ", univ.fonts)[0][1:2] == b"\x9c"                # Ľ stays
+
+
+def test_icon_codes_are_characters_for_bs120():
+    # firmware: 0xB0-0xBF spacing, 0xC0-0xDF dropped, 0xE0-0xEF font, 0xFF end of font
+    from busepanel.core.icons import ICON_CODES
+    for c in ICON_CODES.values():
+        assert 0x20 <= c < 0xB0 or 0xF0 <= c < 0xFF
+    assert len(set(ICON_CODES.values())) == len(ICON_CODES)
+    assert not {0xAF, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5} & set(ICON_CODES.values())   # original pictograms

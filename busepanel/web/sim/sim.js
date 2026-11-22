@@ -109,6 +109,9 @@ function renderVehicle() {
   const s = v.settings || (v.settings = {}), i = s.interior || (s.interior = {}), e = s.exterior || (s.exterior = {});
   $$("[data-item]").forEach((c) => c.checked = (i.items || ["next", "time", "zone"]).includes(c.dataset.item));
   $("#sSeconds").value = i.seconds ?? 4; $("#sAtStop").value = i.at_stop || "line_dest"; $("#sMsgMode").value = i.message_mode || "cycle";
+  $("#sLine").value = i.line || "at_stop";
+  $("#sPreset").innerHTML = Object.entries(sim.presets || {}).map(([k, p]) =>
+    `<option value="${k}" ${k === (i.format || "zakladni") ? "selected" : ""}>${esc(p.title)}</option>`).join("");
   $("#sFont").value = i.font ?? 3; $("#sSpacing").value = i.spacing ?? 1;
   $("#sTime").value = i.time_format ?? "%H:%M";
   if (!i.sequences) i.sequences = JSON.parse(JSON.stringify(sim.defaultSeqs || {}));
@@ -118,7 +121,7 @@ function renderVehicle() {
 function readSettings() {
   const s = sim.vehicle.settings;
   s.interior = { ...s.interior, items: $$("[data-item]").filter((c) => c.checked).map((c) => c.dataset.item),
-    seconds: +$("#sSeconds").value, at_stop: $("#sAtStop").value, message_mode: $("#sMsgMode").value,
+    seconds: +$("#sSeconds").value, at_stop: $("#sAtStop").value, message_mode: $("#sMsgMode").value, line: $("#sLine").value,
     font: +$("#sFont").value, spacing: +$("#sSpacing").value, time_format: $("#sTime").value };
   s.exterior = { ...s.exterior, font: +$("#sFont").value, spacing: +$("#sSpacing").value };
 }
@@ -131,7 +134,12 @@ const applyVehicle = guard(async (path) => {
   toast(path ? "Vozidlo uloženo" : "Nastavení použito");
 });
 $("#vehApply").onclick = () => applyVehicle();
-$$("#tab-sim [data-item], #sSeconds, #sAtStop, #sMsgMode, #sFont, #sSpacing, #sTime")
+$("#sPresetApply").onclick = () => {
+  const p = (sim.presets || {})[$("#sPreset").value]; if (!p) return;
+  sim.vehicle.settings.interior = JSON.parse(JSON.stringify(p.interior));
+  renderVehicle(); applyVehicle();
+};
+$$("#tab-sim [data-item], #sSeconds, #sAtStop, #sMsgMode, #sLine, #sFont, #sSpacing, #sTime")
   .forEach((el) => el.addEventListener("change", () => applyVehicle()));
 $("#vehSave").onclick = guard(async () => { await applyVehicle($("#vehPath").value); loadSimFiles(); });
 $("#vehLoad").onclick = guard(async () => {
@@ -143,10 +151,12 @@ $("#vehLoad").onclick = guard(async () => {
 // ------------------------------------------------------------------ sequences (pages)
 const WHEN = { always: "vždy", request: "na znamení", not_request: "ne na znamení", via: "je „přes“", zone: "má zónu" };
 const ROLE = { text: "text", heading: "nadpis" };
+// default pages of a sequence – from the selected format (preset), else the built-in defaults
+const seqDefaults = () => (sim.presets?.[sim.vehicle.settings.interior.format]?.interior.sequences) || sim.defaultSeqs || {};
 function seqList() {
   const i = sim.vehicle.settings.interior, name = $("#seqSelect").value;
   i.sequences = i.sequences || {};
-  if (!i.sequences[name]) i.sequences[name] = JSON.parse(JSON.stringify((sim.defaultSeqs || {})[name] || []));
+  if (!i.sequences[name]) i.sequences[name] = JSON.parse(JSON.stringify(seqDefaults()[name] || []));
   return i.sequences[name];
 }
 function renderSeq() {
@@ -160,10 +170,12 @@ function renderSeq() {
     <td><input data-f="seconds" type="number" min="0.5" step="0.5" value="${p.seconds ?? ""}" style="width:4em"></td>
     <td><select data-f="when">${opts(WHEN, p.when)}</select></td>
     <td><select data-f="role">${opts(ROLE, p.role)}</select></td>
+    <td><input data-f="run" type="checkbox" ${p.run ? "checked" : ""}></td>
     <td class="nowrap"><button data-a="up">↑</button><button data-a="del" class="danger">×</button></td></tr>`).join("");
   $("#seqPages").querySelectorAll("[data-f]").forEach((el) => el.onchange = () => {
     const p = pages[+el.closest("tr").dataset.i], f = el.dataset.f;
-    if (el.type === "number") { if (el.value === "") delete p[f]; else p[f] = +el.value; }
+    if (el.type === "checkbox") { if (el.checked) p[f] = true; else delete p[f]; }
+    else if (el.type === "number") { if (el.value === "") delete p[f]; else p[f] = +el.value; }
     else if ((f === "when" && el.value === "always") || (f === "role" && el.value === "text")) delete p[f];
     else p[f] = el.value;
     applyVehicle();
@@ -178,7 +190,7 @@ function renderSeq() {
 $("#seqSelect").onchange = renderSeq;
 $("#seqAdd").onclick = () => { seqList().push({ text: "" }); renderSeq(); };
 $("#seqDefault").onclick = () => {
-  sim.vehicle.settings.interior.sequences[$("#seqSelect").value] = JSON.parse(JSON.stringify((sim.defaultSeqs || {})[$("#seqSelect").value] || []));
+  sim.vehicle.settings.interior.sequences[$("#seqSelect").value] = JSON.parse(JSON.stringify(seqDefaults()[$("#seqSelect").value] || []));
   renderSeq(); applyVehicle();
 };
 
@@ -259,7 +271,8 @@ export async function activateSim(on) {
     sim.profiles = (await api("/api/profiles")).profiles;
     sim.route = (await api("/api/sim/route")).route;
     sim.vehicle = (await api("/api/sim/vehicle")).config;
-    sim.defaultSeqs = (await api("/api/sim/defaults")).sequences;
+    const d = await api("/api/sim/defaults");
+    sim.defaultSeqs = d.sequences; sim.presets = d.presets;
     const ic = await api("/api/icons");
     $("#iconNames").textContent = ic.icons.map((i) => i.name).join(", ");
     renderRoute(); renderVehicle();

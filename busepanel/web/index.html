@@ -369,6 +369,9 @@
       <div class="row"><button id="vehAdd">+ Panel</button><button id="vehApply">Použít</button></div>
       <h3>Vnitřní panel</h3>
       <div class="row">
+        <label>Formát <select id="sPreset"></select></label><button id="sPresetApply">Použít formát</button>
+      </div>
+      <div class="row">
         <label class="chk"><input type="checkbox" data-item="next" checked> příští zastávka</label>
         <label class="chk"><input type="checkbox" data-item="time" checked> čas</label>
         <label class="chk"><input type="checkbox" data-item="zone" checked> tarifní pásmo</label>
@@ -376,6 +379,7 @@
       <div class="grid2">
         <label>Doba jedné položky [s] <input id="sSeconds" type="number" min="1" step="0.5"></label>
         <label>V zastávce <select id="sAtStop"><option value="line_dest">linka + cíl</option><option value="stop_name">název zastávky</option></select></label>
+        <label>Číslo linky <select id="sLine"><option value="at_stop">jen v zastávce</option><option value="always">stále</option></select></label>
         <label>Mimořádnost <select id="sMsgMode"><option value="cycle">přidat do cyklu</option><option value="override">přebít vše</option></select></label>
         <label>Font / mezera <span class="row"><input id="sFont" type="number" min="0" max="15" style="width:4em"><input id="sSpacing" type="number" min="0" max="15" style="width:4em"></span></label>
       </div>
@@ -398,10 +402,11 @@
         <button id="seqAdd">+ Stránka</button><button id="seqDefault">Výchozí</button>
       </div>
       <div class="stopwrap"><table class="stops seq">
-        <thead><tr><th>Text</th><th>Font</th><th>Mez.</th><th>s</th><th>Kdy</th><th>Role</th><th></th></tr></thead>
+        <thead><tr><th>Text</th><th>Font</th><th>Mez.</th><th>s</th><th>Kdy</th><th>Role</th><th title="vždy běžící text">Běž.</th><th></th></tr></thead>
         <tbody id="seqPages"></tbody></table></div>
       <p class="muted small">Proměnné: <code>{name}</code> zastávka, <code>{icons}</code> ikony, <code>{zone}</code> číslo zóny,
-        <code>{zone_name}</code> název zóny, <code>{destination}</code> cíl, <code>{via}</code> přes, <code>{line}</code> linka,
+        <code>{zone_name}</code> název zóny, <code>{destination}</code> cíl, <code>{DESTINATION}</code> cíl velkými písmeny,
+        <code>{dest_icons}</code> ikony cílové zastávky, <code>{via}</code> přes, <code>{line}</code> linka,
         <code>{time}</code> čas, <code>{message}</code> text mimořádnosti. Ikony i v textu: <code>{icon:vlak}</code>.
         Font 0 je tenký, 3 normální (podle fontů v databázi). Prázdný font nebo mezera = hodnota z „Font / mezera“ výše.</p>
     </div>

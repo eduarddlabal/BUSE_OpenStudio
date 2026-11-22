@@ -158,8 +158,9 @@ class VehicleSave(BaseModel):
 
 @router.get("/api/sim/defaults")
 def defaults():
-    from ..sim.engine import DEFAULT_SEQUENCES
-    return {"sequences": DEFAULT_SEQUENCES}
+    from ..sim.engine import DEFAULT_SEQUENCES, PRESETS, preset_settings
+    return {"sequences": DEFAULT_SEQUENCES,
+            "presets": {k: {"title": v["title"], "interior": preset_settings(k)} for k, v in PRESETS.items()}}
 
 
 @router.get("/api/sim/vehicle")

@@ -41,7 +41,7 @@ def spec_telegrams(spec: dict, prof, fonts, line_map: dict | None = None) -> lis
         payload, _ = text_payload(fonts, text, spec.get("font"), spec.get("spacing"))
         g = prof.geometry
         room = g.dest_width if (line and lk) else g.columns
-        if spec.get("auto_run", True) and _width(payload, fonts) > room:
+        if spec.get("run") or (spec.get("auto_run", True) and _width(payload, fonts) > room):
             payload = _with_run(payload)
         if spec.get("heading") and g.rows > 8:
             # two-line panel: heading on the upper line, text below (LF separator – NOT verified on hardware)
@@ -75,14 +75,14 @@ def make_measure(fonts, prof):
     """Seconds a page needs so that a running text scrolls through once (0 = fits, static)."""
     g = prof.geometry
 
-    def measure(text, font, spacing, two_line=False):
+    def measure(text, font, spacing, two_line=False, run=False):
         try:
             payload, _ = text_payload(fonts, text, font, spacing)
         except Exception:      # noqa: BLE001
             return 0
         w = _width(payload, fonts)
         room = g.columns
-        if w <= room:
+        if w <= room and not run:
             return 0
         return (w + room) * g.scroll_ms / 1000 + 0.5
     return measure

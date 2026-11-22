@@ -453,3 +453,22 @@ U volného textu dále funguje:
 - **Po nahrání nových dat je nutné panel vypnout a zapnout.**
   - Rejstřík linek si firmware načítá při startu. Bez restartu `l099` ukazovalo „99“, po restartu správně „607“.
   - Cíle (`z`) a volný text se z nových dat projeví i bez restartu.
+
+### 9.6 Znaky, fonty a ikony ve volném textu **[firmware + OVĚŘENO na BS120]**
+Z EPROM `BS120_adr10_eprom.bin`:
+
+- **Hledání znaku** (0x12D8): je-li na adrese 0 ve FLASH bajt `AB` (nahraná data), bere se ukazatel na fonty z FLASH (0x0009), jinak z vestavěných fontů v EPROM (0x2009 → fonty 0–3 od 0x2060). Ve fontu `E0+n` (aktuální font) se znaky procházejí po řadě a hledání **končí u prvního většího kódu** (0x1329) → znaky ve fontu musí být seřazené vzestupně. `FF` končí font.
+- **Třídění bajtů textu** (0x14E7): `1B` ESC, `0A`/`0D` konec řádku/textu, `0B` konec běžícího textu, `0E x` = `x | 80h` (kromě `0E 0D`), `20–AF` **znak**, `B0–BF` mezera, **`C0–DF` příkaz bez účinku – bajt se zahodí**, `E0–EF` font, `F0–FE` **znak**.
+- Samostatný font s piktogramy (např. `EE`) panel ve volném textu nezobrazí, protože text je vždy v aktuálním fontu.
+
+Ověřeno na panelu (volný text `v`, x9997):
+
+| Kód | Výsledek |
+|---|---|
+| 0x80–0xA9 (Kamenických) kromě 0x8B | OK |
+| **0x8B (Í)** | znak se vykreslí, ale **text za ním skončí** → Í se v univerzální databázi přesouvá na **0x40** (`@`, v originále prázdné; v gBUSE se Í psalo jako `@`) |
+| 0xAA, 0xAB, 0xAE, 0xF0, 0xFD, 0xFE (nové znaky v nahrané databázi) | OK |
+| 0xAF, 0xF1–0xF5 (originální piktogramy gBUSE) | OK |
+| 0xC0–0xDF | nic (zahozeno) |
+
+BUSE Studio proto dává ikony do každého textového fontu na kódy 0xAA–0xAE, 0xF0, 0xFA–0xFE (`core/icons.py`) a `{icon:…}` posílá jako jediný znak.

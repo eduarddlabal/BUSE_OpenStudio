@@ -46,7 +46,7 @@ busepanel serve                     # otevře http://127.0.0.1:8090
 ```
 
 `quickstart` vytvoří:
-- `databaze/univerzalni/projekt.yaml`: univerzální databázi s originálním fontem gBUSE (tenký 0, normální 3; `--font builtin` = vestavěný font), ikonami (font 14) a čísly linek. Ostatní texty pak aplikace posílá dynamicky volným textem.
+- `databaze/univerzalni/projekt.yaml`: univerzální databázi s originálním fontem gBUSE (tenký 0, normální 3; `--font builtin` = vestavěný font), ikonami (přímo v textových fontech na kódech 0xAA–0xAE, 0xF0, 0xFA–0xFE) a čísly linek. Ostatní texty pak aplikace posílá dynamicky volným textem.
 - `trasy/`: ukázkovou trasu regionální linky 607 Pardubice → Chlumec nad Cidlinou s tarifními zónami IDS IREDO. Zdroj: veřejná data CIS JŘ a IREDO.
 - `vozidla/autobus.yaml`: vozidlo s náhledem a se skutečným panelem na nalezeném převodníku.
 

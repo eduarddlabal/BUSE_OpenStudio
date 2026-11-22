@@ -116,7 +116,10 @@ def decode_markup(b: bytes, fonts) -> str:
         elif c == ord("{"):
             out.append("{{"); i += 1
         else:
+            from .icons import CODE_ICONS
             ch = fonts.codetable.decode_code(c) if 0x20 <= c < 0xE0 else None
+            if ch is None and c in CODE_ICONS:
+                ch = "{icon:%s}" % CODE_ICONS[c]
             out.append(ch if ch is not None and ch != "{" else f"{{{c:02X}}}")
             i += 1
     if nocr:
@@ -156,7 +159,7 @@ def encode_markup(s: str, fonts, default_font: int = 3, cr: bool = True) -> tupl
         elif t.startswith("icon:"):
             from .icons import icon_bytes
             try:
-                out += icon_bytes(t[5:].strip(), font if font is not None else default_font)
+                out += icon_bytes(t[5:].strip(), font if font is not None else default_font, fonts)
             except KeyError as e:
                 raise TextError(str(e.args[0])) from None
         elif re.fullmatch(r"([0-9A-Fa-f]{2}\s*)+", t):

@@ -12,7 +12,34 @@ from ..core.icons import add_icon_font
 from ..core.project import Project
 
 COMMANDS = ["l", "z", "x", "v", "zI", "zM", "zN", "a", "aV"]
+
+# Codes the BS120 cannot take in free text (v): the firmware ends the text at them (measured:
+# "HLAVNÍ NÁDRAŽÍ" shows only "HLAVNÍ" – Í = 0x8B, i.e. VT 0x0B with the high bit). The universal
+# database moves such characters to free codes; the code table makes the app send the new code.
+# Tested OK on hardware: ČĎŤĚÁÉŽÓÚŠÝŘ ďčěžůýť (0x80–0x9F apart from 0x8B).
+# Target 0x40 ('@'): plain ASCII, empty and "undefined" in the original gBUSE font – users of gBUSE
+# typed '@' to get Í. Verified on the BS120. (Firmware details: docs/PROTOKOL.md 9.6.)
+RELOCATE = {0x8B: 0x40}          # Í
 SLOTS = 100
+
+
+def relocate_codes(fonts, moves: dict = RELOCATE):
+    """Move characters from codes the firmware cannot display in free text to free codes
+    (glyph in every font + code table entry)."""
+    raw = bytearray(fonts.codetable.raw)
+    for old, new in moves.items():
+        if not raw[old - 0x21]:
+            continue                              # nothing to move
+        raw[new - 0x21], raw[old - 0x21] = raw[old - 0x21], 0     # replaces the char at `new`
+        for f in fonts.fonts:
+            g = f.glyphs.get(old)
+            if g is None:
+                continue
+            glyphs = {c: x for c, x in f.glyphs.items() if c != old}
+            glyphs[new] = type(g)(new, g.height, g.data)
+            f.glyphs = dict(sorted(glyphs.items()))
+    from ..core.fonts import CodeTable
+    fonts.codetable = CodeTable(bytes(raw))
 
 
 def plan_lines(extra_lines=()) -> tuple[dict, dict]:
@@ -42,6 +69,7 @@ def build_universal(base: Project | None = None, version: str = "UNIV", extra_li
         fonts = fontset(font)
     else:
         fonts = base.fonts
+    relocate_codes(fonts)
     add_icon_font(fonts)
     texts, line_map = plan_lines(extra_lines)
     line_recs = {}

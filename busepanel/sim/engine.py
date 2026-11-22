@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import copy
 import datetime as dt
+import re
 import time
 
 THIN = 0          # headings and extra lines; other pages take the font from the role settings
@@ -50,7 +51,39 @@ DEFAULT_SETTINGS = {
     "exterior": {"font": 3, "spacing": 1, "seconds": 4},
 }
 
+# Ready-made display formats ("Formát" in the UI): a preset replaces the interior settings.
+DPP_SEQUENCES = {
+    # Standardy DPP – vnitřní informační panel s číslem linky (linka je zobrazena stále)
+    "next": [   # mimo zastávku: příští zastávka + piktogramy přestupu; na znamení běžícím textem
+        {"text": "{name}{icons}", "when": "not_request"},
+        {"text": "{name}{icons} - na znamení / request stop {icon:znameni}", "when": "request", "run": True},
+    ],
+    "destination": [{"text": "{icon:sipka} {DESTINATION}{dest_icons}"}],   # zastávka: šipka + cíl spoje
+    "exterior": [{"text": "{destination}"}],
+    "zone": [{"text": "{zone} {zone_name}"}],
+    "time": [{"text": "{time}"}],
+    "message": [{"text": "{message}", "run": True}],
+    "final": [{"text": "Konečná zastávka, prosíme vystupte / Final stop, please leave the tram.", "run": True}],
+    "stop": [{"text": "{name}{icons}"}],
+}
+
+PRESETS = {
+    "zakladni": {"title": "Základní (příští zastávka / čas / zóna)",
+                 "interior": {k: v for k, v in DEFAULT_SETTINGS["interior"].items()} | {"line": "at_stop"}},
+    "dpp": {"title": "DPP – linka stále, příští zastávka / šipka + cíl / konečná",
+            "interior": {"items": ["next"], "seconds": 4, "time_format": "%H:%M", "at_stop": "line_dest",
+                         "message_mode": "override", "line": "always", "font": 3, "spacing": 1,
+                         "sequences": DPP_SEQUENCES}},
+}
+
 CONDITIONS = {"always", "request", "not_request", "via", "zone"}
+
+
+def preset_settings(name: str) -> dict:
+    """Interior settings of a preset (deep copy, tagged with the preset name)."""
+    if name not in PRESETS:
+        raise ValueError(f"neznámý formát {name!r}")
+    return {**copy.deepcopy(PRESETS[name]["interior"]), "format": name}
 
 
 def merge_settings(user: dict | None) -> dict:
@@ -154,12 +187,14 @@ class SimEngine:
     def _context(self, now: float) -> dict:
         st = self.route.stops
         stop = st[self.pos] if st else None
+        last = st[-1] if st else None
         s = self.settings["interior"]
         return {
             "name": stop.name if stop else "", "icons": self._icons(stop) if stop else "",
             "zone": stop.zone if stop else "", "zone_name": stop.zone_name if stop else "",
             "request": " – na znamení" if stop and stop.request else "", "is_request": bool(stop and stop.request),
-            "destination": self.route.destination, "via": self.route.via, "line": self.route.line,
+            "destination": self.route.destination, "DESTINATION": self.route.destination.upper(),
+            "dest_icons": self._icons(last) if last else "", "via": self.route.via, "line": self.route.line,
             "time": dt.datetime.fromtimestamp(now).strftime(s.get("time_format", "%H:%M")),
             "message": self.message or "",
         }
@@ -177,20 +212,22 @@ class SimEngine:
             if not self._ok(p, ctx):
                 continue
             try:
-                text = str(p.get("text", "")).format(**ctx)
+                # {icon:name} is panel markup, not a format field -> escape it before format()
+                text = re.sub(r"\{(icon:[^{}]*)\}", r"{{\1}}", str(p.get("text", ""))).format(**ctx)
             except (KeyError, IndexError, ValueError):
                 text = str(p.get("text", ""))
             out.append({"text": text,
                         "font": p.get("font", role_settings.get("font")),
                         "spacing": p.get("spacing", role_settings.get("spacing")),
                         "seconds": float(p.get("seconds") or role_settings.get("seconds") or 3),
-                        "role": p.get("role", "text")})
+                        "role": p.get("role", "text"), "run": bool(p.get("run"))})
         return out
 
     def _duration(self, page: dict, two_line: bool) -> float:
         d = page["seconds"]
         if self.measure:
-            d = max(d, self.measure(page["text"], page["font"], page["spacing"], two_line) or 0)
+            d = max(d, self.measure(page["text"], page["font"], page["spacing"], two_line,
+                                    run=page.get("run", False)) or 0)
         return d
 
     def _pick(self, pages: list[dict], now: float, two_line: bool) -> dict | None:
@@ -221,7 +258,7 @@ class SimEngine:
         if page is None:
             return {"line": line, "text": ""}
         return {"line": line, "text": page["text"], "font": page["font"], "spacing": page["spacing"],
-                "heading": page.get("heading"), "heading_font": page.get("heading_font")}
+                "run": page.get("run", False), "heading": page.get("heading"), "heading_font": page.get("heading_font")}
 
     # ---- displays -----------------------------------------------------------
     def interior(self, now: float | None = None, two_line: bool = False) -> dict:
@@ -229,15 +266,16 @@ class SimEngine:
         now = self.clock() if now is None else now
         ctx = self._context(now)
         st = self.route.stops
+        ln = self.route.line if s.get("line") == "always" else None   # line number on every page
         if self.phase == "idle" or not st:
             return self._spec(self._pick(self._pages("destination", ctx, s), now, two_line), self.route.line)
         if self.message and s.get("message_mode") == "override":
-            return self._spec(self._pick(self._pages("message", ctx, s), now, two_line), None)
+            return self._spec(self._pick(self._pages("message", ctx, s), now, two_line), ln)
         if self.phase == "ended":
-            return self._spec(self._pick(self._pages("final", ctx, s), now, two_line), None)
+            return self._spec(self._pick(self._pages("final", ctx, s), now, two_line), ln)
         if self.phase == "at_stop":
             if s.get("at_stop") == "stop_name":
-                return self._spec(self._pick(self._pages("stop", ctx, s), now, two_line), None)
+                return self._spec(self._pick(self._pages("stop", ctx, s), now, two_line), ln)
             return self._spec(self._pick(self._pages("destination", ctx, s), now, two_line), self.route.line)
         pages = []
         for it in s.get("items") or ["next"]:
@@ -246,7 +284,7 @@ class SimEngine:
             pages += self._pages(it, ctx, s)
         if self.message:
             pages += self._pages("message", ctx, s)
-        return self._spec(self._pick(pages, now, two_line), None)
+        return self._spec(self._pick(pages, now, two_line), ln)
 
     def exterior(self, now: float | None = None, two_line: bool = False) -> dict:
         s = self.settings["exterior"]
