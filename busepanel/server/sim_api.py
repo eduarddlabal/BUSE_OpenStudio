@@ -24,7 +24,7 @@ EXAMPLE_ROUTE = {
               {"name": "U Kostela", "zone": "P", "request": True},
               {"name": "Sídliště Dukla", "zone": "1"}],
     "messages": {"odklon": "Spoj jede odklonem přes ul. Pražskou",
-                 "vyluka": "Výluka – zastávka U Kostela se neobsluhuje"},
+                 "vyluka": "Výluka - zastávka U Kostela se neobsluhuje"},
 }
 EXAMPLE_VEHICLE = {
     "name": "Testovací autobus",

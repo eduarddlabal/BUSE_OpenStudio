@@ -14,26 +14,26 @@ import copy
 import datetime as dt
 import time
 
-THIN, NORMAL = 0, 3
+THIN = 0          # headings and extra lines; other pages take the font from the role settings
 
 DEFAULT_SEQUENCES = {
     "next": [
         {"text": "Příští zastávka / Next stop", "font": THIN, "role": "heading"},
-        {"text": "{name}{icons}", "font": NORMAL},
+        {"text": "{name}{icons}"},
         {"text": "zastávka na znamení / request stop", "font": THIN, "when": "request"},
     ],
     "destination": [
         {"text": "Směr / Direction", "font": THIN, "role": "heading"},
-        {"text": "{destination}", "font": NORMAL},
+        {"text": "{destination}"},
         {"text": "Přes {via}", "font": THIN, "when": "via"},
     ],
-    "exterior": [{"text": "{destination}", "font": NORMAL}],
+    "exterior": [{"text": "{destination}"}],
     "zone": [{"text": "Tarifní zóna / Zone", "font": THIN, "role": "heading"},
-             {"text": "{zone} {zone_name}", "font": NORMAL}],
-    "time": [{"text": "{time}", "font": NORMAL}],
-    "message": [{"text": "{message}", "font": NORMAL}],
-    "final": [{"text": "Konečná zastávka – prosíme, vystupte", "font": NORMAL}],
-    "stop": [{"text": "{name}{icons}", "font": NORMAL}],
+             {"text": "{zone} {zone_name}"}],
+    "time": [{"text": "{time}"}],
+    "message": [{"text": "{message}"}],
+    "final": [{"text": "Konečná zastávka - prosíme, vystupte"}],
+    "stop": [{"text": "{name}{icons}"}],
 }
 
 DEFAULT_SETTINGS = {

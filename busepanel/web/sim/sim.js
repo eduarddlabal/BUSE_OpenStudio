@@ -127,6 +127,7 @@ const applyVehicle = guard(async (path) => {
   readSettings();
   sim.vehicle = (await api("/api/sim/vehicle/save", { path: path || null, config: sim.vehicle })).config;
   sim.views = {}; $("#simPanels").innerHTML = "";
+  renderSeq();                       // placeholders show the current default font / spacing
   toast(path ? "Vozidlo uloženo" : "Nastavení použito");
 });
 $("#vehApply").onclick = () => applyVehicle();
@@ -154,8 +155,8 @@ function renderSeq() {
   const opts = (obj, sel) => Object.entries(obj).map(([k, t]) => `<option value="${k}" ${k === (sel || Object.keys(obj)[0]) ? "selected" : ""}>${t}</option>`).join("");
   $("#seqPages").innerHTML = pages.map((p, i) => `<tr data-i="${i}">
     <td><input data-f="text" value="${esc(p.text || "")}" class="mono" style="min-width:14em;width:100%"></td>
-    <td><input data-f="font" type="number" min="0" max="15" value="${p.font ?? ""}" style="width:3.5em"></td>
-    <td><input data-f="spacing" type="number" min="0" max="15" value="${p.spacing ?? ""}" style="width:3.5em"></td>
+    <td><input data-f="font" type="number" min="0" max="15" value="${p.font ?? ""}" placeholder="${sim.vehicle.settings.interior.font ?? 3}" style="width:3.5em"></td>
+    <td><input data-f="spacing" type="number" min="0" max="15" value="${p.spacing ?? ""}" placeholder="${sim.vehicle.settings.interior.spacing ?? 1}" style="width:3.5em"></td>
     <td><input data-f="seconds" type="number" min="0.5" step="0.5" value="${p.seconds ?? ""}" style="width:4em"></td>
     <td><select data-f="when">${opts(WHEN, p.when)}</select></td>
     <td><select data-f="role">${opts(ROLE, p.role)}</select></td>
@@ -175,7 +176,7 @@ function renderSeq() {
   });
 }
 $("#seqSelect").onchange = renderSeq;
-$("#seqAdd").onclick = () => { seqList().push({ text: "", font: 3 }); renderSeq(); };
+$("#seqAdd").onclick = () => { seqList().push({ text: "" }); renderSeq(); };
 $("#seqDefault").onclick = () => {
   sim.vehicle.settings.interior.sequences[$("#seqSelect").value] = JSON.parse(JSON.stringify((sim.defaultSeqs || {})[$("#seqSelect").value] || []));
   renderSeq(); applyVehicle();
