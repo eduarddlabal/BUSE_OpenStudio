@@ -1,0 +1,15 @@
+Sequences (sim settings)
+========================
+A sequence is a list of pages shown one after another (page flip). Page fields:
+  text     template: {name} {icons} {zone} {zone_name} {destination} {via} {line} {time} {message}
+  font     font id (e.g. 0 thin, 3 normal) – optional
+  spacing  letter spacing – optional
+  seconds  how long the page stays (default: settings "seconds"); running texts get at least
+           the time to scroll through once
+  when     always | request (stop on request) | via (route has "via") | zone (stop has a zone)
+           | not_request
+  role     text | heading – on two-line panels a heading is shown on the upper line together
+           with the following page on the lower line
+
+Sequences: next (next stop), destination (at a stop / line + destination), exterior (front/side/rear),
+zone, time, message, final, stop (stop name at a stop).

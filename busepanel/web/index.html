@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BUSE Studio</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">BUSE&nbsp;Studio</div>
+  <div class="project">
+    <select id="fileSelect" title="Soubory v pracovní složce"></select>
+    <button id="btnOpen">Otevřít</button>
+    <button id="btnNew">Nový…</button>
+    <button id="btnSave" class="primary">Uložit</button>
+    <button id="btnHex">Stáhnout HEX</button>
+    <span id="projectPath" class="muted"></span>
+  </div>
+  <div class="panelstat"><span id="panelPort" class="pill">COM?</span></div>
+</header>
+
+<section class="ledwrap" data-module="gbuse">
+  <canvas id="led" width="1350" height="100"></canvas>
+  <div class="ledinfo"><span id="ledInfo"></span></div>
+</section>
+
+<nav class="modules">
+  <button data-module="gbuse" class="active"><b>gBUSE</b><small>editor dat → HEX</small></button>
+  <button data-module="loader"><b>Loader</b><small>nahrávání, záloha, povely</small></button>
+  <button data-module="live"><b>Živě</b><small>text, hodiny, odjezdy</small></button>
+  <button data-module="sim"><b>Simulace</b><small>linka, vozidlo, OMSI</small></button>
+</nav>
+<nav class="tabs" data-for="gbuse">
+  <button data-tab="texts" class="active">Texty</button>
+  <button data-tab="config">Konfigurace</button>
+  <button data-tab="fonts">Fonty a ikony</button>
+  <button data-tab="import">Import</button>
+</nav>
+
+<main>
+<!-- ======================= TEXTY ======================= -->
+<div class="tab" data-module="gbuse" id="tab-texts">
+  <div class="cols">
+    <div class="list">
+      <div class="row">
+        <select id="secSelect">
+          <option value="destinations">Cíle (z)</option>
+          <option value="lines">Linky (l)</option>
+          <option value="stops">Zastávky (x)</option>
+          <option value="messages">Mimořádné (xA)</option>
+          <option value="destinations4">Cíle 4místné (zC)</option>
+        </select>
+        <input id="search" placeholder="Hledat…">
+      </div>
+      <div class="row"><button id="btnAdd">+ Přidat</button><button id="btnCheck">Kontrola</button></div>
+      <div id="recList" class="reclist"></div>
+    </div>
+    <div class="editor">
+      <div id="noSel" class="muted">Vyberte záznam vlevo nebo otevřete projekt.</div>
+      <div id="edForm" hidden>
+        <div class="grid2">
+          <label>Číslo <input id="edKey"></label>
+          <label>Linka pro náhled <select id="edPreviewLine"></select></label>
+        </div>
+        <label>Text <input id="edText" class="big"></label>
+        <div class="grid4">
+          <label>Font <select id="edFont"></select></label>
+          <label>Mezera <input id="edSpacing" type="number" min="0" max="15"></label>
+          <label>Zarovnání
+            <select id="edAlign"><option value="center">na střed</option><option value="left">vlevo</option><option value="right">vpravo</option></select>
+          </label>
+          <label>Sloupec (ESC s) <input id="edX" type="number" min="0" max="134" placeholder="auto"></label>
+        </div>
+        <div class="row">
+          <label class="chk"><input id="edRun" type="checkbox"> běžící text</label>
+          <label class="chk"><input id="edInv" type="checkbox"> inverze</label>
+          <label class="chk"><input id="edMarkup" type="checkbox"> pokročilý zápis (značky)</label>
+        </div>
+        <label id="markupWrap" hidden>Značky <input id="edMarkupText" class="big mono">
+          <small class="muted">{f3} font, {m2} mezera, {run}…{/run} běžící, {inv} inverze, {x:24} sloupec, {1B 61 05} bajty</small></label>
+        <div id="edProblems" class="problems"></div>
+        <div class="row">
+          <button id="btnShow" class="primary">Zobrazit na panelu</button>
+          <button id="btnDelete" class="danger">Smazat</button>
+          <span id="edBytes" class="muted mono small"></span>
+        </div>
+      </div>
+      <div id="checkOut" class="problems"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= KONFIGURACE ======================= -->
+<div class="tab" data-module="gbuse" id="tab-config" hidden>
+  <div class="card">
+    <h3>Panel</h3>
+    <div class="grid4">
+      <label>Typ <input id="cfgType" value="BS120"></label>
+      <label>IBIS adresa <input id="cfgAddr" type="number" min="0" max="15"></label>
+      <label>Sloupců <input id="cfgColumns" type="number"></label>
+      <label>Verze dat (aV) <input id="cfgVersion" maxlength="16"></label>
+    </div>
+    <h3>Předvolby</h3>
+    <div class="grid4">
+      <label>Font <input id="cfgFont" type="number" min="0" max="15"></label>
+      <label>Mezera <input id="cfgSpacing" type="number" min="0" max="15"></label>
+      <label>Interval [s] <input id="cfgInterval" type="number" step="0.1"></label>
+      <label>Zpoždění cyklu <input id="cfgCycle" type="number"></label>
+    </div>
+    <h3>Povolené IBIS povely</h3>
+    <div id="cfgCommands" class="cmdgrid"></div>
+    <p class="muted small">Panel přijímá jen zaškrtnuté povely. Ověřeno na BS120: l, z, x (zastávky 4místné), aV.</p>
+  </div>
+</div>
+
+<!-- ======================= FONTY ======================= -->
+<div class="tab" data-module="gbuse" id="tab-fonts" hidden>
+  <div class="cols">
+    <div class="list">
+      <div class="row"><select id="fontSelect"></select><input id="glyphFilter" placeholder="Znak…"></div>
+      <div id="glyphList" class="glyphlist"></div>
+      <div class="row"><input id="newGlyphChar" placeholder="znak nebo #C1" maxlength="3" style="width:7em"><button id="btnNewGlyph">+ Znak</button></div>
+      <div class="row"><button id="btnAddIcons">Vložit sadu ikon (font 14)</button></div>
+      <p class="muted small">Ikony (bus, tramvaj, vlak, metro, výstraha…) jsou ve fontu 14 na kódech C1–CA; v textech <code>{icon:metro}</code>. Šířka znaku až 16 sloupců.</p>
+    </div>
+    <div class="editor">
+      <div id="glyphEditor" hidden>
+        <h3 id="glyphTitle"></h3>
+        <div class="row">
+          <button id="gWidthMinus">− sloupec</button><button id="gWidthPlus">+ sloupec</button>
+          <button id="gClear">Vymazat</button><button id="gInvert">Invertovat</button>
+          <button id="gShiftL">←</button><button id="gShiftR">→</button><button id="gShiftU">↑</button><button id="gShiftD">↓</button>
+        </div>
+        <canvas id="glyphCanvas" width="400" height="200"></canvas>
+        <div class="row"><button id="gSave" class="primary">Uložit znak</button><button id="gDelete" class="danger">Smazat znak</button></div>
+      </div>
+      <details class="card">
+        <summary>Kódová tabulka (kód panelu ↔ znak)</summary>
+        <div id="codeTable" class="codetable"></div>
+      </details>
+    </div>
+  </div>
+</div>
+
+<!-- ======================= IMPORT ======================= -->
+<div class="tab" data-module="gbuse" id="tab-import" hidden>
+  <div class="card">
+    <h3>Hromadný import z CSV / Excel</h3>
+    <p class="muted">Sloupce: <code>cislo; text</code> a volitelně <code>sekce; font; mezera; zarovnani; bezici; inverze</code>.
+      Sekce: linky, cile, zastavky, mimoradne.</p>
+    <div class="grid4">
+      <label>Soubor <input id="impFile" type="file" accept=".csv,.txt,.xlsx"></label>
+      <label>Výchozí sekce <select id="impSection">
+        <option value="destinations">Cíle</option><option value="lines">Linky</option>
+        <option value="stops">Zastávky</option><option value="messages">Mimořádné</option></select></label>
+      <label>Výchozí font <input id="impFont" type="number" min="0" max="15" placeholder="—"></label>
+      <label>Výchozí mezera <input id="impSpacing" type="number" min="0" max="15" placeholder="—"></label>
+    </div>
+    <div class="row"><label class="chk"><input id="impReplace" type="checkbox"> nahradit celou sekci</label>
+      <button id="btnImport" class="primary">Importovat</button>
+      <button id="btnTemplate">Vzorový CSV</button></div>
+    <pre id="impOut" class="out"></pre>
+  </div>
+</div>
+
+<!-- ======================= PANEL ======================= -->
+<div class="tab" data-module="loader" id="tab-panel" hidden>
+  <div class="card">
+    <h3>Připojení</h3>
+    <div class="row">
+      <select id="portSelect"></select>
+      <label>Adresa <input id="panelAddr" type="number" min="0" max="15" style="width:4em"></label>
+      <button id="btnPortSave">Nastavit</button>
+      <button id="btnScan">Vyhledat panely</button>
+      <button id="btnVersion">Verze dat (aV)</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Připojená ESP zařízení</h3>
+    <p class="muted small">ESP se připojí na <code>ws://&lt;tento počítač&gt;:8080/ws/device/&lt;id&gt;</code> a přeposílá telegramy na IBIS (protokol: docs/esp-protokol.md).</p>
+    <div class="row"><button id="btnDevices">Obnovit</button><span id="devList" class="muted"></span></div>
+  </div>
+  <div class="card">
+    <h3>Nahrání a záloha</h3>
+    <div class="row">
+      <button id="btnUpload" class="primary">Nahrát projekt do panelu</button>
+      <button id="btnBackup">Zálohovat panel</button>
+      <label class="chk"><input id="bkEprom" type="checkbox"> i program (EPROM)</label>
+    </div>
+    <div class="progress"><div id="progBar"></div></div>
+    <pre id="jobOut" class="out"></pre>
+  </div>
+  <div class="card">
+    <h3>Konzole povelů IBIS</h3>
+    <div class="row">
+      <input id="telegram" class="mono" placeholder="např. l010 z001 nebo aV:" style="flex:1">
+      <button id="btnSend" class="primary">Odeslat</button>
+      <button id="btnQuery">Dotaz (čekat na odpověď)</button>
+    </div>
+    <div class="row quick">
+      <span class="muted">Rychle:</span>
+      <button data-tel="l000">l000</button><button data-tel="l010">l010</button><button data-tel="z001">z001</button>
+      <button data-tel="z002">z002</button><button data-tel="x0001">x0001</button><button data-tel="x0000">x0000</button>
+      <button data-tel="a:" data-q="1">a: (stav)</button>
+    </div>
+    <details>
+      <summary>Testy povelů (experiment)</summary>
+      <p class="muted small">Klikněte a sledujte panel. Po prvním <code>x</code> je panel v režimu zastávek a zpracovává jen další <code>x</code>;
+        zpět do běžného provozu (linka + cíl) přepne <code>x9999</code> (z rozboru firmwaru, neověřeno).</p>
+      <div class="row quick">
+        <span class="muted">Volný text:</span>
+        <button data-tel="vAHOJ SVETE">vAHOJ SVETE</button><button data-tel="zI0VOLNY TEXT">zI0VOLNY TEXT</button>
+        <button data-tel="zM0MIMORADNE">zM0MIMORADNE</button><button data-tel="zN0NACESTNE">zN0NACESTNE</button>
+      </div>
+      <div class="row quick">
+        <span class="muted">Režim zastávek:</span>
+        <button data-tel="x9999">x9999 → linka + cíl</button><button data-tel="x9995">x9995 → jen cíl</button>
+        <button data-tel="x9996">x9996 → text v</button><button data-tel="x9994">x9994 → linka + zI</button>
+        <button data-tel="x9990">x9990 → text zM</button><button data-tel="x9987">x9987 → text zN</button>
+        <button data-tel="x9992">x9992 → zC</button><button data-tel="x9991">x9991 → xA</button>
+      </div>
+      <div class="row quick">
+        <span class="muted">Ostatní:</span>
+        <button data-tel="zC0001">zC0001</button><button data-tel="xA0001">xA0001</button>
+        <button data-tel="u1234">u1234 (čas)</button><button data-tel="e005">e005 (pásmo)</button>
+      </div>
+    </details>
+    <pre id="consoleOut" class="out"></pre>
+  </div>
+</div>
+
+<!-- ======================= ŽIVĚ ======================= -->
+<div class="tab" data-module="live" id="tab-live" hidden>
+  <div class="card">
+    <div class="row"><b>Výstup živého režimu:</b>
+      <select id="liveOutput"><option value="serial">COM port (nastavení v Loaderu)</option><option value="esp">ESP přes WebSocket</option></select>
+      <input id="liveDevice" placeholder="ID zařízení ESP" style="width:12em"></div>
+  </div>
+  <div class="card">
+    <h3>Volný text na panel (bez nahrávání)</h3>
+    <p class="muted small">Text se pošle povelem <code>v</code> a zobrazí přepnutím <code>x9996</code> (ověřeno na BS120).
+      Česká písmena se převádí kódovou tabulkou otevřeného projektu. Zpět na linku + cíl: <code>x9999</code>.</p>
+    <div class="row">
+      <input id="ftText" class="big" style="flex:1" placeholder="Text pro panel" value="AHOJ SVĚTE">
+    </div>
+    <div class="grid4">
+      <label>Režim <select id="ftKind">
+        <option value="v">jen text (v + x9996) – ověřeno</option>
+        <option value="v+line">linka + text (v + x9997)</option>
+        <option value="zI">linka + text zI (x9994)</option>
+        <option value="zM">mimořádná informace zM (x9990)</option></select></label>
+      <label>Linka (jen s režimem s linkou) <input id="ftLine" placeholder="např. 010"></label>
+      <label>Font (zkouška) <input id="ftFont" type="number" min="0" max="15" placeholder="—"></label>
+      <label>Mezera (zkouška) <input id="ftSpacing" type="number" min="0" max="15" placeholder="—"></label>
+    </div>
+    <div class="row"><button id="ftSend" class="primary">Zobrazit</button><button id="ftNormal">Zpět na linku + cíl (x9999)</button>
+      <span id="ftOut" class="muted small mono"></span></div>
+  </div>
+  <div class="cols3">
+    <div class="card">
+      <h3>Hodiny</h3>
+      <p class="muted small"><b>Volný text</b> nic nepotřebuje nahrávat: každou minutu se pošle čas povelem <code>v</code>.
+        Ostatní kanály potřebují texty v projektu (Přidat texty → Uložit → Nahrát → Spustit).</p>
+      <label>Formát <input id="clkFormat" value="%H:%M"></label>
+      <label>Kanál <select id="clkChannel"><option value="text">volný text (v) – bez nahrávání</option>
+        <option value="stops">zastávky (x HHMM) – ověřeno</option>
+        <option value="split">hodiny = linka, minuty = cíl</option><option value="dest4">4místné cíle (zC) – nefunguje na BS120</option></select></label>
+      <div class="row"><button id="clkBuild">Přidat texty</button><button id="clkStart" class="primary">Spustit</button></div>
+    </div>
+    <div class="card">
+      <h3>Odjezdová tabule</h3>
+      <p class="muted small">Volným textem – nic se nenahrává. CSV: <code>cas;linka;cil;dny</code> (dny volitelně, např. Po-Pá, So,Ne).
+        Zobrazí se nejbližší odjezd a obnovuje se každých 5 s.</p>
+      <textarea id="depCsv" rows="7" class="mono">cas;linka;cil;dny
+06:12;3;Hlavní nádraží;Po-Pá
+06:42;3;Hlavní nádraží;
+07:05;11;Polabiny;</textarea>
+      <label>Formát textu <input id="depFormat" value="{line}  {dest}  {za}" class="mono"></label>
+      <p class="muted small"><code>{line}</code> linka, <code>{dest}</code> cíl, <code>{time}</code> čas odjezdu,
+        <code>{za}</code> „za 5 min“ / „teď“, <code>{min}</code> minuty do odjezdu.</p>
+      <div class="grid4">
+        <label>Font <input id="depFont" type="number" min="0" max="15" placeholder="—"></label>
+        <label>Mezera <input id="depSpacing" type="number" min="0" max="15" placeholder="—"></label>
+      </div>
+      <label class="chk"><input id="depLineField" type="checkbox"> číslo linky v poli linky (jen když je linka v databázi panelu)</label>
+      <div class="row"><button id="depStart" class="primary">Spustit</button></div>
+    </div>
+    <div class="card">
+      <h3>Vlastní texty</h3>
+      <p class="muted small">Střídání vybraných cílů (čísla oddělená čárkou).</p>
+      <label>Čísla cílů <input id="plKeys" value="001,002"></label>
+      <label>Interval [s] <input id="plInterval" type="number" value="10"></label>
+      <div class="row"><button id="plStart" class="primary">Spustit</button></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="row"><button id="liveStop" class="danger">Zastavit živý režim</button><span id="liveState" class="muted"></span></div>
+    <pre id="liveOut" class="out"></pre>
+  </div>
+</div>
+<div class="tab" data-module="sim" id="tab-sim" hidden>
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <h3>Řízení simulace</h3>
+      <span id="simDb" class="muted small"></span>
+    </div>
+    <div class="row simctl">
+      <button id="simStart" class="primary">▶ Start / Odeslat na panely</button>
+      <button id="simStop">■ Zastavit odesílání</button>
+      <span class="sep"></span>
+      <button data-ev="prev" title="←">◀ Zpět</button>
+      <button data-ev="arrive" title="A">Příjezd (A)</button>
+      <button data-ev="depart" title="D">Odjezd (D)</button>
+      <button data-ev="next" class="primary" title="mezerník / →">Další ▶ (mezerník)</button>
+      <button data-ev="end">Konečná</button>
+      <button data-ev="reset">Reset</button>
+    </div>
+    <div class="row">
+      <span class="muted">Mimořádnosti:</span>
+      <span id="simMsgButtons" class="row"></span>
+      <input id="simMsgText" placeholder="vlastní text mimořádnosti" style="flex:1;min-width:12em">
+      <button id="simMsgSend">Zobrazit</button>
+      <button data-ev="clear_message">Zrušit (Esc)</button>
+    </div>
+    <div id="simStatus" class="simstatus"></div>
+    <div id="simPanels" class="simpanels"></div>
+    <details><summary>Záznam odeslaných povelů</summary><pre id="simLog" class="out"></pre></details>
+  </div>
+
+  <div class="cols3">
+    <div class="card">
+      <h3>Trasa linky</h3>
+      <div class="row">
+        <select id="routeSelect"></select><button id="routeLoad">Načíst</button>
+        <input id="routePath" value="trasy/linka7.yaml" style="flex:1"><button id="routeSave" class="primary">Uložit</button>
+      </div>
+      <div class="grid4">
+        <label>Linka <input id="rLine"></label>
+        <label>Cíl <input id="rDest"></label>
+        <label>Přes (volitelně) <input id="rVia"></label>
+      </div>
+      <div class="stopwrap"><table class="stops">
+        <thead><tr><th>#</th><th>Zastávka</th><th>Pásmo</th><th>Ikony</th><th title="na znamení">Zn.</th><th></th></tr></thead>
+        <tbody id="rStops"></tbody></table></div>
+      <div class="row"><button id="rAddStop">+ Zastávka</button></div>
+      <h3>Mimořádné informace</h3>
+      <div id="rMsgs"></div>
+      <div class="row"><button id="rAddMsg">+ Mimořádnost</button></div>
+      <details>
+        <summary>Import trasy z CSV</summary>
+        <textarea id="rCsv" rows="5" class="mono">poradi;zastavka;pasmo;ikony;na_znameni
+1;Hlavní nádraží;P;vlak bus;
+2;Masarykovo náměstí;P;;
+3;U Kostela;P;;ano
+4;Sídliště Dukla;1;;</textarea>
+        <div class="row"><button id="rCsvImport">Importovat</button></div>
+      </details>
+      <p class="muted small">Ikony: <span id="iconNames"></span>. V textech se píší jako <code>{icon:metro}</code>.</p>
+    </div>
+
+    <div class="card">
+      <h3>Vozidlo a panely</h3>
+      <div class="row">
+        <select id="vehSelect"></select><button id="vehLoad">Načíst</button>
+        <input id="vehPath" value="vozidla/autobus.yaml" style="flex:1"><button id="vehSave" class="primary">Uložit</button>
+      </div>
+      <div id="vehPanels"></div>
+      <div class="row"><button id="vehAdd">+ Panel</button><button id="vehApply">Použít</button></div>
+      <h3>Vnitřní panel</h3>
+      <div class="row">
+        <label class="chk"><input type="checkbox" data-item="next" checked> příští zastávka</label>
+        <label class="chk"><input type="checkbox" data-item="time" checked> čas</label>
+        <label class="chk"><input type="checkbox" data-item="zone" checked> tarifní pásmo</label>
+      </div>
+      <div class="grid2">
+        <label>Doba jedné položky [s] <input id="sSeconds" type="number" min="1" step="0.5"></label>
+        <label>V zastávce <select id="sAtStop"><option value="line_dest">linka + cíl</option><option value="stop_name">název zastávky</option></select></label>
+        <label>Mimořádnost <select id="sMsgMode"><option value="cycle">přidat do cyklu</option><option value="override">přebít vše</option></select></label>
+        <label>Font / mezera <span class="row"><input id="sFont" type="number" min="0" max="15" style="width:4em"><input id="sSpacing" type="number" min="0" max="15" style="width:4em"></span></label>
+      </div>
+      <label>Formát času (strftime) <input id="sTime" class="mono" value="%H:%M"></label>
+      <h3>Skladba textů</h3>
+      <p class="muted small">Každý údaj je sekvence stránek, které se na panelu překlápějí. Stránka = text, vlastní font
+        a mezera, doba zobrazení a podmínka. Jeden běžící text = sekvence s jedinou stránkou.
+        Na dvouřádkových panelech se stránka s rolí „nadpis“ zobrazí na horním řádku spolu s následující stránkou.</p>
+      <div class="row">
+        <select id="seqSelect">
+          <option value="next">Příští zastávka (na trase)</option>
+          <option value="destination">Směr / cíl (v zastávce)</option>
+          <option value="exterior">Vnější panely (čelní, boční, zadní)</option>
+          <option value="zone">Tarifní zóna</option>
+          <option value="time">Čas</option>
+          <option value="message">Mimořádnost</option>
+          <option value="final">Konečná</option>
+          <option value="stop">Název zastávky (v zastávce)</option>
+        </select>
+        <button id="seqAdd">+ Stránka</button><button id="seqDefault">Výchozí</button>
+      </div>
+      <div class="stopwrap"><table class="stops seq">
+        <thead><tr><th>Text</th><th>Font</th><th>Mez.</th><th>s</th><th>Kdy</th><th>Role</th><th></th></tr></thead>
+        <tbody id="seqPages"></tbody></table></div>
+      <p class="muted small">Proměnné: <code>{name}</code> zastávka, <code>{icons}</code> ikony, <code>{zone}</code> číslo zóny,
+        <code>{zone_name}</code> název zóny, <code>{destination}</code> cíl, <code>{via}</code> přes, <code>{line}</code> linka,
+        <code>{time}</code> čas, <code>{message}</code> text mimořádnosti. Ikony i v textu: <code>{icon:vlak}</code>.
+        Font 0 je tenký, 3 normální (podle fontů v databázi).</p>
+    </div>
+
+    <div class="card">
+      <h3>Univerzální databáze panelu</h3>
+      <p class="muted small">Fonty + ikony + čísla linek 1–999. Nahraje se do panelu jednou; všechny texty pak jdou dynamicky
+        (volný text <code>v</code> + <code>x9996/x9997</code>).</p>
+      <label>Fonty převzít z <select id="dbBase"></select></label>
+      <label>Uložit jako <input id="dbOut" value="databaze/univerzalni/projekt.yaml"></label>
+      <div class="row"><button id="dbBuild" class="primary">Sestavit</button></div>
+      <div class="row"><select id="dbSelect"></select><button id="dbOpen">Použít existující</button></div>
+      <div class="row"><button id="dbToLoader">Otevřít v gBUSE a nahrát přes Loader…</button></div>
+      <h3>API pro externí ovládání</h3>
+      <p class="muted small">Např. plugin do OMSI: <code>POST /api/sim/event</code> s <code>{"type": "arrive"}</code> nebo WebSocket
+        <code>ws://…/ws/sim</code> (stejné zprávy, odpověď = stav). Typy: start, depart, arrive, next, prev, end, reset,
+        message (<code>key</code> / <code>text</code>), clear_message, goto (<code>index</code>).</p>
+    </div>
+  </div>
+</div>
+</main>
+
+<dialog id="dlgNew">
+  <form method="dialog">
+    <h3>Nový projekt</h3>
+    <label>Soubor projektu <input id="newPath" value="projekty/novy/projekt.yaml"></label>
+    <label>Fonty převzít z <select id="newFontsFrom"></select></label>
+    <label>Verze dat <input id="newVersion" value="NOVY" maxlength="16"></label>
+    <div class="row"><button value="cancel">Zrušit</button><button id="newOk" value="ok" class="primary">Vytvořit</button></div>
+  </form>
+</dialog>
+
+<div id="toast"></div>
+<script type="module" src="/static/main.js"></script>
+</body>
+</html>

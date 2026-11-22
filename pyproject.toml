@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "busepanel"
+version = "0.2.0"
+description = "BUSE Studio – editor a nahrávání dat pro informační panely BUSE (BS120)"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+readme = "README.md"
+dependencies = ["pyserial", "pyyaml", "fastapi", "uvicorn", "websockets"]
+
+[project.optional-dependencies]
+excel = ["openpyxl"]
+test = ["pytest"]
+
+[project.scripts]
+busepanel = "busepanel.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["busepanel*"]
+
+[tool.setuptools.package-data]
+busepanel = ["web/*", "web/*/*", "panels/*.yaml", "sim/*.txt", "examples/*", "examples/*/*"]

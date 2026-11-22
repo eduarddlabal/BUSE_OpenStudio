@@ -1,0 +1,22 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+
+# working data created by `busepanel quickstart` / the app – keep them out of the repository
+/databaze/
+/trasy/
+/vozidla/
+/zalohy/
+/projekty/
+
+# operator data and original vendor software must never be committed
+*.hex
+*.HEX
+*.bin
+*.exe
+*.EXE

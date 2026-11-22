@@ -1,0 +1,50 @@
+# Panel profiles. Only BS120 is measured on real hardware; the others are placeholders
+# (verified: false) until a panel of that type is analysed.
+BS120:
+  title: BS 120 – vnitřní jednořádkový
+  verified: true
+  columns: 135
+  rows: 8
+  line: [0, 23]            # line number field
+  dest: [24, 134]          # centred / running destination text
+  positioned_right: 111    # ESC s texts are clipped here
+  scroll_ms: 20            # running text speed for the preview (ms per column) – calibrate on the panel
+  data_format: gbuse1      # HEX format (magic 0xAB)
+  service_baud: 9600
+  free_text: true          # v + x9996 / x9997 (verified)
+  modes:                   # x99xx mode switches (firmware analysis; 9999/9996/9997 verified)
+    normal: x9999          # line + destination
+    text: x9996            # free text v only
+    line_text: x9997       # line + free text v
+    dest_only: x9995
+    line_zI: x9994
+    zM: x9990
+  commands: [l, z, x, xA, xB, zC, zD, v, zI, zM, zN, aA, u, e, xC, a, aV, lA]
+
+BS220:
+  title: BS 220 – vnitřní dvouřádkový (neověřeno)
+  verified: false
+  columns: 135
+  rows: 16
+  line: [0, 23]
+  dest: [24, 134]
+  positioned_right: 134
+  data_format: gbuse1
+  service_baud: 9600
+  free_text: true
+  modes: {normal: x9999, text: x9996, line_text: x9997}
+  commands: [l, z, x, v, zI, zM, a, aV]
+
+BS210:
+  title: BS 210 – vnější DOT-LED (neověřeno)
+  verified: false
+  columns: 112
+  rows: 19
+  line: [0, 27]
+  dest: [28, 111]
+  positioned_right: 111
+  data_format: gbuse0      # magic 0x57 – not supported by the editor yet
+  service_baud: 19200
+  free_text: false
+  modes: {}
+  commands: [l, z, a, aV]
