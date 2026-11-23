@@ -362,6 +362,7 @@ function renderVehicle() {
         <label>Nácestné zastávky <select data-f="stop_field">${opts(STOP_FIELD, p.stop_field || "")}</select></label>
         <label>Ovládání <select data-f="control">${opts(CONTROL, p.control || "text")}</select></label>
         <label>Databáze gBUSE0 (.hex, volitelně) <input data-f="database" value="${esc(p.database || "")}" placeholder="bez databáze – originální font gBUSE0"></label>` : ""}
+      ${!lcd && !ext ? `<label title="rychlost běžícího textu – změřte na panelu: (šířka textu + šířka pole) sloupců za naměřenou dobu">Posuv [ms/sloupec] <input data-f="scroll_ms" type="number" min="1" max="500" value="${p.scroll_ms ?? ""}" placeholder="podle profilu" style="width:6em"></label>` : ""}
       ${lcd ? "" : `<label>Panel <select data-f="output">${opts(panelOutputs, p.output || "virtual")}</select></label>`}
       ${!lcd && p.output === "serial" ? `<label>Port / adresa <span class="row"><input data-f="port" value="${esc(p.port || "")}" placeholder="auto" style="width:8em"><input data-f="address" type="number" value="${p.address ?? 10}" style="width:4em"></span></label>` : ""}
       ${!lcd && p.output === "esp" ? `<label>ID zařízení ESP <input data-f="device" value="${esc(p.device || "")}"></label>` : ""}
@@ -372,6 +373,7 @@ function renderVehicle() {
     const p = v.panels[+el.closest(".vpanel").dataset.i], f = el.dataset.f;
     let val = el.type === "checkbox" ? el.checked : el.type === "number" ? +el.value : el.value;
     if ((f === "database" || f === "stop_field") && !val) { delete p[f]; return; }
+    if (f === "scroll_ms" && !el.value) { delete p[f]; return; }
     p[f] = val;
     if (f === "type") {                   // type decides the driver; keep profile in sync for the interior panels
       if (val === "LCD") { p.output = "lcd"; delete p.profile; }
@@ -387,7 +389,7 @@ function renderVehicle() {
   const s = v.settings || (v.settings = {}), i = s.interior || (s.interior = {}), e = s.exterior || (s.exterior = {});
   $$("[data-item]").forEach((c) => c.checked = (i.items || ["next", "time", "zone"]).includes(c.dataset.item));
   $("#sSeconds").value = i.seconds ?? 4; $("#sAtStop").value = i.at_stop || "line_dest"; $("#sMsgMode").value = i.message_mode || "cycle";
-  $("#sLine").value = i.line || "at_stop";
+  $("#sLine").value = i.line || "at_stop"; $("#sRunTime").value = i.run_time || "once";
   $("#sPreset").innerHTML = Object.entries(sim.presets || {}).map(([k, p]) =>
     `<option value="${k}" ${k === (i.format || "zakladni") ? "selected" : ""}>${esc(p.title)}</option>`).join("");
   $("#sFont").value = i.font ?? 3; $("#sSpacing").value = i.spacing ?? 1;
@@ -399,7 +401,7 @@ function renderVehicle() {
 function readSettings() {
   const s = sim.vehicle.settings;
   s.interior = { ...s.interior, items: $$("[data-item]").filter((c) => c.checked).map((c) => c.dataset.item),
-    seconds: +$("#sSeconds").value, at_stop: $("#sAtStop").value, message_mode: $("#sMsgMode").value, line: $("#sLine").value,
+    seconds: +$("#sSeconds").value, at_stop: $("#sAtStop").value, message_mode: $("#sMsgMode").value, line: $("#sLine").value, run_time: $("#sRunTime").value,
     font: +$("#sFont").value, spacing: +$("#sSpacing").value, time_format: $("#sTime").value };
   delete s.exterior.font; delete s.exterior.spacing;      // exterior: fonts only per page (else autoformat)
 }

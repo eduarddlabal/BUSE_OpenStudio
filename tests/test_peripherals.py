@@ -293,3 +293,31 @@ def test_data_vehicles_build(path, univ):
     cfg["panels"] = [{**p, "output": "virtual"} for p in cfg["panels"] if p.get("output") != "lcd"]
     per, _ = build_peripherals(cfg, univ)
     assert len(per) == len(cfg["panels"])
+
+
+# ---------------------------------------------------------------- running text: one pass
+def test_running_text_one_pass(univ, route):
+    from busepanel.sim.vehicle import free_text_layout, make_measure, run_seconds
+    prof = profile("BS120")
+    long = {"text": "Velmi dlouhý text, který se na jednořádkový panel nevejde a musí běžet", "font": 3, "spacing": 1}
+    _p, _lk, room, width, runs = free_text_layout(long, prof, univ.fonts)
+    assert runs and room == prof.geometry.columns
+    assert run_seconds(long, prof, univ.fonts) == pytest.approx((width + room) * prof.geometry.scroll_ms / 1000)
+    with_line = run_seconds({**long, "line": "7"}, prof, univ.fonts, {"7": "007"})
+    assert with_line < run_seconds(long, prof, univ.fonts)           # narrower field next to the line number
+    assert run_seconds({"text": "Krátký", "font": 3, "spacing": 1}, prof, univ.fonts) == 0
+
+    m = make_measure(univ.fonts, prof)
+    page = {**long, "seconds": 3.0, "role": "text"}
+    e = SimEngine(route, {"interior": {"sequences": {}}})
+    e.measure = m
+    assert e._duration(page, False) == pytest.approx(m(page))         # default: exactly one pass
+    e.settings["interior"]["run_time"] = "min"
+    assert e._duration({**page, "seconds": 60.0}, False) == 60.0      # at least the page time
+    e.settings["interior"]["run_time"] = "once"
+    assert e._duration({**page, "text": "Krátký"}, False) == 3.0      # static text keeps its time
+
+
+def test_scroll_ms_per_panel(univ):
+    per, _ = build_peripherals({"panels": [{"name": "a", "type": "BS120", "output": "virtual", "scroll_ms": 35}]}, univ)
+    assert per[0].profile.geometry.scroll_ms == 35 and profile("BS120").geometry.scroll_ms == 20

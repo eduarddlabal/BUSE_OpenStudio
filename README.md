@@ -148,6 +148,12 @@ směru podbarvené. Tlačítko **Další spoj** (událost `next_trip`) přejde n
 se uloží zase plochá, dokud nepřibude druhý směr nebo kurz. API: `POST /api/sim/trip` s
 `{"course": "1", "index": 0}` nebo `{"direction": "A"}`; `POST /api/sim/line/update` / `line/save` s celou linkou.
 
+**Běžící text:** stránka, která se na vnitřní panel nevejde (nebo má „Běž.“), se zobrazí přesně tak dlouho,
+aby text jednou projel: (šířka textu + šířka pole) sloupců × rychlost posuvu. Pole je část vedle čísla linky,
+nebo celý panel. Volba „Běžící text: aspoň doba položky“ (`run_time: min`) vrátí dřívější chování.
+Rychlost posuvu je v profilu panelu (`scroll_ms`, BS120: 20 ms/sloupec, odhad) a u každého panelu ve vozidle
+ji jde zkalibrovat polem „Posuv [ms/sloupec]“.
+
 **Skladba textů** (formáty) je v YAML: vestavěné v [`busepanel/sim/formats/`](busepanel/sim/formats), vlastní ve
 složce `formaty/` pracovní složky (stejná struktura). Sekvence `exterior` (případně `exterior_side`,
 `exterior_rear`) určuje cíl na vnějších panelech, sekvence `via` řádek nácestných zastávek. Stránka s

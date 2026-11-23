@@ -31,20 +31,40 @@ def line_key(line: str, line_map: dict | None = None) -> str | None:
     return f"{int(line):03d}" if line.isdigit() and 0 < int(line) < 100 else None
 
 
-def spec_telegrams(spec: dict, prof, fonts, line_map: dict | None = None) -> list:
-    """Display spec -> IBIS telegrams for the given panel profile."""
+def free_text_layout(spec: dict, prof, fonts, line_map: dict | None = None):
+    """Free text of a page as the panel gets it -> (payload, line key or None, room, width, runs).
+    room = columns the text runs through (destination field next to the line number, else the whole panel)."""
     text = spec.get("text") or ""
     line = spec.get("line")
     lk = line_key(line, line_map) if line else None
+    if line and lk is None:              # line not in the database -> put it into the text
+        text, lk = f"{line}  {text}", None
+        line = None
+    payload, _ = text_payload(fonts, text, spec.get("font"), spec.get("spacing"))
+    g = prof.geometry
+    room = g.dest_width if (line and lk) else g.columns
+    width = _width(payload, fonts)
+    runs = bool(spec.get("run") or (spec.get("auto_run", True) and width > room))
+    return payload, (lk if line else None), room, width, runs
+
+
+def run_seconds(spec: dict, prof, fonts, line_map: dict | None = None) -> float:
+    """Seconds a running text needs to pass through once – it enters at the right edge and leaves at
+    the left one, i.e. (text width + field width) columns at the panel's scroll speed. 0 = static text."""
+    try:
+        _p, _lk, room, width, runs = free_text_layout(spec, prof, fonts, line_map)
+    except Exception:      # noqa: BLE001
+        return 0.0
+    return (width + room) * prof.geometry.scroll_ms / 1000 if runs else 0.0
+
+
+def spec_telegrams(spec: dict, prof, fonts, line_map: dict | None = None) -> list:
+    """Display spec -> IBIS telegrams for the given panel profile."""
     if prof.free_text:
-        if line and lk is None:              # line not in the database -> put it into the text
-            text, lk = f"{line}  {text}", None
-            line = None
-        payload, _ = text_payload(fonts, text, spec.get("font"), spec.get("spacing"))
-        g = prof.geometry
-        room = g.dest_width if (line and lk) else g.columns
-        if spec.get("run") or (spec.get("auto_run", True) and _width(payload, fonts) > room):
+        payload, lk, _room, _w, runs = free_text_layout(spec, prof, fonts, line_map)
+        if runs:
             payload = _with_run(payload)
+        g = prof.geometry
         if spec.get("heading") and g.rows > 8:
             # two-line panel: heading on the upper line, text below (LF separator – NOT verified on hardware)
             head, _ = text_payload(fonts, spec["heading"], spec.get("heading_font"), spec.get("spacing"))
@@ -52,10 +72,12 @@ def spec_telegrams(spec: dict, prof, fonts, line_map: dict | None = None) -> lis
         # The real BS120 shows the previously stored text right after a mode switch and takes
         # the new one only with the next v -> send v again after the switch (verified issue).
         v = b"v" + payload
-        if line and lk:
+        if lk:
             return [f"l{lk}", prof.mode("line_text") or "x9997", v]
         return [prof.mode("text") or "x9996", v]
     # panels without free text: only the line number from the database
+    line = spec.get("line")
+    lk = line_key(line, line_map) if line else None
     return [f"l{lk or '000'}"]
 
 
@@ -73,20 +95,10 @@ def _with_run(payload: bytes) -> bytes:
     return payload[:i] + bytes([0x1B, 0x74, 0x11]) + payload[i:] + bytes([0x0B])
 
 
-def make_measure(fonts, prof):
-    """Seconds a page needs so that a running text scrolls through once (0 = fits, static)."""
-    g = prof.geometry
-
-    def measure(text, font, spacing, two_line=False, run=False):
-        try:
-            payload, _ = text_payload(fonts, text, font, spacing)
-        except Exception:      # noqa: BLE001
-            return 0
-        w = _width(payload, fonts)
-        room = g.columns
-        if w <= room and not run:
-            return 0
-        return (w + room) * g.scroll_ms / 1000 + 0.5
+def make_measure(fonts, prof, line_map: dict | None = None):
+    """measure(page, line) -> seconds for one pass of a running text on this panel (0 = static)."""
+    def measure(page: dict, line=None) -> float:
+        return run_seconds({**page, "line": line}, prof, fonts, line_map)
     return measure
 
 
@@ -128,7 +140,7 @@ class Vehicle:
         interior = [s for s in slots if getattr(s, "profile", None) is not None]
         ref = next((s.profile for s in interior if s.role == "interior"), interior[0].profile if interior else None)
         if ref is not None:
-            engine.measure = make_measure(project.fonts, ref)
+            engine.measure = make_measure(project.fonts, ref, line_map)
         return veh
 
     def tick(self, now: float | None = None, virtual_only: bool = False):

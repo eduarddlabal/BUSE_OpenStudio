@@ -10,6 +10,7 @@ Vehicle YAML (vozidla/*.yaml):
        database: databaze/vnejsi/zadni.hex, control: code}
     - {name: LCD, type: LCD, role: interior, http_port: 8091}
 
+scroll_ms (interior panels): running-text speed in ms per column, overrides the profile (calibration).
 output: serial (physical panel on a COM port, IBIS address) | esp (on the network) | virtual (preview).
 Peripherals on the same COM port or ESP device share one IBIS line (an internal bus). Optional
 `buses: {name: {output…}}` + `bus: name` name such a line explicitly (not shown in the UI).
@@ -17,6 +18,7 @@ Types: see TYPES; new types register there.
 """
 from __future__ import annotations
 
+import dataclasses
 import os
 
 from .base import Bus, Peripheral
@@ -99,6 +101,8 @@ def build_peripherals(cfg: dict, project, base_dir: str = ".", line_map: dict | 
             result.append(ExteriorSlot(name, role, db, bus, p, line_map=line_map))
         else:
             prof = get_profile(p.get("profile") or ptype)
+            if p.get("scroll_ms"):           # running-text speed calibrated for this panel [ms per column]
+                prof = dataclasses.replace(prof, geometry=dataclasses.replace(prof.geometry, scroll_ms=int(p["scroll_ms"])))
             emu = VirtualPanel(name if not bus.real else name + " (náhled)", project, prof)
             emu.fonts = project.fonts
             result.append(PanelSlot(name, role, prof, shadow=emu, bus=bus, params=p))

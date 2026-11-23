@@ -465,7 +465,8 @@ class ExteriorSlot(Peripheral):
     def telegrams(self, vehicle, now) -> list:
         from ..sim.vehicle import line_key
         eng = vehicle.engine
-        spec = eng.display(self.role if self.role != "interior" else "front", now, cursor=self.cursor)
+        spec = eng.display(self.role if self.role != "interior" else "front", now, cursor=self.cursor,
+                           measure=None)          # the gBUSE0 panel formats (shrinks) texts itself, no running text
         route = eng.route
         tel = []
         fields = self.db.fields

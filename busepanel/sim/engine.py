@@ -56,6 +56,7 @@ DEFAULT_SETTINGS = {
     "exterior": {"seconds": 4},
 }
 
+_UNSET = object()
 CONDITIONS = {"always", "request", "not_request", "via", "zone"}
 
 
@@ -90,7 +91,8 @@ class SimEngine:
         self.route = route
         self.settings = merge_settings(settings)
         self.clock = clock
-        self.measure = measure        # measure(text, font, spacing, role) -> seconds to scroll once (or 0)
+        self.measure = measure        # measure(page, line) -> seconds for one pass of a running text (or 0)
+        self._measure = _UNSET        # the measure of the panel being served (display())
         self.reset()
 
     # ---- state ------------------------------------------------------------
@@ -223,14 +225,21 @@ class SimEngine:
                         "role": p.get("role", "text"), "run": bool(p.get("run"))})
         return out
 
-    def _duration(self, page: dict, two_line: bool) -> float:
+    def _duration(self, page: dict, two_line: bool, line=None) -> float:
+        """Page time. A running text: run_time "once" (default) = exactly one pass through the panel,
+        "min" = at least the page time (and at least one pass)."""
         d = page["seconds"]
-        if self.measure:
-            d = max(d, self.measure(page["text"], page["font"], page["spacing"], two_line,
-                                    run=page.get("run", False)) or 0)
+        m = self.measure if self._measure is _UNSET else self._measure
+        if m:
+            t = m(page, line) or 0
+            if t:
+                d = t if self.settings["interior"].get("run_time", "once") == "once" else max(d, t + 0.5)
         return d
 
-    def _pick(self, pages: list[dict], now: float, two_line: bool) -> dict | None:
+    def _show(self, pages: list[dict], now: float, two_line: bool, line) -> dict:
+        return self._spec(self._pick(pages, now, two_line, line), line)
+
+    def _pick(self, pages: list[dict], now: float, two_line: bool, line=None) -> dict | None:
         """Choose the page for `now`; on two-line panels a heading pairs with the next page."""
         if not pages:
             return None
@@ -244,7 +253,7 @@ class SimEngine:
             else:
                 units.append((None, p))
                 i += 1
-        durs = [self._duration(u[1], two_line) for u in units]
+        durs = [self._duration(u[1], two_line, line) for u in units]
         cur = getattr(self, "_cursor", None)
         if cur is not None:
             # per-panel pacing: next page only after the current one has been shown for its time
@@ -280,15 +289,15 @@ class SimEngine:
         st = self.route.stops
         ln = self.route.line if s.get("line") == "always" else None   # line number on every page
         if self.phase == "idle" or not st:
-            return self._spec(self._pick(self._pages("destination", ctx, s), now, two_line), self.route.line)
+            return self._show(self._pages("destination", ctx, s), now, two_line, self.route.line)
         if self.message and s.get("message_mode") == "override":
-            return self._spec(self._pick(self._pages("message", ctx, s), now, two_line), ln)
+            return self._show(self._pages("message", ctx, s), now, two_line, ln)
         if self.phase == "ended":
-            return self._spec(self._pick(self._pages("final", ctx, s), now, two_line), ln)
+            return self._show(self._pages("final", ctx, s), now, two_line, ln)
         if self.phase == "at_stop":
             if s.get("at_stop") == "stop_name":
-                return self._spec(self._pick(self._pages("stop", ctx, s), now, two_line), ln)
-            return self._spec(self._pick(self._pages("destination", ctx, s), now, two_line), self.route.line)
+                return self._show(self._pages("stop", ctx, s), now, two_line, ln)
+            return self._show(self._pages("destination", ctx, s), now, two_line, self.route.line)
         pages = []
         for it in s.get("items") or ["next"]:
             if it == "zone" and not ctx["zone"]:
@@ -296,7 +305,7 @@ class SimEngine:
             pages += self._pages(it, ctx, s)
         if self.message:
             pages += self._pages("message", ctx, s)
-        return self._spec(self._pick(pages, now, two_line), ln)
+        return self._show(pages, now, two_line, ln)
 
     def via_stops(self) -> list:
         """Via stops (marked via: true) still ahead, without the terminal."""
@@ -319,7 +328,7 @@ class SimEngine:
         now = self.clock() if now is None else now
         ctx = self._context(now)
         pages = self._pages(self._seq_for("exterior", role), ctx, self._ext_settings())
-        return self._spec(self._pick(pages, now, two_line), self.route.line)
+        return self._show(pages, now, two_line, self.route.line)
 
     def via_pages(self, role: str = "side", now: float | None = None) -> list[dict]:
         """Pages of the via-stop line of an exterior panel: a page with {via_stop} is repeated for every
@@ -344,10 +353,14 @@ class SimEngine:
                                 "seconds": float(p.get("seconds") or 3), "code": stop.code if stop else ""})
         return out
 
-    def display(self, role: str, now: float | None = None, two_line: bool = False, cursor: dict | None = None) -> dict:
-        """cursor: per-panel dict for page pacing (see _pick); None = pages purely by the clock."""
+    def display(self, role: str, now: float | None = None, two_line: bool = False, cursor: dict | None = None,
+                measure=_UNSET) -> dict:
+        """cursor: per-panel dict for page pacing (see _pick); None = pages purely by the clock.
+        measure: the panel's running-text timing (make_measure); None = the panel does not run texts."""
         self._cursor = cursor
+        self._measure = measure
         try:
             return self.interior(now, two_line) if role == "interior" else self.exterior(now, two_line, role)
         finally:
             self._cursor = None
+            self._measure = _UNSET

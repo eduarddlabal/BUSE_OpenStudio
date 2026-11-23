@@ -23,6 +23,7 @@ class PanelSlot(Peripheral):
         super().__init__(name, role, bus, emulator, params)
         self.profile = prof
         self.mode = None              # last x99xx switch sent to this panel
+        self._measure = None          # (vehicle, running-text timing of this panel)
 
     @property
     def shadow(self):
@@ -35,7 +36,11 @@ class PanelSlot(Peripheral):
     def update(self, vehicle, now, virtual_only):
         from ..live.modes import order_for_panel
         from ..sim.vehicle import spec_telegrams
-        spec = vehicle.engine.display(self.role, now, two_line=self.profile.geometry.rows > 8, cursor=self.cursor)
+        if self._measure is None or self._measure[0] is not vehicle:
+            from ..sim.vehicle import make_measure
+            self._measure = (vehicle, make_measure(vehicle.fonts, self.profile, vehicle.line_map))
+        spec = vehicle.engine.display(self.role, now, two_line=self.profile.geometry.rows > 8, cursor=self.cursor,
+                                      measure=self._measure[1])
         tel = spec_telegrams(spec, self.profile, vehicle.fonts, vehicle.line_map)
         if tel == self.last:
             return

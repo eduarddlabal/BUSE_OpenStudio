@@ -6,6 +6,7 @@ interior:
   seconds: 4
   time_format: "%H:%M"
   at_stop: line_dest
+  run_time: once            # running text: once = exactly one pass, min = at least `seconds`
   message_mode: override
   line: always
   font: 3
