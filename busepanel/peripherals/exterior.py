@@ -20,6 +20,7 @@ font set (gbuse0_font.yaml).
 from __future__ import annotations
 
 import os
+import re
 import time
 from dataclasses import dataclass
 
@@ -213,7 +214,32 @@ def split_codes(codes: bytes) -> tuple[int | None, int | None, bytes]:
 SPACINGS = (1, 0)                    # normal letter spacing first, tight only when needed
 
 
+BIG_METRO_H = 16                     # from this font height the metro is the M pictogram, not [B]
+
+
+def _big_metro(db, rec: bytes) -> bytes:
+    """PID exterior panels: in big fonts the metro transfer is the rectangle with M and an arrow (one
+    pictogram for all lines); small fonts keep the line letters in the stylised corners like inside."""
+    from ..core.icons import ICON_CODES
+    ml, mr, m = ICON_CODES["metro_l"], ICON_CODES["metro_r"], ICON_CODES["metro"]
+    if ml not in rec:
+        return rec
+    pat = re.compile(bytes([ml]) + rb"[A-Da-d]{1,4}" + bytes([mr]))
+    out = []
+    for line in rec.split(b"\n"):
+        fonts = [c - 0xE0 for c in line if 0xE0 <= c <= 0xEF]
+        if fonts and font_height(db, fonts[0]) >= BIG_METRO_H:
+            line = pat.sub(bytes([m]), line)
+        out.append(line)
+    return b"\n".join(out)
+
+
 def autoformat(db, fld: Field, codes: bytes) -> bytes:
+    """Open text -> record; the metro pictogram follows the chosen font size (see _big_metro)."""
+    return _big_metro(db, _autoformat(db, fld, codes))
+
+
+def _autoformat(db, fld: Field, codes: bytes) -> bytes:
     """Open text -> record (FW 3.08 autoformat): the biggest font that fits (normal spacing first); two
     lines if the text has LF (FW 3.18) or does not fit on one line. Vertically centred. Leading font /
     spacing codes fix the font / spacing."""
@@ -224,7 +250,12 @@ def autoformat(db, fld: Field, codes: bytes) -> bytes:
 
     def cands(max_h, text):
         if font is not None:
-            return [font] if font in db.fonts else [fld.font]
+            f = font if font in db.fonts else fld.font
+            if font_height(db, f) <= max_h:
+                return [f]
+            # the page font is taller than the field (e.g. a 9-row font in an 8-row via line of a
+            # database) -> the biggest lower font that fits, instead of cutting the letters
+            return [x for x in _candidates(db, max_h, text) if font_height(db, x) <= font_height(db, f)] or [f]
         return _candidates(db, max_h, text)
 
     if 0x0A not in codes:
@@ -548,6 +579,8 @@ class ExteriorSlot(Peripheral):
                         tel.append(f"zC{k4}")
                     else:
                         tel.append(f"z{k3}")
+                    if in_db:
+                        notes.append(f"cíl kódem {tel[-1][1:].lstrip('C')} ✓")
                 else:
                     parsed = None
             if parsed is None:
@@ -574,6 +607,8 @@ class ExteriorSlot(Peripheral):
                     notes.append(f"zastávka {','.join(codes[:3])} není v databázi → posílá se text")
             if codes and (self.control == "code" or (self.control == "auto" and any(c in dru for c in codes))):
                 tel.append("zD" + "".join(codes))
+                found = sum(c in dru for c in codes)
+                notes.append(f"zastávky kódy {found}/{len(codes)} ✓")
             else:
                 fld = fields["stop"]
                 tel.append(b"zN" + STOP_SEPARATOR.encode().join(

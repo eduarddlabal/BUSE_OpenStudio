@@ -11,6 +11,12 @@ const OUTPUTS = { virtual: "virtuální náhled", serial: "fyzický – COM port
 // ------------------------------------------------------------------ files
 function vehOptions(list) {
   const groups = {};
+  const own = sim.projectVehicle;
+  if (own && list.includes(own)) {
+    list = list.filter((p) => p !== own);
+    const rest = vehOptions(list);
+    return `<optgroup label="projekt ${esc(sim.projectName || "")}"><option value="${esc(own)}">${esc(own.split("/").pop())} (vozidlo projektu)</option></optgroup>` + rest;
+  }
   for (const p of list) { const parts = p.split("/"); const g = parts.length > 2 ? parts.slice(1, -1).join("/") : ""; (groups[g] = groups[g] || []).push(p); }
   return Object.keys(groups).sort().map((g) => {
     const o = groups[g].map((p) => `<option value="${esc(p)}">${esc(p.split("/").pop())}</option>`).join("");
@@ -111,7 +117,7 @@ function renderRouteList() {
   const q = ($("#routeSearch")?.value || "").trim().toLowerCase();
   const items = (sim.routeItems || []).filter((it) => !q || [it.line, it.summary, it.path, it.group].some((x) => (x || "").toLowerCase().includes(q)));
   if (!items.length) {
-    box.innerHTML = `<div class="muted small" style="padding:8px">Žádné odpovídající linky ve složce <code>trasy/</code>.</div>`;
+    box.innerHTML = `<div class="muted small" style="padding:8px">Žádné odpovídající linky ${sim.projectName ? `projektu ${esc(sim.projectName)}` : "ve složce <code>trasy/</code>"}.</div>`;
     return;
   }
   box.innerHTML = items.map((it) => {
@@ -135,6 +141,10 @@ async function loadSimFiles() {
   const opt = (list) => list.map((x) => `<option>${esc(x)}</option>`).join("");
   sim.routeItems = f.route_items || f.routes.map((p) => ({ path: p, line: "", summary: p, directions: 0, courses: 0, stops: 0, group: "" }));
   sim.routePath = f.route_path;
+  sim.projectVehicle = f.project_vehicle || null;
+  sim.projectName = f.project_name || "";
+  sim.projectSystem = f.project_system || "";
+  sim.projectRoutes = !!f.project_name && (f.routes || []).length > 0;
   sim.dbCodes = f.db_codes || { destinations: [], stops: [], lines: [] };
   renderCodeLists();
   updateDestCodeHint();
@@ -167,8 +177,49 @@ async function loadSimFiles() {
   $("#dbBase").innerHTML = `<option value="gbuse">originální font gBUSE</option><option value="builtin">vestavěný font (BUSE Studio)</option>` + baseOpts;
   if (f.route_path) $("#routePath").value = f.route_path;
   if (f.vehicle_path) $("#vehPath").value = f.vehicle_path;
-  $("#simDb").textContent = f.db_path ? "projekt/databáze: " + f.db_path : "⚠ není vybraný projekt panelu (Vozidla → Univerzální projekt pro simulaci)";
+  const miss = (f.project_routes_missing || []).length ? ` · ⚠ chybí trasy projektu: ${f.project_routes_missing.join(", ")}` : "";
+  $("#simDb").textContent = f.db_path
+    ? (f.project_name ? `projekt: ${f.project_name} (${f.db_path})` : "projekt/databáze: " + f.db_path) + miss
+    : "⚠ není vybraný projekt panelu (Vozidla → Univerzální projekt pro simulaci)";
 }
+
+// ------------------------------------------------------------------ code check per panel (Linky)
+async function renderCodeCheck() {
+  const box = $("#rCodeCheck");
+  if (!box || !$("#rCodeCheckWrap").open) return;
+  let r;
+  try { r = await api("/api/sim/codes", { direction: sim.dir || null }); }
+  catch (e) { box.innerHTML = `<div class="codewarn small">${esc(e.message)}</div>`; return; }
+  sim.codeSuggest = r.suggest;
+  const n = Object.keys(r.suggest.stops || {}).length + (r.suggest.dest ? 1 : 0);
+  $("#rCodeFillInfo").textContent = n ? `${n} návrh(ů) podle názvů` : "žádné nové shody názvů";
+  $("#rCodeFill").disabled = !n;
+  if (!r.panels.length) { box.innerHTML = `<div class="muted small">Vozidlo nemá panely s databází.</div>`; return; }
+  const cell = (c) => {
+    if (c.state === "none") return `<td class="muted">–</td>`;
+    if (c.state === "na" || c.state === "bad") return `<td class="muted" title="${esc(c.text)}">${c.state === "bad" ? "⚠ " : ""}${esc(c.text)}</td>`;
+    const mark = c.state === "ok" ? `<span class="codeok">✓ ${esc(c.key)}</span> ${esc(c.text)}` : `<span class="codewarn">✗ ${esc(c.key)} chybí</span>`;
+    const warn = c.state !== "ok" && c.send === "kód" ? " codewarn" : "";
+    return `<td>${mark}<div class="small${warn}">posílá se: <b>${c.send}</b></div></td>`;
+  };
+  const head = r.panels.map((p) => `<th>${esc(p.name)}<div class="muted small">${esc(p.control)}${p.two_line ? " · dvouřádek" : ""} · ${p.codes.dest} cílů, ${p.codes.stops} zast.</div></th>`).join("");
+  const rows = [`<tr><td><b>Cíl</b> ${esc(r.dest.name)}<div class="muted small">kód ${esc(r.dest.code || "–")}</div></td>${r.dest.cells.map(cell).join("")}</tr>`]
+    .concat(r.stops.filter((s) => s.code).map((s) => `<tr><td>${s.i + 1}. ${esc(s.name)}<div class="muted small">kód ${esc(s.code)}</div></td>${s.cells.map(cell).join("")}</tr>`));
+  const none = r.stops.some((s) => s.code) ? "" : `<tr><td colspan="${r.panels.length + 1}" class="muted small">Žádná zastávka směru nemá kód – na panely jde text.</td></tr>`;
+  box.innerHTML = `<table class="stops codetab"><thead><tr><th></th>${head}</tr></thead><tbody>${rows.join("")}${none}</tbody></table>`;
+}
+$("#rCodeCheckWrap").addEventListener("toggle", guard(renderCodeCheck));
+$("#rCodeFill").onclick = guard(async () => {
+  const sg = sim.codeSuggest || {}, d = dirOf();
+  let n = 0;
+  if (sg.dest && !d.dest_code) { d.dest_code = sg.dest; n++; }
+  for (const [i, c] of Object.entries(sg.stops || {})) { const s = d.stops[+i]; if (s && !s.code) { s.code = c; n++; } }
+  if (!n) return;
+  renderStops(); $("#rDestCode").value = d.dest_code || "";
+  await pushLine();
+  toast(`Doplněno ${n} kódů – zkontrolujte tabulku a uložte linku`);
+  await renderCodeCheck();
+});
 
 // ------------------------------------------------------------------ line: directions, courses, trips
 // sim.data = the whole line as edited (line, messages, directions {id: {destination, dest_code, stops}},
@@ -301,6 +352,7 @@ function markSimStops() {
 }
 function renderStops() {
   const r = dirOf();
+  guard(renderCodeCheck)();               // the per-panel code check follows the edited direction
   $("#rStops").innerHTML = r.stops.map((s, i) => `<tr data-i="${i}">
     <td class="muted">${i + 1}</td>
     <td><input data-f="name" value="${esc(s.name)}"></td>
@@ -587,7 +639,7 @@ async function loadFormatList() {
 function systemOptions(cur, missing) {
   const groups = {};
   for (const f of sim.formats || []) (groups[f.group || ""] = groups[f.group || ""] || []).push(f);
-  const opt = (f) => `<option value="${esc(f.name)}" ${f.name === cur ? "selected" : ""}>${esc(f.title)}</option>`;
+  const opt = (f) => `<option value="${esc(f.name)}" ${f.name === cur ? "selected" : ""}>${esc(f.title)}${f.name === sim.projectSystem ? " (systém projektu)" : ""}</option>`;
   return `<option value="" ${cur ? "" : "selected"}>(výchozí vestavěný)</option>` +
     (missing ? `<option value="${esc(cur)}" selected>${esc(cur)} (nenalezen)</option>` : "") +
     Object.entries(groups).map(([g, fs]) => (g ? `<optgroup label="${esc(g)}">` + fs.map(opt).join("") + "</optgroup>" : fs.map(opt).join(""))).join("");
@@ -619,8 +671,18 @@ async function refreshAfterDbChange() {
   sim.views = {}; $("#simPanels").innerHTML = "";
   renderVehicle();
   await loadSimFiles();
+  renderVehicleFormat();              // after loadSimFiles: marks the project's system
   if (typeof loadFiles === "function") await loadFiles();
 }
+window.addEventListener("buse:project-opened", guard(async (e) => {
+  const path = e.detail;
+  const f = await api("/api/sim/files");
+  if (!path || f.db_path === path) return;
+  const pr = (f.projects || []).find((p) => p.path === path);
+  if (!pr || pr.kind !== "bundle") return;          // single-panel files do not change the simulation
+  await api("/api/sim/db/open", { path, apply_vehicle: true });
+  await refreshAfterDbChange();
+}));
 $("#dbBuild").onclick = guard(async () => {
   const r = await api("/api/sim/db/build", {
     base: $("#dbBase").value,

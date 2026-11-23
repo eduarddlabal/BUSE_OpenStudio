@@ -224,6 +224,8 @@ export function setProject(r) {
   showCycles();
   renderProjectCards();
   if (r.rel_path && $("#fileSelect")) $("#fileSelect").value = r.rel_path;
+  // the simulation (Jízda, Linky, Vozidla, Systémy) follows the project opened here
+  if (r.rel_path) window.dispatchEvent(new CustomEvent("buse:project-opened", { detail: r.rel_path }));
   st.key = null;
   showEditor();
 }

@@ -212,8 +212,14 @@ def test_sim_api_bundle_discovery_and_quickstart(tmp_path):
         sim.SIM.vehicle_path = None
         sim.init(str(wd))
         assert sim.SIM.db_path == "projekty/univerzalni/projekt.yaml"
-        assert sim.SIM.vehicle_path == "vozidla/autobus.yaml"
+        # a multi-panel project brings its own vehicle (panels with the project's databases), not vozidla/
+        assert sim.SIM.bundle is not None and sim.SIM.vehicle_path == "projekty/univerzalni/vozidlo.yaml"
+        assert any("database" in p for p in sim.SIM.vehicle_cfg["panels"])
         assert sim.SIM.route_path is not None
+        # single-panel project: the vehicle of the working folder
+        sim.init(str(wd2))
+        assert sim.SIM.bundle is None and sim.SIM.vehicle_path == "vozidla/autobus.yaml"
+        sim.init(str(wd))
         fl = sim.files()
         assert "projekty/univerzalni/projekt.yaml" in fl["databases"]
         assert any(p["kind"] == "bundle" and p["panels"] == 3 for p in fl["projects"])
@@ -228,3 +234,147 @@ def test_sim_api_bundle_discovery_and_quickstart(tmp_path):
         (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
          sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle) = old
         sim._rebuild()
+
+
+def test_project_simulation_is_own(tmp_path):
+    """A project's simulation: section (vehicle, system, routes) wins over the working folder."""
+    from busepanel.core.bundle import build_demo_bundle
+    from busepanel.core.project import dump_yaml
+    from busepanel.server import sim_api as sim
+    wd = tmp_path / "w"
+    (wd / "trasy").mkdir(parents=True)
+    (wd / "vozidla").mkdir()
+    dump_yaml({"line": "9", "destination": "JINDE", "stops": [{"name": "A"}, {"name": "B"}]}, str(wd / "trasy" / "a9.yaml"))
+    dump_yaml({"name": "Cizí", "system": "jiny", "panels": [{"name": "X", "type": "BS120", "role": "interior"}]},
+              str(wd / "vozidla" / "a.yaml"))
+    b = build_demo_bundle()
+    b.simulation["system"] = "muj"
+    b.simulation["routes"] = ["trasy/l3.yaml", "trasy/neni.yaml"]
+    proj = wd / "projekty" / "demo"
+    (proj / "trasy").mkdir(parents=True)
+    dump_yaml({"line": "3", "destination": "MOJE", "stops": [{"name": "C"}, {"name": "D"}]}, str(proj / "trasy" / "l3.yaml"))
+    b.save(str(proj / "projekt.yaml"))
+    old = (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.bundle, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+           sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle)
+    try:
+        sim.init(str(wd))
+        sim.db_open(sim.OpenDbReq(path="projekty/demo/projekt.yaml", apply_vehicle=True))
+        assert sim.SIM.route_path == "projekty/demo/trasy/l3.yaml" and sim.SIM.route.line == "3"
+        assert sim.SIM.vehicle_cfg["system"] == "muj" and sim.SIM.vehicle_cfg["name"] != "Cizí"
+        f = sim.files()
+        assert f["routes"] == ["projekty/demo/trasy/l3.yaml"] and f["project_routes_missing"] == ["trasy/neni.yaml"]
+    finally:
+        (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.bundle, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+         sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle) = old
+
+
+def test_two_line_auto_sends_pages_and_tall_font_falls_back():
+    from busepanel.peripherals.exterior import autoformat, encode_text, font_height, variant_database
+    db = variant_database("v2", stop_field="bottom", stop_rows=8)        # an 8-row via line (real databases)
+    fld = db.fields["stop"]
+    rec = autoformat(db, fld, bytes([0xE1]) + encode_text("Přes zastávky:"))   # PID: font 1 = 9 rows
+    assert font_height(db, rec[0] - 0xE0) <= fld.height
+
+
+def test_code_check_per_panel_and_suggest(tmp_path):
+    """Kontrola kódů: each panel answers from its own database; suggestions by stop names."""
+    from busepanel.core.bundle import build_demo_bundle
+    from busepanel.core.project import dump_yaml
+    from busepanel.server import sim_api as sim
+    wd = tmp_path / "w"
+    b = build_demo_bundle()
+    b.simulation["routes"] = ["trasy/l3.yaml"]
+    proj = wd / "projekty" / "demo"
+    (proj / "trasy").mkdir(parents=True)
+    dump_yaml({"line": "3", "destination": "LÁZNĚ BOHDANEČ", "dest_code": "003",
+               "stops": [{"name": "Hlavní nádraží"}, {"name": "Náměstí Republiky", "code": "0001"},
+                         {"name": "Poliklinika"}, {"name": "Lázně Bohdaneč"}]}, str(proj / "trasy" / "l3.yaml"))
+    b.save(str(proj / "projekt.yaml"))
+    old = (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.bundle, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+           sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle)
+    try:
+        sim.init(str(wd))
+        sim.db_open(sim.OpenDbReq(path="projekty/demo/projekt.yaml", apply_vehicle=True))
+        r = sim.codes_check(sim.CodesReq())
+        names = [p["name"] for p in r["panels"]]
+        assert len(names) == 3
+        d = dict(zip(names, r["dest"]["cells"]))
+        assert all(c["state"] == "ok" and c["text"] for c in d.values())     # 003 is in all three databases
+        st = next(x for x in r["stops"] if x["code"] == "0001")
+        side = dict(zip(names, st["cells"]))
+        assert any(c.get("state") == "ok" and c["send"] == "kód" for c in side.values())
+        assert any(c.get("state") == "na" for c in side.values())            # the front panel has no stop line
+        assert r["suggest"]["stops"].get("2") == "0002"                       # Poliklinika -> DRU 0002
+    finally:
+        (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.bundle, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+         sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle) = old
+
+
+
+def test_other_vehicle_keeps_project_databases(tmp_path):
+    """Another vehicle (vozidla/) while a project is open: panels without a database take the project's
+    one (same role, type, variant); saving the vehicle does not write those paths into its file."""
+    from busepanel.core.project import dump_yaml, load_yaml
+    from busepanel.server import sim_api as sim
+    wd = tmp_path / "w"
+    b = build_demo_bundle()
+    proj = wd / "projekty" / "demo"
+    proj.mkdir(parents=True)
+    b.save(str(proj / "projekt.yaml"))
+    old = (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.bundle, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+           sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle)
+    try:
+        sim.init(str(wd))
+        sim.db_open(sim.OpenDbReq(path="projekty/demo/projekt.yaml", apply_vehicle=True))
+        own = [p for p in sim.SIM.vehicle_cfg["panels"] if p.get("database")]
+        assert own
+        bare = {"name": "Cizí", "panels": [{k: v for k, v in p.items() if k != "database"} for p in own]}
+        (wd / "vozidla").mkdir(exist_ok=True)
+        dump_yaml(bare, str(wd / "vozidla" / "cizi.yaml"))
+        sim.vehicle_load(sim.PathReq(path="vozidla/cizi.yaml"))
+        got = sim._with_bundle_databases(sim.SIM.vehicle_cfg)["panels"]
+        assert [p.get("database") for p in got] == [p["database"] for p in own]
+        # project opened while that vehicle is selected (vehicle not taken over) -> the same
+        sim.db_open(sim.OpenDbReq(path="projekty/demo/projekt.yaml", apply_vehicle=False))
+        assert sim.SIM.vehicle_path == "vozidla/cizi.yaml"
+        got = sim._with_bundle_databases(sim.SIM.vehicle_cfg)["panels"]
+        assert [p.get("database") for p in got] == [p["database"] for p in own]
+        sim.vehicle_save(sim.VehicleSave(config=sim.SIM.vehicle_cfg, path="vozidla/cizi.yaml"))
+        assert not any(p.get("database") for p in load_yaml(str(wd / "vozidla" / "cizi.yaml"))["panels"])
+    finally:
+        (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.bundle, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+         sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle) = old
+
+
+def test_project_vehicle_listed_loaded_and_saved_back(tmp_path):
+    """The open project's vehicle has its path, is first in the list and saving keeps project-relative
+    database paths; the project's own systemy/ come first."""
+    from busepanel.core.project import dump_yaml, load_yaml
+    from busepanel.server import sim_api as sim
+    wd = tmp_path / "w"
+    b = build_demo_bundle()
+    proj = wd / "projekty" / "demo"
+    (proj / "systemy").mkdir(parents=True)
+    dump_yaml({"title": "Vlastní projektu", "interior": {}}, str(proj / "systemy" / "vlastni.yaml"))
+    b.simulation["system"] = "vlastni"
+    dump_yaml(b.simulation.pop("vehicle_data"), str(proj / "vozidlo.yaml"))
+    b.simulation["vehicle"] = "vozidlo.yaml"
+    b.save(str(proj / "projekt.yaml"))
+    old = (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.bundle, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+           sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle)
+    try:
+        sim.init(str(wd))
+        sim.db_open(sim.OpenDbReq(path="projekty/demo/projekt.yaml", apply_vehicle=True))
+        vp = sim._bundle_vehicle_path()
+        assert vp == "projekty/demo/vozidlo.yaml"
+        f = sim.files()
+        assert f["vehicles"][0] == vp == f["vehicle_path"] == f["project_vehicle"]
+        assert "vlastni" in {x["name"] for x in sim.formats_list()["formats"]}
+        before = load_yaml(str(wd / vp))
+        sim.vehicle_load(sim.PathReq(path=vp))
+        sim.vehicle_save(sim.VehicleSave(config=sim.SIM.vehicle_cfg, path=vp))
+        after = load_yaml(str(wd / vp))
+        assert [p.get("database") for p in after["panels"]] == [p.get("database") for p in before["panels"]]
+    finally:
+        (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.bundle, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+         sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle) = old

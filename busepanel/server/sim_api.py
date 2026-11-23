@@ -24,7 +24,7 @@ router = APIRouter()
 
 EXAMPLE_ROUTE = {
     "line": "7", "destination": "Sídliště Dukla",
-    "stops": [{"name": "Hlavní nádraží", "zone": "P", "icons": ["vlak", "bus"]},
+    "stops": [{"name": "Hlavní nádraží", "zone": "P", "icons": ["vlak"]},
               {"name": "Masarykovo náměstí", "zone": "P"},
               {"name": "Náměstí Republiky", "zone": "P", "icons": ["prestup"]},
               {"name": "U Kostela", "zone": "P", "request": True},
@@ -53,6 +53,7 @@ class Sim:
         self.vehicle_path = None
         self.db: Project | None = None
         self.db_path = None
+        self.bundle: ProjectBundle | None = None          # open multi-panel project (its simulation: section)
         self.engine: SimEngine | None = None
         self.vehicle: Vehicle | None = None
         self.log: list[str] = []
@@ -177,7 +178,7 @@ def init(workdir: str):
     appsettings.load(SIM.workdir)
     if SIM.vehicle:
         SIM.vehicle.stop()
-    SIM.db, SIM.db_path = None, None
+    SIM.db, SIM.db_path, SIM.bundle = None, None, None
     SIM.engine, SIM.vehicle = None, None
     SIM.line = Line.from_dict(EXAMPLE_ROUTE)
     SIM.sel = {}
@@ -210,11 +211,9 @@ def init(workdir: str):
     if cand and os.path.exists(SIM.path(cand)):
         try:
             db, bundle = _load_sim_project(SIM.path(cand))
-            SIM.db, SIM.db_path = db, cand
-            if bundle is not None and SIM.vehicle_path is None:
-                vcfg = bundle.resolved_vehicle_config(SIM.workdir)
-                if vcfg:
-                    SIM.vehicle_cfg = _clean_vehicle(vcfg)
+            SIM.db, SIM.db_path, SIM.bundle = db, cand, bundle
+            if bundle is not None:
+                _apply_bundle_sim(bundle, apply_vehicle=True)
             _rebuild(keep_state=False)
         except Exception as e:      # noqa: BLE001
             SIM._log(f"univerzální databázi nelze načíst: {e}")
@@ -252,10 +251,32 @@ def _route_sort_key(item: dict) -> tuple:
     return (1, 0, ln.lower(), item.get("group") or "", item["path"])
 
 
+def _bundle_routes(bundle) -> tuple[list[str], list[str]]:
+    """Routes named in a project's simulation: section -> (found paths relative to the workdir, missing).
+    A path is looked up in the project folder first, then in the working folder."""
+    found, missing = [], []
+    for r in (bundle.simulation or {}).get("routes") or [] if bundle is not None else []:
+        r = str(r)
+        for base in (bundle.base_dir, SIM.workdir):
+            full = os.path.abspath(os.path.join(base, r))
+            if os.path.isfile(full):
+                found.append(os.path.relpath(full, SIM.workdir).replace("\\", "/"))
+                break
+        else:
+            missing.append(r)
+    return found, missing
+
+
+def _route_paths() -> list[str]:
+    """Routes offered in Jízda / Linky: those of the open project if it names any, else `trasy/`."""
+    found, _missing = _bundle_routes(SIM.bundle)
+    return found if found else _list("trasy")
+
+
 def _scan_route_entries() -> list[dict]:
-    """Structured metadata for every line/route YAML in `trasy/`, sorted naturally by line number."""
+    """Structured metadata for every offered line/route YAML, sorted naturally by line number."""
     items: list[dict] = []
-    for rel in _list("trasy"):
+    for rel in _route_paths():
         parts = rel.split("/")
         group = "/".join(parts[1:-1]) if len(parts) > 2 else ""
         try:
@@ -327,17 +348,161 @@ def _collect_db_codes() -> dict[str, list[dict]]:
     return {"destinations": to_list(dests), "stops": to_list(stops), "lines": to_list(lines)}
 
 
+
+# ------------------------------------------------------------------ code check (per panel, confirmable)
+def _norm_name(text: str) -> str:
+    """Name for matching route stops with database records: no markup, no metro letters after a double
+    space ("Palmovka  B"), case and spacing ignored."""
+    t = re.sub(r"\{[^{}]*\}", " ", str(text or ""))
+    t = re.split(r"\s{2,}", t.strip())[0] if t.strip() else ""
+    return " ".join(t.replace(",", " ").split()).casefold()
+
+
+def _slot_code_maps(slot) -> dict | None:
+    """Code -> text of one panel's own database: {"dest3", "dest4", "stops"}; None = the panel uses no codes."""
+    if getattr(slot, "kind", "") == "lcd":
+        return None
+    recs = getattr(getattr(slot, "db", None), "records", None)
+    if recs is not None:                                   # exterior gBUSE0 database of this panel
+        from ..core.fonts import CodeTable, default_codetable
+        from ..gbuse0 import mnemo as M0
+        db0 = slot.db
+        ct = CodeTable(db0.codetable) if getattr(db0, "codetable", None) else default_codetable()
+
+        def txt(raw):
+            return " ".join(re.findall(r"'([^']*)'", M0.to_mnemo(raw, ct))).strip()
+        return {"dest3": {k: txt(v) for k, v in (recs.get("CIL") or {}).items()},
+                "dest4": {k: txt(v) for k, v in (recs.get("CIL4") or {}).items()},
+                "stops": {k: txt(v) for k, v in (recs.get("DRU") or {}).items()},
+                "has_dest": "dest" in db0.fields, "has_stops": "stop" in db0.fields}
+    proj = getattr(getattr(slot, "emulator", None), "project", None)
+    if proj is None:
+        return {"dest3": {}, "dest4": {}, "stops": {}, "has_dest": True, "has_stops": True}
+    d = proj.data
+    return {"dest3": {str(k): _plain_g1(v) for k, v in (d.get("destinations") or {}).items()},
+            "dest4": {str(k): _plain_g1(v) for k, v in (d.get("destinations4") or {}).items()},
+            "stops": {str(k): _plain_g1(v) for k, v in (d.get("stops") or {}).items()},
+            "has_dest": True, "has_stops": True}
+
+
+def _code_cell(slot, maps, raw: str, what: str) -> dict:
+    """What this panel does with a destination / stop code: found text and what is sent."""
+    s = str(raw or "").strip()
+    if not s:
+        return {"state": "none"}
+    if not s.isdigit():
+        return {"state": "bad", "text": "kód musí být číslo"}
+    n = int(s)
+    if what == "dest":
+        if not maps["has_dest"]:
+            return {"state": "na", "text": "panel nemá pole cíle"}
+        k3, k4 = f"{n:03d}", f"{n:04d}"
+        text = maps["dest4"].get(k4) if len(s) == 4 else None
+        text = text if text is not None else maps["dest3"].get(k3, maps["dest4"].get(k4))
+        key = k4 if len(s) == 4 else k3
+    else:
+        if not maps["has_stops"]:
+            return {"state": "na", "text": "panel nemá řádek zastávek"}
+        key = f"{n:04d}"
+        text = maps["stops"].get(key)
+    control = getattr(slot, "control", "auto") or "auto"
+    two_line = getattr(getattr(getattr(slot, "profile", None), "geometry", None), "rows", 8) > 8
+    if control == "text":
+        send = "text"
+    elif control == "code":
+        send = "kód"
+    elif two_line:
+        send = "text"               # two-line interior in auto: PID pages (heading + text), see PanelSlot
+    else:
+        send = "kód" if text is not None else "text"
+    return {"state": "ok" if text is not None else "missing", "key": key, "text": text or "", "send": send}
+
+
+class CodesReq(BaseModel):
+    direction: str | None = None
+
+
+@router.post("/api/sim/codes")
+def codes_check(r: CodesReq):
+    """Per panel of the vehicle: does its own database know the destination / stop codes of the direction,
+    with which text, and is the code or the free text sent (control auto / kódy / text)."""
+    did = r.direction
+    route = (Route.from_dict(SIM.line.directions[did].to_dict()) if did and did in SIM.line.directions
+             else SIM.route)
+    panels, cols = [], []
+    for slot in (SIM.vehicle.panels if SIM.vehicle else []):
+        maps = _slot_code_maps(slot)
+        if maps is None:
+            continue
+        two_line = getattr(getattr(getattr(slot, "profile", None), "geometry", None), "rows", 8) > 8
+        panels.append({"name": slot.name, "role": slot.role, "control": getattr(slot, "control", "auto") or "auto",
+                       "two_line": two_line,
+                       "codes": {"dest": len(maps["dest3"]) + len(maps["dest4"]), "stops": len(maps["stops"])}})
+        cols.append((slot, maps))
+    dest = {"code": route.dest_code, "name": route.destination,
+            "cells": [_code_cell(s, m, route.dest_code, "dest") for s, m in cols]}
+    stops = [{"i": i, "name": st.name, "code": st.code,
+              "cells": [_code_cell(s, m, st.code, "stop") for s, m in cols]} for i, st in enumerate(route.stops)]
+    # suggestions: a code whose text in the panel databases is the stop name (all databases agree)
+    cand_st: dict[str, set] = {}
+    cand_de: dict[str, set] = {}
+    for _s, m in cols:
+        for k, t in m["stops"].items():
+            cand_st.setdefault(_norm_name(t), set()).add(k)
+        for k, t in list(m["dest3"].items()) + list(m["dest4"].items()):
+            cand_de.setdefault(_norm_name(t), set()).add(k)
+
+    def pick(cands, *names):
+        for nm in names:
+            hit = cands.get(_norm_name(nm)) if nm else None
+            if hit and len(hit) == 1:
+                return next(iter(hit))
+        return None
+    suggest = {"dest": None if route.dest_code else pick(cand_de, route.destination, route.dest_short),
+               "stops": {str(x["i"]): c for x in stops if not x["code"]
+                         for c in [pick(cand_st, route.stops[x["i"]].name, route.stops[x["i"]].short)] if c}}
+    return {"panels": panels, "dest": dest, "stops": stops, "suggest": suggest}
+
 # ------------------------------------------------------------------ files
+def _apply_bundle_sim(bundle, apply_vehicle: bool = True):
+    """Use a project's own simulation setup: its vehicle (panel databases of the project), its display
+    system and its first route – not the files of the working folder."""
+    sim = bundle.simulation or {}
+    if apply_vehicle:
+        vcfg = bundle.resolved_vehicle_config(SIM.workdir)
+        if vcfg:
+            SIM.vehicle_cfg = _clean_vehicle(vcfg)
+            SIM.vehicle_path = _bundle_vehicle_path()
+    if sim.get("system"):
+        SIM.vehicle_cfg["system"] = str(sim["system"])
+    found, missing = _bundle_routes(bundle)
+    for m in missing:
+        SIM._log(f"projekt: trasa {m} neexistuje")
+    if found and SIM.route_path not in found:
+        try:
+            line = Line.load(SIM.path(found[0]))
+            SIM.line = line
+            _select(_default_sel(line))
+            SIM.route_path = found[0]
+        except Exception as e:      # noqa: BLE001
+            SIM._log(f"linku {found[0]} nelze načíst: {e}")
+
+
 @router.get("/api/sim/files")
 def files():
     projects = _scan_project_entries()
     route_items = _scan_route_entries()
     return {"routes": [r["path"] for r in route_items], "route_items": route_items,
-            "vehicles": _list("vozidla"),
+            "vehicles": ([_bundle_vehicle_path()] if _bundle_vehicle_path() else [])
+            + [v for v in _list("vozidla") if v != _bundle_vehicle_path()],
+            "project_vehicle": _bundle_vehicle_path(),
+            "project_system": str((SIM.bundle.simulation or {}).get("system") or "") if SIM.bundle is not None else "",
             "databases": [p["path"] for p in projects],
             "projects": projects,
             "db_codes": _collect_db_codes(),
-            "route_path": SIM.route_path, "vehicle_path": SIM.vehicle_path, "db_path": SIM.db_path}
+            "route_path": SIM.route_path, "vehicle_path": SIM.vehicle_path, "db_path": SIM.db_path,
+            "project_routes_missing": _bundle_routes(SIM.bundle)[1],
+            "project_name": str((SIM.bundle.meta or {}).get("name") or "") if SIM.bundle is not None else ""}
 
 
 class PathReq(BaseModel):
@@ -536,8 +701,21 @@ def defaults():
 
 
 def _formats() -> dict:
-    """Display systems of the working folder (systemy/, older folder formaty/ too)."""
-    return load_formats(SIM.path(SYSTEMS_DIR), *(SIM.path(d) for d in LEGACY_DIRS))
+    """Display systems: the open project's own systemy/ first, then the working folder (systemy/, older
+    folder formaty/ too)."""
+    own = os.path.join(SIM.bundle.base_dir, SYSTEMS_DIR) if SIM.bundle is not None else None
+    return load_formats(own, SIM.path(SYSTEMS_DIR), *(SIM.path(d) for d in LEGACY_DIRS))
+
+
+def _bundle_vehicle_path() -> str | None:
+    """The open project's vehicle file relative to the working folder (None = no project / no file)."""
+    if SIM.bundle is None:
+        return None
+    v = (SIM.bundle.simulation or {}).get("vehicle")
+    if not isinstance(v, str) or v.startswith("template:"):
+        return None
+    full = os.path.abspath(os.path.join(SIM.bundle.base_dir, v))
+    return os.path.relpath(full, SIM.workdir).replace("\\", "/") if os.path.isfile(full) else None
 
 
 def _clean_vehicle(cfg: dict) -> dict:
@@ -560,9 +738,40 @@ def vehicle_get():
             "system_title": fm[name]["title"] if name in fm else "", "system_missing": bool(name) and name not in fm}
 
 
+def _with_bundle_databases(cfg: dict) -> dict:
+    """Another vehicle while a project is open: its panels without their own database take the database
+    of the project's panel with the same role and type / variant (the project's code records stay in use)."""
+    if SIM.bundle is None:
+        return cfg
+    pv = SIM.bundle.resolved_vehicle_config(SIM.workdir) or {}
+    src = [p for p in pv.get("panels") or [] if p.get("database")]
+    if not src:
+        return cfg
+    cfg = dict(cfg)
+    out = []
+    for p in cfg.get("panels") or []:
+        p = dict(p)
+        if p.pop("database_from_project", False):
+            p.pop("database", None)
+        if not p.get("database") and p.get("output") != "lcd" and str(p.get("type", "")).upper() != "LCD":
+            same = [q for q in src if q.get("role") == p.get("role")
+                    and str(q.get("type", "")).upper() == str(p.get("type", "")).upper()
+                    and (q.get("variant") or "") == (p.get("variant") or "")]
+            if same:
+                p["database"] = same[0]["database"]
+                p["database_from_project"] = True          # not written into the vehicle file
+        out.append(p)
+    cfg["panels"] = out
+    return cfg
+
+
 @router.post("/api/sim/vehicle/load")
 def vehicle_load(r: PathReq):
-    SIM.vehicle_cfg = _clean_vehicle(load_yaml(SIM.path(r.path)))
+    if r.path == _bundle_vehicle_path():
+        # the project's vehicle: its database paths are relative to the project folder
+        SIM.vehicle_cfg = _clean_vehicle(SIM.bundle.resolved_vehicle_config(SIM.workdir) or {})
+    else:
+        SIM.vehicle_cfg = _clean_vehicle(load_yaml(SIM.path(r.path)))
     SIM.vehicle_path = r.path
     _rebuild()
     return vehicle_get()
@@ -574,7 +783,16 @@ def vehicle_save(r: VehicleSave):
     SIM.vehicle_cfg = cfg
     if r.path:
         os.makedirs(os.path.dirname(SIM.path(r.path)), exist_ok=True)
-        dump_yaml(cfg, SIM.path(r.path))
+        disk = dict(cfg)
+        disk["panels"] = [{k: v for k, v in p.items() if k != "database_from_project"
+                           and not (k == "database" and p.get("database_from_project"))}
+                          for p in cfg.get("panels") or []]
+        if r.path == _bundle_vehicle_path():
+            # back into the project: database paths relative to the project folder again
+            for q in disk["panels"]:
+                if isinstance(q.get("database"), str) and not os.path.isabs(q["database"]):
+                    q["database"] = os.path.relpath(SIM.path(q["database"]), SIM.bundle.base_dir).replace("\\", "/")
+        dump_yaml(disk, SIM.path(r.path))
         SIM.vehicle_path = r.path
     _rebuild()
     return vehicle_get()
@@ -625,7 +843,8 @@ def formats_list():
         out.append({"name": name, "title": f["title"], "group": name.rsplit("/", 1)[0] if "/" in name else "",
                     "sections": [k for k in SECTIONS if f.get(k)]})
     return {"formats": out, "default_sequences": DEFAULT_SEQUENCES, "sections": SECTION_TITLES,
-            "vehicle_format": vehicle_system(SIM.vehicle_cfg)}
+            "vehicle_format": vehicle_system(SIM.vehicle_cfg),
+            "project_system": str((SIM.bundle.simulation or {}).get("system") or "") if SIM.bundle is not None else ""}
 
 
 @router.get("/api/sim/format")
@@ -750,12 +969,12 @@ def db_open(r: OpenDbReq):
     db, bundle = _load_sim_project(p)
     SIM.db = db
     SIM.db_path = r.path
-    if bundle is not None and r.apply_vehicle:
-        vcfg = bundle.resolved_vehicle_config(SIM.workdir)
-        if vcfg:
-            SIM.vehicle_cfg = _clean_vehicle(vcfg)
-            SIM.vehicle_path = None
-    _rebuild()
+    SIM.bundle = bundle
+    if bundle is not None:
+        _apply_bundle_sim(bundle, apply_vehicle=r.apply_vehicle)
+        _rebuild(keep_state=False)
+    else:
+        _rebuild()
     return {
         "path": r.path,
         "kind": "bundle" if bundle is not None else "single",
@@ -863,7 +1082,7 @@ def _rebuild(keep_state: bool = True):
     if keep_state and old is not None:
         SIM.engine.phase, SIM.engine.pos = old.phase, min(old.pos, max(0, len(SIM.route.stops) - 1))
         SIM.engine.message, SIM.engine.message_key = old.message, old.message_key
-    cfg = dict(SIM.vehicle_cfg)
+    cfg = _with_bundle_databases(dict(SIM.vehicle_cfg))
     cfg["panels"] = [p for p in cfg.get("panels") or [] if p.get("enabled", True)]
     SIM.vehicle = Vehicle.from_config(cfg, SIM.engine, SIM.db, log=SIM._log, base_dir=SIM.workdir)
     _sync_lcd()

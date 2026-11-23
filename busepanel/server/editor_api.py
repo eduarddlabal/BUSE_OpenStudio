@@ -126,6 +126,11 @@ def preview(r: PreviewReq):
         if name == "dest" and not info["run"]:
             start, lo, hi = g.dest_span(len(cols), info["x"])
             item.update(start=start, lo=lo, hi=hi, overflow=start + len(cols) - 1 > hi or start < lo)
+        elif name == "dest":
+            # running text: it runs through the whole text window (next to the line field, or the full width)
+            lo, hi = {"full": (0, g.columns - 1), "line": (g.line_left, g.line_right)}.get(
+                primary_area, (g.dest_left, g.dest_right))
+            item.update(start=hi + 1, lo=lo, hi=hi, overflow=False)
         out[name] = item
         if name == "dest":
             rf = render_frames(b, p.fonts, g, (f0, s0), default_iv, area=primary_area)

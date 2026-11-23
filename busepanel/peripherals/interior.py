@@ -45,6 +45,13 @@ class PanelSlot(Peripheral):
         self.note = None
         if self.control == "text":
             return None
+        if self.control == "auto" and self.profile.geometry.rows > 8:
+            # two-line panel: the page composition (heading + text, PID) is sent as text; database records
+            # are single-line texts without headings -> only with control: code
+            r = vehicle.engine.route
+            if any(x.code for x in r.stops) or getattr(r, "dest_code", ""):
+                self.note = "dvouřádek: text (stránky PID), kódy jen při ovládání „kódy“"
+            return None
         from ..sim.vehicle import line_key
         eng = vehicle.engine
         if eng.message and (eng.settings.get("interior") or {}).get("message_mode") == "override":
@@ -62,11 +69,12 @@ class PanelSlot(Peripheral):
             sk = f"{sp[0]:04d}"
             in_stops = sk in stops_map
             if self.control == "code":
-                if not in_stops:
-                    self.note = f"⚠ zastávka {sk} není v databázi panelu"
+                self.note = (f"zastávka kódem {sk} ✓" if in_stops
+                             else f"⚠ zastávka {sk} není v databázi panelu")
                 return [f"x{sk}"], True
             if self.control == "auto":
                 if in_stops:
+                    self.note = f"zastávka kódem {sk} ✓"
                     return [f"x{sk}"], True
                 self.note = f"zastávka {sk} není v databázi → posílá se text"
 
@@ -77,8 +85,8 @@ class PanelSlot(Peripheral):
             in_d3, in_d4 = k3 in dests, k4 in dests4
             code_label = k4 if len(ddig) == 4 else k3
             if self.control == "code" or (self.control == "auto" and (in_d3 or in_d4)):
-                if self.control == "code" and not (in_d3 or in_d4):
-                    self.note = f"⚠ cíl {code_label} není v databázi panelu"
+                self.note = (f"cíl kódem {code_label} ✓" if (in_d3 or in_d4)
+                             else f"⚠ cíl {code_label} není v databázi panelu")
                 lk = line_key(eng.route.line, vehicle.line_map) if eng.route.line else None
                 if in_d4 or (len(ddig) == 4 and not in_d3):
                     tel = ([f"l{lk}", f"zC{k4}", "x9993"] if lk else [f"zC{k4}", "x9992"])

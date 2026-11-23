@@ -207,7 +207,9 @@ export async function preview() {
   let info = "";
   const frames = res.frames || [];
   if (d && (d.run || d.effect === 1)) {
-    const span = (d.hi - d.lo + 1) || (g.dest_right - g.dest_left + 1), period = d.width + span;
+    // the server gives the text window (lo..hi); older answers without it -> the destination field
+    if (!Number.isFinite(d.lo) || !Number.isFinite(d.hi)) { d.lo = g.dest_left; d.hi = g.dest_right; }
+    const span = d.hi - d.lo + 1, period = d.width + span;
     let off = 0, last = performance.now();
     const tick = (t) => {
       const step = g.scroll_ms || 20;

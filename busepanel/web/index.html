@@ -709,6 +709,15 @@
           </label>
         </div>
         <div id="rCodesDbNote" class="small codewarn" hidden></div>
+        <details id="rCodeCheckWrap" class="codecheck">
+          <summary>Kontrola kódů na panelech vozidla</summary>
+          <p class="muted small">Pro každý panel aktuálního vozidla: zná jeho vlastní databáze kód (✓ a text záznamu,
+            ✗ chybí) a co se při jízdě opravdu pošle – <b>kód</b>, nebo volný <b>text</b> (podle Ovládání panelu
+            v Vozidlech: auto / kódy / text). Vnitřní dvouřádek v režimu auto posílá vždy text (stránky PID).</p>
+          <div class="row"><button id="rCodeFill" title="kódy podle shody názvu se záznamem databáze – jen jednoznačné, jen prázdná pole">Doplnit kódy z databáze</button>
+            <span id="rCodeFillInfo" class="muted small"></span></div>
+          <div id="rCodeCheck" class="stopwrap"></div>
+        </details>
         <div class="stopwrap"><table class="stops">
           <thead><tr><th>#</th><th>Zastávka</th><th title="zkrácený název – použije se tam, kde se plný nevejde (vnější panely)">Zkratka</th><th>Pásmo</th><th>Ikony</th><th title="na znamení">Zn.</th><th title="minuty od začátku směru (LCD panel)">Min.</th><th title="nácestná – ukazuje se na vnějších panelech">Přes</th><th title="kód zastávky v databázi (DRU / ZST – používá se v režimu auto/kódy)">Kód</th><th></th></tr></thead>
           <tbody id="rStops"></tbody></table></div>

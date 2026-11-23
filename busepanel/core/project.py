@@ -128,6 +128,10 @@ class Project:
             fonts = FontSet.from_yaml(f)
         else:
             raise ValueError("projekt neobsahuje fonty (klíč 'fonts')")
+        if ((data.get("panel") or {}).get("format")) == "gbuse0":
+            # normative PID pictograms (core/icons.py) replace older copies saved with the project fonts
+            from .icons import add_exterior_icons
+            add_exterior_icons(fonts)
         return Project(data, fonts, base)
 
     def save(self, path, fonts_file: str | None = "fonts.yaml"):

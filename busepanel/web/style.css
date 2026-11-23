@@ -187,3 +187,7 @@ label.btnlike:hover { border-color: var(--accent); }
 .codewarn { color: var(--accent); }
 input.codeok { color: inherit; border-color: var(--ok); }
 input.codewarn { color: inherit; border-color: var(--accent); }
+
+.codecheck { margin: 8px 0; }
+.codecheck summary { cursor: pointer; font-weight: 600; }
+.codetab td, .codetab th { vertical-align: top; font-size: 12px; }

@@ -130,6 +130,11 @@ def test_http_static_and_end_to_end_contracts(tmp_path):
         # 4. Editor preview, autoformat, mnemo
         code, _, pv_res = _json("POST", "/api/preview", {"section": "destinations", "value": "CENTRUM"})
         assert code == 200 and pv_res["format"] == "gbuse1" and "dest" in pv_res
+        # running text: the preview needs the text window to animate it (was missing -> nothing drawn)
+        code, _, run_res = _json("POST", "/api/preview", {"section": "stops",
+                                                          "value": {"text": "Dlouhý běžící text", "run": True}})
+        d = run_res["dest"]
+        assert code == 200 and d["run"] and d["lo"] == run_res["geometry"]["dest_left"] and d["hi"] >= d["lo"]
 
         code, _, af_res = _json("POST", "/api/gbuse/autoformat", {"text": "CENTRUM", "section": "destinations"})
         assert code == 200 and set(af_res) >= {"font", "spacing"}

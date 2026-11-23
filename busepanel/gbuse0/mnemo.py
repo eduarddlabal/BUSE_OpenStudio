@@ -48,6 +48,25 @@ DEFAULT_AFD = [
 ]
 
 
+def _icon_name(code: int) -> str | None:
+    from ..core.icons import CODE_ICONS
+    return CODE_ICONS.get(code)
+
+
+def _decode_txt(raw: bytes, ct: CodeTable) -> str | None:
+    """Record text -> editor text; icon codes outside the code table become {icon:name}."""
+    out = []
+    for c in raw:
+        ch = ct.decode_code(c)
+        if ch is None:
+            name = _icon_name(c)
+            if name is None:
+                return None
+            ch = "{icon:%s}" % name
+        out.append(ch)
+    return "".join(out)
+
+
 def to_mnemo(rec: bytes, ct: CodeTable) -> str:
     """Binary gBUSE0 record -> official MNEMO text representation."""
     tokens: list[str] = []
@@ -93,6 +112,9 @@ def to_mnemo(rec: bytes, ct: CodeTable) -> str:
             ch = ct.decode_code(c)
             if ch and ch != "'":
                 buf.append(ch)
+            elif ch is None and _icon_name(c):
+                flush_buf()
+                tokens.append("{icon:%s}" % _icon_name(c))
             else:
                 flush_buf()
                 tokens.append(f"#{c}")
@@ -246,11 +268,7 @@ def autoformat_line(text: str, db, ct: CodeTable, width: int, height: int,
     if not table:
         return 3, 1, 0
 
-    codes = bytearray()
-    for ch in text:
-        c = ct.encode_char(ch)
-        if c is not None:
-            codes.append(c)
+    codes, _ = _encode_str(text, ct)
 
     max_h = max(1, (height - 1) // 2) if two_line else height
     chosen = None
@@ -275,13 +293,24 @@ def autoformat_line(text: str, db, ct: CodeTable, width: int, height: int,
 
 
 def _encode_str(text: str, ct: CodeTable) -> tuple[bytes, list[str]]:
+    """Visual-editor text -> codes; {icon:name} becomes the icon's character code."""
+    from ..core.icons import ICON_CODES
     out, probs = bytearray(), []
-    for ch in text:
-        c = ct.encode_char(ch)
-        if c is None:
-            probs.append(f"znak {ch!r} není v kódové tabulce")
-        else:
-            out.append(c)
+    for part in re.split(r"(\{icon:[a-z0-9_]+\})", text):
+        m = re.fullmatch(r"\{icon:([a-z0-9_]+)\}", part)
+        if m:
+            code = ICON_CODES.get(m.group(1))
+            if code is None:
+                probs.append(f"neznámá ikona {m.group(1)!r}")
+            else:
+                out.append(code)
+            continue
+        for ch in part:
+            c = ct.encode_char(ch)
+            if c is None:
+                probs.append(f"znak {ch!r} není v kódové tabulce")
+            else:
+                out.append(c)
     return bytes(out), probs
 
 
@@ -444,7 +473,7 @@ def decompose_record(rec: bytes, db, field_name: str, ct: CodeTable) -> dict | N
     if not frames or len(frames[0]) != 1:
         return None
     l1_raw = frames[0][0]
-    t1 = ct.decode(bytes(l1_raw["text"]))
+    t1 = _decode_txt(bytes(l1_raw["text"]), ct)
     if t1 is None:
         return None
     line1 = {
@@ -464,7 +493,7 @@ def decompose_record(rec: bytes, db, field_name: str, ct: CodeTable) -> dict | N
     for fr in frames[1:]:
         if len(fr) != 1:
             return None
-        s2 = ct.decode(bytes(fr[0]["text"]))
+        s2 = _decode_txt(bytes(fr[0]["text"]), ct)
         if s2 is None:
             return None
         texts2.append(s2)
