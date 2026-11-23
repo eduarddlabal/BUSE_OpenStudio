@@ -121,6 +121,12 @@ Nástroj `busepanel upload` (dříve analytický skript `nahraj.py`) dělá tot�
 ### 3.5 Chování panelu BS120 při zobrazování **[OVĚŘENO]**
 - Text se překreslí jen při **změně čísla** linky nebo cíle. Stejné `z001` po nahrání nových dat obraz nezměnilo, `z002` ano.
 - Panel má **135 sloupců** (0–134), jak udává hlavička. Pole linky zabírá sloupce ~0–23.
+- **Model:** certifikát IDS JMK (2014) uvádí vnitřní jednořádkový LED panel **BS 120.0A** (dříve BS 120.A nebo
+  BS 120.08 135 – tedy 8 řádků × 135 sloupců): 8×135 bodů, červené LED 625 nm, průměr/rozteč 3 / 4,7 mm,
+  firmware E120 212ABA 200105 pro řízení BS 100 / BS 230 (E120 223ABU pro odbavovací systém Mikroelektronika).
+  Seznam PID (2020) uvádí **BS 120.0K** (IBIS i Ethernet, řízení FCP2000/FCS2001) bez rozměru. Všechna dostupná data
+  gBUSE1 (Pardubice trolejbusy, DISPA, testy) mají 135 sloupců. Fanouškovské weby z Ostravy uvádějí 8×136 (tramvaje),
+  8×120 (autobusy, trolejbusy) a dvouřádkový 16×120 – 136 je nejspíš nepřesnost, 8×120 a 16×120 zatím nemáme ověřené.
 - **Text bez `ESC s`** (vycentrovaný) využije pole cíle až k pravému okraji, tedy sloupce ~24–134 („LÁZNĚ BOHDANEČ“).
 - **Text s `ESC s n`** se kreslí od **absolutního sloupce panelu** n−0x10, ale jen do oblasti **0–111**. Za sloupcem 111 se ořízne a sloupce 112–134 zůstanou prázdné. Co padne do pole linky (<24), je zakryté.
 - Ověřeno měřením se třemi pravítky (znaky se známými sloupci):
@@ -530,3 +536,39 @@ gBUSE0 a dBUSE. Co je odhad:
 - **Sdílená linka**: IBIS je vysílací linka. Telegram, který už na lince je, ovladač vnějšího panelu nepošle znovu.
   Všechny vnější panely na jednom COM portu tak ukazují stejnou linku a cíl, stejně jako ve voze s BS100.
   Ovládání BS120 (`v` + `x9996/x9997`) se nemění.
+
+## 11. Další vnitřní panely v simulaci (jednořádek jiné délky, dvouřádek, tramvaj) **[ODHAD]**
+K žádnému z těchto panelů nemáme přístup ani data. Simulace vychází z toho, co víme o BS120, z manuálu gBUSE1
+a ze standardů PID.
+
+**Co víme**
+- **gBUSE1** (manuál, `PRG/gBUSE1/cz/gBUSE1.doc`) je editor jen pro **jednořádkové** vnitřní panely. Výška je pevně
+  8 bodů (1 bajt na sloupec), **délka se nastavuje** v konfiguraci (záložka PANEL, „Délka“ = hlavička bajt 02).
+  Chování „typ 2“ (cykly) jde jen na panelu délky 135. Jiné délky tedy mají jen „typ 0 / 1“.
+- Manuál uvádí chybu FW 2.00–2.05: příkaz `ESC s` usekne text od 110. sloupce. Náš panel (FW 2.06) ořezává
+  texty s `ESC s` za sloupcem 111 (kap. 3.5) – podobné chování, verze ale podle manuálu už opravená.
+- Všechna dostupná data gBUSE1 (Pardubice, DISPA, vzorky 10/11.HEX z archivu ekselcom) mají 135 sloupců.
+  Vzorek 3.HEX v témže archivu je vnější panel gBUSE0 **84×19** (linka 0–27 + cíl 28–83, boční bez čísla?).
+- **BSLoader** (`Zarizeni_cz.txt`) vede „BS 220 – Panel vnitřní dvojřádek“ (kód typu 5, zápis povelem `0x24`
+  jako BS 410). Dvouřádek tedy BUSE aspoň plánovala; certifikát ani datový list jsme nenašli.
+- Ostravské weby: BS 120 **8×120** v autobusech a trolejbusech, **16×120** dvouřádek (VarioLF, Solaris Trollino):
+  nahoře linka, cíl, čas a pásmo, dole důležité nácestné, aktuální a příští zastávka.
+- Standard PID pro autobusy (příloha 2, 2024): vnitřní LED displej musí být **dvouřádkový**, min. **16×128**,
+  červený (jednořádek v autobusech PID nepřípustný). Horní řádek: číslo linky vlevo + nadpis, dolní řádek text
+  přes celou šířku. Obraz 1–7: mimo zastávku „příští zastávka/next:“ + zastávka (4 s), „směr/direction:“ + cíl
+  (4 s), „přes zastávky/via:“ + běžící nácestné (15 s); v zastávce „zastávka/this stop:“ (4 s) a směr (2 s);
+  na konečné „Konečná zastávka, / prosíme vystupte.“ (4 s) a „Final stop. / Please leave the bus.“ (2 s).
+  Boční vnější panel: nahoře cíl, dole po 2 s „Přes zastávky:“ – příští zastávka – nácestné (tenký font). Standard PID pro tramvaje (2025): vnitřní jednořádek min. **8×128**, mimo
+  zastávku příští zastávka (na znamení běžícím textem „- na znamení / request stop“), v zastávce šipka + cíl,
+  na konečné běžící text „Konečná zastávka, prosíme vystupte / Final stop, please leave the tram.“
+
+**Jak se to simuluje**
+- **Jednořádek jiné délky**: profil BS120 s `columns` u panelu (`geometry_for`): pole linky 0–23, cíl do konce,
+  `ESC s` texty nejvýš do sloupce 111. Telegramy stejné jako BS120.
+- **Dvouřádek** (profil `BS220`, 16×128 podle minima PID): dva řádky po 8 bodech. Volný text `v` nese
+  „horní LF dolní“ (oddělovač LF je odhad, viz `spec_telegrams`). Obsah je sekce `interior_2` systému zobrazení:
+  stránka s rolí „nadpis“ jde do horního řádku vedle čísla linky, následující stránka do dolního řádku přes celou
+  šířku. Linka, která není v databázi panelu, se pošle textem před nadpisem. Dlouhý text v horním řádku neběží.
+- **Tramvaj**: stejný BS 120 8×135 (certifikát BS 120.0A; údaj 8×136 z webů považujeme za nepřesný), obsah podle
+  standardu PID = systém „PID – tramvaje“.
+- Vnitřní panely se v náhledu kreslí červeně (certifikát i standard PID), vnější žlutě.

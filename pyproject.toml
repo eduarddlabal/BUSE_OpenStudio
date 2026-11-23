@@ -22,5 +22,5 @@ busepanel = "busepanel.cli:main"
 include = ["busepanel*"]
 
 [tool.setuptools.package-data]
-busepanel = ["web/*", "web/*/*", "core/*.yaml", "panels/*.yaml", "peripherals/*.yaml", "sim/*.txt", "sim/formats/*.yaml", "examples/*", "examples/*/*",
+busepanel = ["web/*", "web/*/*", "core/*.yaml", "panels/*.yaml", "peripherals/*.yaml", "sim/*.txt", "sim/*.yaml", "examples/*", "examples/*/*",
              "extras/*/web/*"]

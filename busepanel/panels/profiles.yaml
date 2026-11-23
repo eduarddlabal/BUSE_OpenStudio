@@ -1,7 +1,10 @@
 # Panel profiles. Only BS120 is measured on real hardware; the others are placeholders
 # (verified: false) until a panel of that type is analysed.
+# BS120 = BS 120.0A (earlier BS 120.A / BS 120.08 135): certificate IDS JMK 2014 – 8×135 dots, red LED 625 nm,
+# dot 3 mm / pitch 4.7 mm, FW E120 212ABA (BS 100 / BS 230). PID 2020 lists BS 120.0K (IBIS and Ethernet).
+# Fan sites (Ostrava) also name 8×120 (buses) and 16×120 two-line variants – not covered by this profile.
 BS120:
-  title: BS 120 – vnitřní jednořádkový
+  title: BS 120.0A – vnitřní jednořádkový 8×135
   verified: true
   columns: 135
   rows: 8
@@ -21,14 +24,21 @@ BS120:
     zM: x9990
   commands: [l, z, x, xA, xB, zC, zD, v, zI, zM, zN, aA, u, e, xC, a, aV, lA]
 
+# BS220: "BS 220 vnitřní dvojřádek" in the BSLoader device list (type code 5). Ostrava fan sites describe a two-line
+# BUSE panel 16×120 (upper row line + destination + time + zone, lower row via / current / next stop) in buses and
+# two BS120-like rows of 8 dots, upper row = line field + heading, lower row = text over the full width ("heading LF text").
+# two BS120-like rows of 8 dots, upper row = heading, lower row = line field + text (free text "heading LF text").
+# Single-line BS120 of other lengths (8×120 in buses, PID minimum 8×128): set `columns` on the panel.
+# PID (bus annex 2024, Příloha 2): min. 16×128, line number in the left segment of the upper row, heading
+# texts next to it, stop names over the whole lower row; red LEDs.
 BS220:
-  title: BS 220 – vnitřní dvouřádkový (neověřeno)
+  title: BS 220 – vnitřní dvouřádkový 16×128 (odhad)
   verified: false
-  columns: 135
+  columns: 128
   rows: 16
   line: [0, 23]
-  dest: [24, 134]
-  positioned_right: 134
+  dest: [24, 127]
+  positioned_right: 127
   data_format: gbuse1
   service_baud: 9600
   free_text: true

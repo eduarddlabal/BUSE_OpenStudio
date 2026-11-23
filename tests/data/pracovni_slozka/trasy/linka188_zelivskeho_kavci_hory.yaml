@@ -28,6 +28,7 @@ directions:
       zone: P
       request: true
       minutes: 4
+      via: true
     - name: Sídliště Malešice
       zone: P
       request: true
@@ -46,6 +47,7 @@ directions:
       - metro-A
       request: true
       minutes: 12
+      via: true
     - name: Na Hroudě
       zone: P
       minutes: 13
@@ -73,6 +75,7 @@ directions:
       zone: P
       request: true
       minutes: 23
+      via: true
     - name: Záběhlice
       zone: P
       request: true
@@ -91,6 +94,7 @@ directions:
     - name: Michelská
       zone: P
       minutes: 30
+      via: true
     - name: Pod Jezerkou
       zone: P
       minutes: 31
@@ -112,6 +116,7 @@ directions:
       - metro-C
       request: true
       minutes: 37
+      via: true
     - name: Sídliště Pankrác
       zone: P
       request: true
@@ -137,6 +142,7 @@ directions:
       - metro-C
       request: true
       minutes: 3
+      via: true
     - name: Sdružení
       zone: P
       request: true
@@ -149,12 +155,14 @@ directions:
       zone: P
       request: true
       minutes: 8
+      via: true
     - name: Pod Jezerkou
       zone: P
       minutes: 9
     - name: Michelská
       zone: P
       minutes: 10
+      via: true
     - name: Plynárna Michle
       zone: P
       request: true
@@ -182,6 +190,7 @@ directions:
       zone: P
       request: true
       minutes: 20
+      via: true
     - name: Želivecká
       zone: P
       request: true
@@ -194,6 +203,7 @@ directions:
       zone: P
       request: true
       minutes: 26
+      via: true
     - name: Na Hroudě
       zone: P
       minutes: 27
@@ -203,6 +213,7 @@ directions:
       - metro-A
       request: true
       minutes: 28
+      via: true
     - name: Dobročovická
       zone: P
       request: true
@@ -211,6 +222,7 @@ directions:
       zone: P
       request: true
       minutes: 33
+      via: true
     - name: Sídliště Malešice
       zone: P
       request: true

@@ -212,14 +212,14 @@ def test_via_context_and_pages(route):
     assert e.via_pages("side", 0) == []
 
 
-def test_formats_from_yaml(tmp_path):
-    from busepanel.sim.engine import PRESETS, load_formats, preset_settings
-    assert {"zakladni", "linka_stale"} <= set(PRESETS)
-    assert preset_settings("dpp")["format"] == "linka_stale"          # old name still works
+def test_systems_from_yaml(tmp_path):
+    from busepanel.sim.engine import DEFAULT_SYSTEM, load_formats, system_settings
     (tmp_path / "vlastni.yaml").write_text("title: Vlastní\ninterior: {items: [next], sequences: {next: [{text: '{name}'}]}}\n",
                                            encoding="utf-8")
-    assert load_formats(str(tmp_path))["vlastni"]["title"] == "Vlastní"
-    assert preset_settings("vlastni", str(tmp_path))["items"] == ["next"]
+    fm = load_formats(str(tmp_path))
+    assert fm["vlastni"]["title"] == "Vlastní"
+    assert system_settings("vlastni", fm)["interior"]["items"] == ["next"]
+    assert system_settings("neni", fm)["interior"]["items"] == DEFAULT_SYSTEM["interior"]["items"]   # fallback
 
 
 def test_exterior_side_composition(univ, route):
@@ -312,9 +312,7 @@ def test_running_text_one_pass(univ, route):
     e = SimEngine(route, {"interior": {"sequences": {}}})
     e.measure = m
     assert e._duration(page, False) == pytest.approx(m(page))         # default: exactly one pass
-    e.settings["interior"]["run_time"] = "min"
-    assert e._duration({**page, "seconds": 60.0}, False) == 60.0      # at least the page time
-    e.settings["interior"]["run_time"] = "once"
+    assert e._duration({**page, "seconds": 60.0, "run_time": "min"}, False) == 60.0   # at least the page time
     assert e._duration({**page, "text": "Krátký"}, False) == 3.0      # static text keeps its time
 
 
@@ -323,32 +321,25 @@ def test_scroll_ms_per_panel(univ):
     assert per[0].profile.geometry.scroll_ms == 35 and profile("BS120").geometry.scroll_ms == 20
 
 
-# ---------------------------------------------------------------- text formats as own files, vehicle = format + overrides
-def test_formats_subfolders_and_builtin_names(tmp_path):
-    from busepanel.sim.engine import load_formats
+# ---------------------------------------------------------------- display systems, vehicle = panels only
+def test_systems_subfolders_and_sections(tmp_path):
+    from busepanel.sim.engine import load_formats, system_settings
     (tmp_path / "skupina").mkdir()
-    (tmp_path / "skupina" / "muj.yaml").write_text("title: Můj\ninterior: {seconds: 5}\nexterior: {seconds: 6}\n", encoding="utf-8")
-    (tmp_path / "zakladni.yaml").write_text("title: Podvrh\ninterior: {seconds: 9}\n", encoding="utf-8")
+    (tmp_path / "skupina" / "muj.yaml").write_text(
+        "title: Můj\ninterior: {seconds: 5}\ninterior_2: {seconds: 2}\nexterior: {seconds: 6}\n", encoding="utf-8")
     fm = load_formats(str(tmp_path))
-    assert fm["skupina/muj"]["exterior"]["seconds"] == 6 and not fm["skupina/muj"]["builtin"]
-    assert fm["zakladni"]["builtin"] and fm["zakladni"]["title"] != "Podvrh"      # built-in cannot be replaced
+    assert fm["skupina/muj"]["exterior"]["seconds"] == 6
+    st = system_settings("skupina/muj", fm)
+    assert st["interior_2"]["seconds"] == 2 and st["interior"]["format"] == "skupina/muj"
 
 
-def test_vehicle_settings_are_format_plus_overrides(tmp_path):
-    from busepanel.sim.engine import (load_formats, merge_settings, override_keys, preset_settings, resolve_settings,
-                                      settings_overrides)
-    (tmp_path / "f.yaml").write_text("title: F\ninterior: {seconds: 7, items: [next]}\n", encoding="utf-8")
-    fm = load_formats(str(tmp_path))
-    full_copy = {"interior": preset_settings("zakladni"), "exterior": {"font": 3, "spacing": 1, "seconds": 4}}
-    assert settings_overrides(full_copy, fm) == {"interior": {"format": "zakladni"}}     # old full copy = no changes
-    mine = {"interior": {"format": "f", "message_mode": "override"}}
-    r = merge_settings(resolve_settings(mine, fm))
-    assert (r["interior"]["seconds"], r["interior"]["items"], r["interior"]["message_mode"]) == (7, ["next"], "override")
-    assert override_keys(mine, fm) == ["interior.message_mode"]
-    old = {"interior": {"format": "dpp", "next_format": "Příští: {name}"}, "exterior": {"format": "{DESTINATION}"}}
-    ov = settings_overrides(old, fm)
-    assert ov["interior"]["format"] == "linka_stale" and "next_format" not in ov["interior"]
-    assert merge_settings(resolve_settings(ov, fm))["interior"]["sequences"]["exterior"] == [{"text": "{DESTINATION}"}]
+def test_vehicle_names_system_only(tmp_path):
+    from busepanel.server import sim_api as A
+    from busepanel.sim.engine import vehicle_system
+    assert vehicle_system({"system": "a"}) == "a"
+    assert vehicle_system({"settings": {"interior": {"format": "b", "seconds": 3}}}) == "b"     # older file
+    cfg = A._clean_vehicle({"name": "x", "panels": [], "settings": {"interior": {"format": "b", "seconds": 3}}})
+    assert cfg == {"name": "x", "panels": [], "system": "b"}
 
 
 def test_format_api_and_preview(tmp_path, univ):
@@ -360,22 +351,24 @@ def test_format_api_and_preview(tmp_path, univ):
     A.SIM.db = univ
     A.route_load(A.PathReq(path="trasy/linka3_kurzy.yaml"))
     A.vehicle_load(A.PathReq(path="vozidla/test/autobus.yaml"))
-    z = A.format_get("zakladni")
+    assert A.vehicle_get()["system"] == "pid_autobus" and "settings" not in A.SIM.vehicle_cfg
+    names = {f["name"] for f in A.formats_list()["formats"]}
+    assert {"pid_autobus", "pid_tramvaj", "dpmp"} <= names
+    z = A.format_get("dpmp")
     A.format_save(A.FormatSave(name="moje/pomaly", title="Pomalý", interior={**z["interior"], "seconds": 6}))
-    assert (work / "formaty" / "moje" / "pomaly.yaml").exists()
+    assert (work / "systemy" / "moje" / "pomaly.yaml").exists()
     assert any(f["name"] == "moje/pomaly" and f["group"] == "moje" for f in A.formats_list()["formats"])
-    with pytest.raises(Exception):
-        A.format_save(A.FormatSave(name="zakladni", interior={}))                       # built-in name
     with pytest.raises(Exception):
         A.format_save(A.FormatSave(name="../ven", interior={}))
     pv = A.format_preview(A.PreviewReq(interior={**z["interior"], "seconds": 6}, panel={"type": "BS120"}, phase="driving", pos=1))
     assert pv["pages"] and all(p["seconds"] == pytest.approx(6, abs=0.15) for p in pv["pages"] if not p["frame"]["dest"].get("run"))
     ext = A.format_preview(A.PreviewReq(interior=z["interior"], panel={"type": "BS210", "variant": "v1", "role": "front"}))
     assert ext["pages"][0]["frame"]["matrix"]
-    A.vehicle_save(A.VehicleSave(config={**A.SIM.vehicle_cfg, "settings": {"interior": {"format": "moje/pomaly"}}}))
+    A.vehicle_use_system(A.SystemReq(name="moje/pomaly"))            # Jízda: only for this run
     assert A.SIM.engine.settings["interior"]["seconds"] == 6
-    v = A.vehicle_to_format(A.NameReq(name="moje/z_vozidla", title="Z vozidla"))
-    assert v["format"] == "moje/z_vozidla" and v["overrides"] == []
+    assert "pid_autobus" in (work / "vozidla" / "test" / "autobus.yaml").read_text(encoding="utf-8")
+    A.vehicle_save(A.VehicleSave(path="vozidla/test/novy.yaml", config=A.SIM.vehicle_cfg))
+    assert "system: moje/pomaly" in (work / "vozidla" / "test" / "novy.yaml").read_text(encoding="utf-8")
 
 
 @pytest.mark.parametrize("t,variant", [("BS 210.0C", "v1"), ("BS210.B", "v2"), ("bs 210.0a", "v4"),
@@ -384,3 +377,25 @@ def test_model_variant(t, variant):
     from busepanel.peripherals import model_variant, peripheral_type
     assert model_variant(t) == variant
     assert peripheral_type({"type": t}) == "BS210"
+
+
+def test_pid_two_line_and_bus_width(tmp_path, univ):
+    import shutil
+    from busepanel.server import sim_api as A
+    work = tmp_path / "w"
+    shutil.copytree(DATA, work)
+    A.init(str(work))
+    A.SIM.db = univ
+    A.route_load(A.PathReq(path="trasy/linka3_kurzy.yaml"))
+    d = A.format_get("pid_autobus")
+    assert d["interior_2"]["sequences"]["next"][0]["text"] == "příští zastávka/next:"
+    two = A.format_preview(A.PreviewReq(interior=d["interior"], interior_2=d["interior_2"], panel={"type": "BS220"},
+                                        phase="driving", pos=1))
+    f = two["pages"][0]["frame"]
+    assert f["geometry"]["columns"] == 128 and f["geometry"]["rows"] == 16
+    # PID: line number + heading in the upper row, the stop name over the whole lower row
+    assert f["line"] and f["heading"]["lo"] == f["geometry"]["dest_left"] and f["dest"]["lo"] == 0
+    assert two["pages"][0]["seconds"] == pytest.approx(4, abs=0.15)          # Obraz 1: 4 s
+    one = A.format_preview(A.PreviewReq(interior=d["interior"], panel={"type": "BS120", "columns": 120}, phase="driving", pos=1))
+    g = one["pages"][0]["frame"]
+    assert g["geometry"]["columns"] == 120 and g["geometry"]["dest_right"] == 119 and not g.get("heading")

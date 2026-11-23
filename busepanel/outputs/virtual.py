@@ -91,8 +91,12 @@ class VirtualPanel(Output):
         if fonts is None:
             return out
 
-        def item(b, area):
-            return preview_item(b, fonts, g, defaults, area) if b else None
+        def item(b, area, lo=None, hi=None):
+            return preview_item(b, fonts, g, defaults, area, lo, hi) if b else None
+
+        two = g.rows > 8
+        # two-line panel (PID layout): upper row = line number + heading next to it, lower row = text over
+        # the whole width [ODHAD – how the real panel splits "heading LF text"]
 
         def split(b):
             """two-line panels: 'heading LF text' -> (heading, text)"""
@@ -113,8 +117,13 @@ class VirtualPanel(Output):
             out["heading"], out["dest"] = item(head, "full"), item(text, "full")
         elif m == "line_text":
             head, text = split(text)
-            out["heading"] = item(head, "full")
-            out["line"], out["dest"] = item(line, "line"), item(text, "dest")
+            out["line"] = item(line, "line")
+            if two:
+                out["heading"] = item(head, "full", g.dest_left)
+                out["dest"] = item(text, "full")
+            else:
+                out["heading"] = item(head, "full")
+                out["dest"] = item(text, "dest")
         elif m == "line_zI":
             zi = self.values["zI"] + b"\r" if self.values["zI"] else None
             out["line"], out["dest"] = item(line, "line"), item(zi, "dest")

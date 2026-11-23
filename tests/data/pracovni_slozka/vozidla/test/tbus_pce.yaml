@@ -1,0 +1,23 @@
+name: Testovací vozidlo – všechny panely (test v počítači)
+panels:
+- name: Vnitřní BS120
+  type: BS120
+  role: interior
+  output: virtual
+- name: Čelní BS 210.0C (v1)
+  type: BS210
+  variant: v1
+  role: front
+  output: virtual
+- name: Boční BS 210.0B (v2)
+  type: BS210
+  variant: v2
+  stop_field: bottom
+  role: side
+  output: virtual
+- name: Zadní BS 210.0A (v4)
+  type: BS210
+  variant: v4
+  role: rear
+  output: virtual
+system: dpmp

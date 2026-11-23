@@ -1,7 +1,7 @@
 line: "3"
 directions:
   A:
-    destination: LÁZNĚ BOHDANEČ,U Mlýnů
+    destination: LÁZNĚ BOHDANEČ
     stops:
     - name: Hlavní nádraží
       zone: I
@@ -24,6 +24,7 @@ directions:
       icons:
       - prestup
       note: Masarykovo nám.(st. 1)
+      via: true
     - name: Zimní stadion
       zone: I
       zone_name: Pardubice
@@ -38,6 +39,7 @@ directions:
       icons:
       - prestup
       note: Terminál Univerzita (st. 1)
+      via: true
     - name: Poděbradská
       zone: I
       zone_name: Pardubice
@@ -51,17 +53,18 @@ directions:
       zone: I
       zone_name: Pardubice
       note: Globus
+      via: true
     - name: Semtín, zastávka
       zone: I
       zone_name: Pardubice
       request: true
       note: Semtín,zastávka
-      via: true
     - name: Semtín, hlavní brána
       zone: I
       zone_name: Pardubice
       request: true
       note: Semtín,hlavní brána
+      via: true
     - name: Semtín, vlečka
       zone: I
       zone_name: Pardubice
@@ -72,12 +75,12 @@ directions:
       zone_name: Pardubice
       request: true
       note: Rybitví,závod
-      via: true
     - name: Rybitví, UMA továrna
       zone: I
       zone_name: Pardubice
       request: true
       note: Rybitví,UMA továrna
+      via: true
     - name: Rybitví, UMA točna
       zone: I
       zone_name: Pardubice

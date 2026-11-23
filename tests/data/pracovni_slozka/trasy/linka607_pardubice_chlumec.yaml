@@ -1,136 +1,276 @@
 line: "607"
-destination: Chlumec nad Cidlinou, žst.
-via: Lázně Bohdaneč - Přepychy
-stops:
-- name: Pardubice, Hlavní nádraží
-  zone: "600"
-  zone_name: Pardubice
-  icons:
-  - vlak
-  note: Pardubice,,Hlavní nádraží
-- name: Pardubice, Masarykovo nám.
-  zone: "600"
-  zone_name: Pardubice
-  note: Pardubice,,Masarykovo nám.
-- name: Pardubice, Terminál Univerzita
-  zone: "600"
-  zone_name: Pardubice
-  icons:
-  - prestup
-  note: Pardubice,,Terminál Univerzita
-- name: Pardubice, Poděbradská
-  zone: "600"
-  zone_name: Pardubice
-  request: true
-  note: Pardubice,,Poděbradská
-- name: Pardubice, Trnová, křiž.
-  zone: "600"
-  zone_name: Pardubice
-  request: true
-  note: Pardubice,Trnová,křiž.
-- name: Pardubice, Semtín, žel.zast.
-  zone: "600"
-  zone_name: Pardubice
-  icons:
-  - vlak
-  request: true
-  note: Pardubice,Semtín,žel.zast.
-- name: Pardubice, Semtín, hl.brána
-  zone: "600"
-  zone_name: Pardubice
-  request: true
-  note: Pardubice,Semtín,hl.brána
-- name: Rybitví, závod
-  zone: "604"
-  zone_name: Rybitví
-  request: true
-  note: Rybitví,,závod
-- name: Rybitví, Uma
-  zone: "604"
-  zone_name: Rybitví
-  request: true
-  note: Rybitví,,Uma
-- name: Lázně Bohdaneč, aut.nádr.
-  zone: "605"
-  zone_name: Lázně Bohdaneč
-  note: Lázně Bohdaneč,,aut.nádr.
-- name: Lázně Bohdaneč, Na Pískách
-  zone: "605"
-  zone_name: Lázně Bohdaneč
-  request: true
-  note: Lázně Bohdaneč,,Na Pískách
-- name: Bukovka
-  zone: "670"
-  zone_name: Rohovládova Bělá
-  note: Bukovka
-- name: Rohovládova Bělá, odb.k Vlčí Habřině
-  zone: "670"
-  zone_name: Rohovládova Bělá
-  note: Rohovládova Bělá,,odb.k Vlčí Habřině
-- name: Rohovládova Bělá, BUS terminál
-  zone: "670"
-  zone_name: Rohovládova Bělá
-  note: Rohovládova Bělá,,BUS terminál
-- name: Voleč, Třídeň
-  zone: "676"
-  zone_name: Voleč
-  note: Voleč,,Třídeň
-- name: Voleč, ObÚ
-  zone: "676"
-  zone_name: Voleč
-  note: Voleč,,ObÚ
-- name: Chýšť
-  zone: "673"
-  zone_name: Chýšť
-  note: Chýšť
-- name: Malé Výkleky
-  zone: "673"
-  zone_name: Chýšť
-  note: Malé Výkleky
-- name: Vápno
-  zone: "622"
-  zone_name: Strašov
-  note: Vápno
-- name: Přepychy
-  zone: "622"
-  zone_name: Strašov
-  note: Přepychy
-- name: Klamoš, hájovna
-  zone: "174"
-  zone_name: Klamoš
-  request: true
-  note: Klamoš,,hájovna
-- name: Klamoš
-  zone: "174"
-  zone_name: Klamoš
-  note: Klamoš
-- name: Klamoš, Rtánov
-  zone: "174"
-  zone_name: Klamoš
-  note: Klamoš,Rtánov
-- name: Nové Město, rybník
-  zone: "175"
-  zone_name: Nové Město(HK)
-  note: Nové Město,,rybník
-- name: Chlumec n.Cidl., OSEVA
-  zone: "170"
-  zone_name: Chlumec n. Cidlinou
-  note: Chlumec n.Cidl.,,OSEVA
-- name: Chlumec n.Cidl., nám.
-  zone: "170"
-  zone_name: Chlumec n. Cidlinou
-  note: Chlumec n.Cidl.,,nám.
-- name: Chlumec n.Cidl., sokolovna
-  zone: "170"
-  zone_name: Chlumec n. Cidlinou
-  note: Chlumec n.Cidl.,,sokolovna
-- name: Chlumec n.Cidl., žel.st.
-  zone: "170"
-  zone_name: Chlumec n. Cidlinou
-  icons:
-  - vlak
-  note: Chlumec n.Cidl.,,žel.st.
 messages:
   odklon: Spoj jede odklonem
   zpozdeni: Spoj má zpoždění, omlouváme se
   iredo: Na lince platí tarif IDS IREDO
+directions:
+  "1":
+    destination: Chlumec nad Cidlinou, žst.
+    stops:
+    - name: Pardubice, Hlavní nádraží
+      zone: "600"
+      zone_name: Pardubice
+      icons:
+      - vlak
+      note: Pardubice,,Hlavní nádraží
+    - name: Pardubice, Masarykovo nám.
+      zone: "600"
+      zone_name: Pardubice
+      note: Pardubice,,Masarykovo nám.
+    - name: Pardubice, Terminál Univerzita
+      zone: "600"
+      zone_name: Pardubice
+      icons:
+      - prestup
+      note: Pardubice,,Terminál Univerzita
+    - name: Pardubice, Poděbradská
+      zone: "600"
+      zone_name: Pardubice
+      request: true
+      note: Pardubice,,Poděbradská
+    - name: Pardubice, Trnová, křiž.
+      zone: "600"
+      zone_name: Pardubice
+      request: true
+      note: Pardubice,Trnová,křiž.
+    - name: Pardubice, Semtín, žel.zast.
+      zone: "600"
+      zone_name: Pardubice
+      icons:
+      - vlak
+      request: true
+      note: Pardubice,Semtín,žel.zast.
+    - name: Pardubice, Semtín, hl.brána
+      zone: "600"
+      zone_name: Pardubice
+      request: true
+      note: Pardubice,Semtín,hl.brána
+    - name: Rybitví, závod
+      zone: "604"
+      zone_name: Rybitví
+      request: true
+      note: Rybitví,,závod
+    - name: Rybitví, Uma
+      zone: "604"
+      zone_name: Rybitví
+      request: true
+      note: Rybitví,,Uma
+    - name: Lázně Bohdaneč, aut.nádr.
+      zone: "605"
+      zone_name: Lázně Bohdaneč
+      note: Lázně Bohdaneč,,aut.nádr.
+      via: true
+    - name: Lázně Bohdaneč, Na Pískách
+      zone: "605"
+      zone_name: Lázně Bohdaneč
+      request: true
+      note: Lázně Bohdaneč,,Na Pískách
+    - name: Bukovka
+      zone: "670"
+      zone_name: Rohovládova Bělá
+      note: Bukovka
+    - name: Rohovládova Bělá, odb.k Vlčí Habřině
+      zone: "670"
+      zone_name: Rohovládova Bělá
+      note: Rohovládova Bělá,,odb.k Vlčí Habřině
+    - name: Rohovládova Bělá, BUS terminál
+      zone: "670"
+      zone_name: Rohovládova Bělá
+      note: Rohovládova Bělá,,BUS terminál
+      via: true
+    - name: Voleč, Třídeň
+      zone: "676"
+      zone_name: Voleč
+      note: Voleč,,Třídeň
+    - name: Voleč, ObÚ
+      zone: "676"
+      zone_name: Voleč
+      note: Voleč,,ObÚ
+    - name: Chýšť
+      zone: "673"
+      zone_name: Chýšť
+      note: Chýšť
+    - name: Malé Výkleky
+      zone: "673"
+      zone_name: Chýšť
+      note: Malé Výkleky
+    - name: Vápno
+      zone: "622"
+      zone_name: Strašov
+      note: Vápno
+      via: true
+    - name: Přepychy
+      zone: "622"
+      zone_name: Strašov
+      note: Přepychy
+    - name: Klamoš, hájovna
+      zone: "174"
+      zone_name: Klamoš
+      request: true
+      note: Klamoš,,hájovna
+    - name: Klamoš
+      zone: "174"
+      zone_name: Klamoš
+      note: Klamoš
+    - name: Klamoš, Rtánov
+      zone: "174"
+      zone_name: Klamoš
+      note: Klamoš,Rtánov
+    - name: Nové Město, rybník
+      zone: "175"
+      zone_name: Nové Město(HK)
+      note: Nové Město,,rybník
+      via: true
+    - name: Chlumec n.Cidl., OSEVA
+      zone: "170"
+      zone_name: Chlumec n. Cidlinou
+      note: Chlumec n.Cidl.,,OSEVA
+    - name: Chlumec n.Cidl., nám.
+      zone: "170"
+      zone_name: Chlumec n. Cidlinou
+      note: Chlumec n.Cidl.,,nám.
+    - name: Chlumec n.Cidl., sokolovna
+      zone: "170"
+      zone_name: Chlumec n. Cidlinou
+      note: Chlumec n.Cidl.,,sokolovna
+    - name: Chlumec n.Cidl., žel.st.
+      zone: "170"
+      zone_name: Chlumec n. Cidlinou
+      icons:
+      - vlak
+      note: Chlumec n.Cidl.,,žel.st.
+  "2":
+    destination: Pardubice, Hlavní nádraží
+    stops:
+    - name: Chlumec n.Cidl., žel.st.
+      zone: "170"
+      zone_name: Chlumec n. Cidlinou
+      icons:
+      - vlak
+      note: Chlumec n.Cidl.,,žel.st.
+    - name: Chlumec n.Cidl., sokolovna
+      zone: "170"
+      zone_name: Chlumec n. Cidlinou
+      note: Chlumec n.Cidl.,,sokolovna
+    - name: Chlumec n.Cidl., nám.
+      zone: "170"
+      zone_name: Chlumec n. Cidlinou
+      note: Chlumec n.Cidl.,,nám.
+    - name: Chlumec n.Cidl., OSEVA
+      zone: "170"
+      zone_name: Chlumec n. Cidlinou
+      note: Chlumec n.Cidl.,,OSEVA
+    - name: Nové Město, rybník
+      zone: "175"
+      zone_name: Nové Město(HK)
+      note: Nové Město,,rybník
+      via: true
+    - name: Klamoš, Rtánov
+      zone: "174"
+      zone_name: Klamoš
+      note: Klamoš,Rtánov
+    - name: Klamoš
+      zone: "174"
+      zone_name: Klamoš
+      note: Klamoš
+    - name: Klamoš, hájovna
+      zone: "174"
+      zone_name: Klamoš
+      request: true
+      note: Klamoš,,hájovna
+    - name: Přepychy
+      zone: "622"
+      zone_name: Strašov
+      note: Přepychy
+    - name: Vápno
+      zone: "622"
+      zone_name: Strašov
+      note: Vápno
+      via: true
+    - name: Malé Výkleky
+      zone: "673"
+      zone_name: Chýšť
+      note: Malé Výkleky
+    - name: Chýšť
+      zone: "673"
+      zone_name: Chýšť
+      note: Chýšť
+    - name: Voleč, ObÚ
+      zone: "676"
+      zone_name: Voleč
+      note: Voleč,,ObÚ
+    - name: Voleč, Třídeň
+      zone: "676"
+      zone_name: Voleč
+      note: Voleč,,Třídeň
+    - name: Rohovládova Bělá, BUS terminál
+      zone: "670"
+      zone_name: Rohovládova Bělá
+      note: Rohovládova Bělá,,BUS terminál
+      via: true
+    - name: Rohovládova Bělá, odb.k Vlčí Habřině
+      zone: "670"
+      zone_name: Rohovládova Bělá
+      note: Rohovládova Bělá,,odb.k Vlčí Habřině
+    - name: Bukovka
+      zone: "670"
+      zone_name: Rohovládova Bělá
+      note: Bukovka
+    - name: Lázně Bohdaneč, Na Pískách
+      zone: "605"
+      zone_name: Lázně Bohdaneč
+      request: true
+      note: Lázně Bohdaneč,,Na Pískách
+    - name: Lázně Bohdaneč, aut.nádr.
+      zone: "605"
+      zone_name: Lázně Bohdaneč
+      note: Lázně Bohdaneč,,aut.nádr.
+      via: true
+    - name: Rybitví, Uma
+      zone: "604"
+      zone_name: Rybitví
+      request: true
+      note: Rybitví,,Uma
+    - name: Rybitví, závod
+      zone: "604"
+      zone_name: Rybitví
+      request: true
+      note: Rybitví,,závod
+    - name: Pardubice, Semtín, hl.brána
+      zone: "600"
+      zone_name: Pardubice
+      request: true
+      note: Pardubice,Semtín,hl.brána
+    - name: Pardubice, Semtín, žel.zast.
+      zone: "600"
+      zone_name: Pardubice
+      icons:
+      - vlak
+      request: true
+      note: Pardubice,Semtín,žel.zast.
+    - name: Pardubice, Trnová, křiž.
+      zone: "600"
+      zone_name: Pardubice
+      request: true
+      note: Pardubice,Trnová,křiž.
+    - name: Pardubice, Poděbradská
+      zone: "600"
+      zone_name: Pardubice
+      request: true
+      note: Pardubice,,Poděbradská
+    - name: Pardubice, Terminál Univerzita
+      zone: "600"
+      zone_name: Pardubice
+      icons:
+      - prestup
+      note: Pardubice,,Terminál Univerzita
+    - name: Pardubice, Masarykovo nám.
+      zone: "600"
+      zone_name: Pardubice
+      note: Pardubice,,Masarykovo nám.
+    - name: Pardubice, Hlavní nádraží
+      zone: "600"
+      zone_name: Pardubice
+      icons:
+      - vlak
+      note: Pardubice,,Hlavní nádraží

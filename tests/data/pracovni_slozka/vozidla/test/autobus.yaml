@@ -1,21 +1,26 @@
-name: Testovací autobus (test v počítači)
+name: Testovací vozidlo – všechny panely (test v počítači)
+system: pid_autobus
 panels:
 - name: Vnitřní BS120
   type: BS120
   role: interior
   output: virtual
-- name: Čelní BS210 (v1)
+- name: Vnitřní dvouřádkový
+  type: BS220
+  role: interior
+  output: virtual
+- name: Čelní BS 210.0C (v1)
   type: BS210
   variant: v1
   role: front
   output: virtual
-- name: Boční BS210 (v2)
+- name: Boční BS 210.0B (v2)
   type: BS210
   variant: v2
   stop_field: bottom
   role: side
   output: virtual
-- name: Zadní BS210 (v4)
+- name: Zadní BS 210.0A (v4)
   type: BS210
   variant: v4
   role: rear
@@ -26,51 +31,3 @@ panels:
   output: lcd
   http_port: 8091
   host: 127.0.0.1
-settings:
-  interior:
-    items:
-    - next
-    - time
-    - zone
-    seconds: 3
-    time_format: "%H:%M"
-    at_stop: line_dest
-    message_mode: cycle
-    font: 3
-    spacing: 1
-    sequences:
-      next:
-      - text: Příští zastávka / Next stop
-        font: 0
-        role: heading
-      - text: '{name}{icons}'
-      - text: zastávka na znamení / request stop
-        font: 0
-        when: request
-      destination:
-      - text: Směr / Direction
-        font: 0
-        role: heading
-      - text: '{destination}'
-      - text: Přes {via}
-        font: 0
-        when: via
-      exterior:
-      - text: '{destination}'
-      zone:
-      - text: Tarifní zóna / Zone
-        font: 0
-        role: heading
-      - text: '{zone} {zone_name}'
-      time:
-      - text: '{time}'
-      message:
-      - text: '{message}'
-      final:
-      - text: Konečná zastávka - prosíme, vystupte
-      stop:
-      - text: '{name}{icons}'
-  exterior:
-    font: 3
-    spacing: 1
-    seconds: 4

@@ -27,8 +27,8 @@ from .interior import PanelSlot
 from .lcd import LcdSlot
 
 TYPES = {
-    "BS120": {"title": "BS 120 – vnitřní jednořádkový (LED, volný text)", "class": "interior"},
-    "BS220": {"title": "BS 220 – vnitřní dvouřádkový (neověřeno)", "class": "interior"},
+    "BS120": {"title": "BS 120.0A – vnitřní jednořádkový 8×135 (LED, volný text)", "class": "interior"},
+    "BS220": {"title": "BS 220 – vnitřní dvouřádkový 16×128 (odhad)", "class": "interior"},
     "BS210": {"title": "BS 210 – vnější DOT-LED (gBUSE0; 210.0C čelní, 210.0B boční, 210.0A zadní)", "class": "exterior"},
     "LCD": {"title": "LCD panel – webová stránka (doplněk)", "class": "lcd"},
 }
@@ -121,6 +121,9 @@ def build_peripherals(cfg: dict, project, base_dir: str = ".", line_map: dict | 
             result.append(ExteriorSlot(name, role, db, bus, p, line_map=line_map))
         else:
             prof = get_profile(p.get("profile") or ptype)
+            if p.get("columns") and int(p["columns"]) != prof.geometry.columns:   # e.g. BS120 8×120 in buses
+                from ..panels.profile import geometry_for
+                prof = dataclasses.replace(prof, geometry=geometry_for(prof.name, int(p["columns"])))
             if p.get("scroll_ms"):           # running-text speed calibrated for this panel [ms per column]
                 prof = dataclasses.replace(prof, geometry=dataclasses.replace(prof.geometry, scroll_ms=int(p["scroll_ms"])))
             emu = VirtualPanel(name if not bus.real else name + " (náhled)", project, prof)

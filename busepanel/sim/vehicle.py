@@ -7,7 +7,7 @@ Vehicle config (YAML, vozidla/<name>.yaml) – see busepanel/peripherals/__init_
     - {name: vnitřní, role: interior, type: BS120, bus: ibis}
     - {name: čelní,   role: front,    type: BS210, variant: v1, bus: ibis}
     - {name: náhled,  role: interior, profile: BS120, output: virtual}     # old form: own output
-  settings: {interior: {items: [next, time, zone], seconds: 4}}
+  system: pid_autobus          # display system (systemy/pid_autobus.yaml); vehicle = panels only
 """
 from __future__ import annotations
 
@@ -37,12 +37,12 @@ def free_text_layout(spec: dict, prof, fonts, line_map: dict | None = None):
     text = spec.get("text") or ""
     line = spec.get("line")
     lk = line_key(line, line_map) if line else None
-    if line and lk is None:              # line not in the database -> put it into the text
-        text, lk = f"{line}  {text}", None
+    g = prof.geometry
+    if line and lk is None and g.rows <= 8:   # line not in the database -> put it into the text
+        text, lk = f"{line}  {text}", None    # (two-line panels: into the upper row, see spec_telegrams)
         line = None
     payload, _ = text_payload(fonts, text, spec.get("font"), spec.get("spacing"))
-    g = prof.geometry
-    room = g.dest_width if (line and lk) else g.columns
+    room = g.dest_width if (line and lk and g.rows <= 8) else g.columns     # two-line: lower row = full width
     width = _width(payload, fonts)
     runs = bool(spec.get("run") or (spec.get("auto_run", True) and width > room))
     return payload, (lk if line else None), room, width, runs
@@ -65,9 +65,13 @@ def spec_telegrams(spec: dict, prof, fonts, line_map: dict | None = None) -> lis
         if runs:
             payload = _with_run(payload)
         g = prof.geometry
-        if spec.get("heading") and g.rows > 8:
-            # two-line panel: heading on the upper line, text below (LF separator – NOT verified on hardware)
-            head, _ = text_payload(fonts, spec["heading"], spec.get("heading_font"), spec.get("spacing"))
+        if g.rows > 8 and (spec.get("heading") or (spec.get("line") and not lk)):
+            # two-line panel: heading on the upper line, text below (LF separator – NOT verified on hardware);
+            # a line number missing in the database goes in front of the heading
+            htext = spec.get("heading") or ""
+            if spec.get("line") and not lk:
+                htext = f"{spec['line']}  {htext}"
+            head, _ = text_payload(fonts, htext, spec.get("heading_font"), spec.get("spacing"))
             payload = head + b"\n" + payload
         # The real BS120 shows the previously stored text right after a mode switch and takes
         # the new one only with the next v -> send v again after the switch (verified issue).

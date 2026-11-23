@@ -18,48 +18,55 @@ import time
 
 import yaml
 
-FORMATS_DIR = os.path.join(os.path.dirname(__file__), "formats")
-FORMAT_ALIASES = {"dpp": "linka_stale"}       # names used by BUSE Studio 2.x vehicle files
+DEFAULT_FILE = os.path.join(os.path.dirname(__file__), "default_system.yaml")
+SYSTEMS_DIR = "systemy"                       # display systems in the working folder
+LEGACY_DIRS = ("formaty",)                    # older name of the folder, still read
+SECTIONS = ("interior", "interior_2", "exterior")
+SECTION_TITLES = {"interior": "vnitřní jednořádkový", "interior_2": "vnitřní dvouřádkový", "exterior": "vnější panely"}
 
 
-def _format_files(d: str, recursive: bool):
+def _system_files(d: str):
     for root, dirs, files in os.walk(d):
         dirs.sort()
         for fn in sorted(files):
             if fn.endswith((".yaml", ".yml")):
                 full = os.path.join(root, fn)
                 yield os.path.splitext(os.path.relpath(full, d))[0].replace(os.sep, "/"), full
-        if not recursive:
-            break
 
 
-def load_formats(extra_dir: str | None = None) -> dict:
-    """Text formats (skladba textů): built-in sim/formats/*.yaml + <working folder>/formaty/**/*.yaml
-    (subfolders = groups, name "group/file"). name -> {"title", "interior", "exterior", "builtin", "path"}"""
-    out = {}
-    for d, builtin in ((FORMATS_DIR, True), (extra_dir, False)):
-        if not d or not os.path.isdir(d):
-            continue
-        for name, full in _format_files(d, recursive=not builtin):
-            if not builtin and name in BUILTIN_NAMES:
-                continue                                  # built-in names cannot be replaced
-            try:
-                with open(full, encoding="utf-8") as f:
-                    data = yaml.safe_load(f) or {}
-            except (OSError, yaml.YAMLError):
-                continue
-            if isinstance(data.get("interior"), dict):
-                out[name] = {"title": str(data.get("title") or name), "interior": data["interior"],
-                             "exterior": dict(data.get("exterior") or {}), "builtin": builtin,
-                             "path": None if builtin else full}
+def _read_system(full: str, name: str) -> dict | None:
+    try:
+        with open(full, encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+    except (OSError, yaml.YAMLError):
+        return None
+    if not isinstance(data.get("interior"), dict):
+        return None
+    out = {"title": str(data.get("title") or name), "path": full}
+    for sec in SECTIONS:
+        out[sec] = dict(data.get(sec) or {})
     return out
 
 
-BUILTIN_NAMES = {n for n, _ in _format_files(FORMATS_DIR, recursive=False)}
+def load_formats(*dirs: str | None) -> dict:
+    """Display systems (systémy zobrazení): <working folder>/systemy/**/*.yaml (subfolders = groups,
+    name "group/file"). One file says what every kind of display shows: interior (single-line),
+    interior_2 (two-line, optional – else the single-line pages with headings) and exterior panels.
+    name -> {"title", "interior", "interior_2", "exterior", "path"}"""
+    out = {}
+    for d in dirs:
+        if not d or not os.path.isdir(d):
+            continue
+        for name, full in _system_files(d):
+            if name not in out:
+                f = _read_system(full, name)
+                if f:
+                    out[name] = f
+    return out
 
 
-PRESETS = load_formats()
-DEFAULT_SEQUENCES = copy.deepcopy(PRESETS["zakladni"]["interior"]["sequences"])
+DEFAULT_SYSTEM = _read_system(DEFAULT_FILE, "výchozí")
+DEFAULT_SEQUENCES = copy.deepcopy(DEFAULT_SYSTEM["interior"]["sequences"])
 
 DEFAULT_SETTINGS = {
     "interior": {
@@ -80,88 +87,43 @@ _UNSET = object()
 CONDITIONS = {"always", "request", "not_request", "via", "zone"}
 
 
-def preset_settings(name: str, extra_dir: str | None = None) -> dict:
-    """Interior settings of a format (deep copy, tagged with the format name)."""
-    name = FORMAT_ALIASES.get(name, name)
-    formats = load_formats(extra_dir) if extra_dir else PRESETS
-    if name not in formats:
-        raise ValueError(f"neznámý formát {name!r}")
-    return {**copy.deepcopy(formats[name]["interior"]), "format": name}
-
-
 def format_name(settings: dict | None) -> str:
-    name = str(((settings or {}).get("interior") or {}).get("format") or "zakladni")
-    return FORMAT_ALIASES.get(name, name)
+    """Name of the display system in engine settings ({"interior": {"format": name}})."""
+    return str(((settings or {}).get("interior") or {}).get("format") or "")
+
+
+def system_settings(name: str | None, formats: dict | None = None) -> dict:
+    """Engine settings of a display system (the built-in default when it does not exist)."""
+    f = (formats or {}).get(name or "") or DEFAULT_SYSTEM
+    out = {sec: copy.deepcopy(f.get(sec) or {}) for sec in SECTIONS}
+    out["interior"]["format"] = name or ""
+    if not out["interior_2"]:
+        out.pop("interior_2")
+    return out
 
 
 def resolve_settings(settings: dict | None, formats: dict | None = None) -> dict:
-    """Vehicle settings = its text format (formaty/ or built-in) + the vehicle's own overrides.
-    A vehicle file stores only `interior.format` and what it changes; old files with a full copy work too."""
-    formats = PRESETS if formats is None else formats
-    name = format_name(settings)
-    f = formats.get(name) or formats.get("zakladni") or {}
-    base = {"interior": {**copy.deepcopy(f.get("interior") or {}), "format": name},
-            "exterior": copy.deepcopy(f.get("exterior") or {})}
+    """{"interior": {"format": name}, …} -> the system's settings; other keys given are applied on top
+    (used by the preview of an unsaved system)."""
+    base = system_settings(format_name(settings), formats)
     for role, vals in (settings or {}).items():
         vals = copy.deepcopy(vals or {})
+        if role == "interior":
+            vals.pop("format", None)
         seq = vals.pop("sequences", None)
         base.setdefault(role, {}).update(vals)
         if seq:
             base[role].setdefault("sequences", {}).update(seq)
-    base["interior"]["format"] = name
     return base
 
 
-LEGACY_KEYS = {"interior": {"next_format", "request_suffix", "zone_format", "final_text", "format"},
-               "exterior": {"font", "spacing", "format"}}
-
-
-def settings_overrides(settings: dict | None, formats: dict | None = None) -> dict:
-    """Only what a vehicle changes against its format (what is stored in the vehicle file).
-    Old keys (next_format, exterior format …) are first turned into sequences, so nothing is lost."""
-    formats = PRESETS if formats is None else formats
-    name = format_name(settings)
-    if name not in formats:
-        return copy.deepcopy(settings or {})
-    full = merge_settings(resolve_settings({"interior": {"format": name}}, formats))
-    mine = merge_settings(resolve_settings(settings, formats))
-    out = {}
-    for role, vals in mine.items():
-        base = full.get(role, {})
-        o = {}
-        for k, v in vals.items():
-            if k in LEGACY_KEYS.get(role, ()):
-                continue
-            if k == "sequences":
-                seq = {n: pg for n, pg in (v or {}).items() if base.get("sequences", {}).get(n) != pg}
-                if seq:
-                    o["sequences"] = copy.deepcopy(seq)
-            elif base.get(k) != v:
-                o[k] = copy.deepcopy(v)
-        if o:
-            out[role] = o
-    out["interior"] = {"format": name, **out.get("interior", {})}
-    return out
-
-
-def override_keys(settings: dict | None, formats: dict | None = None) -> list[str]:
-    """Readable list of what the vehicle changes against its format (for the UI)."""
-    ov = settings_overrides(settings, formats)
-    keys = []
-    for role, vals in ov.items():
-        for k, v in vals.items():
-            if k == "format":
-                continue
-            if k == "sequences":
-                keys += [f"{role}.sequences.{n}" for n in v]
-            else:
-                keys.append(f"{role}.{k}")
-    return keys
+def vehicle_system(cfg: dict | None) -> str:
+    """Display system named by a vehicle file: `system:` (older files: settings.interior.format)."""
+    cfg = cfg or {}
+    return str(cfg.get("system") or format_name(cfg.get("settings")) or "")
 
 
 def merge_settings(user: dict | None) -> dict:
-    if ((user or {}).get("interior") or {}).get("format"):
-        user = resolve_settings(user)      # built-in formats; the server resolves formaty/ beforehand
     s = copy.deepcopy(DEFAULT_SETTINGS)
     for role, vals in (user or {}).items():
         vals = dict(vals or {})
@@ -281,6 +243,9 @@ class SimEngine:
         st = self.route.stops
         stop = st[self.pos] if st else None
         last = st[-1] if st else None
+        # next stop: the one driven to, or (at a stop / before departure) the following one
+        k = self.pos if self.phase == "driving" else self.pos + 1
+        nxt = st[k] if st and k < len(st) and self.phase != "ended" else None
         s = self.settings["interior"]
         return {
             "name": stop.name if stop else "", "icons": self._icons(stop) if stop else "",
@@ -289,6 +254,7 @@ class SimEngine:
             "destination": self.route.destination, "DESTINATION": self.route.destination.upper(),
             "dest_icons": self._icons(last) if last else "", "via": " - ".join(x.name for x in self.via_stops()),
             "line": self.route.line,
+            "next_stop": nxt.name if nxt else "", "next_icons": self._icons(nxt) if nxt else "",
             "time": dt.datetime.fromtimestamp(now).strftime(s.get("time_format", "%H:%M")),
             "message": self.message or "",
         }
@@ -299,10 +265,15 @@ class SimEngine:
         return {"always": True, "request": ctx["is_request"], "not_request": not ctx["is_request"],
                 "via": bool(ctx["via"]), "zone": bool(ctx["zone"])}.get(w, True)
 
+    def _seq(self, name: str, role_settings: dict | None = None) -> list:
+        for seqs in ((role_settings or {}).get("sequences"), self.settings["interior"].get("sequences"), DEFAULT_SEQUENCES):
+            if (seqs or {}).get(name):
+                return seqs[name]
+        return []
+
     def _pages(self, seq_name: str, ctx: dict, role_settings: dict) -> list[dict]:
-        seqs = self.settings["interior"].get("sequences") or {}
         out = []
-        for p in seqs.get(seq_name) or DEFAULT_SEQUENCES.get(seq_name, []):
+        for p in self._seq(seq_name, role_settings):
             if not self._ok(p, {**ctx, "via_stop": ""}):
                 continue
             try:
@@ -314,7 +285,8 @@ class SimEngine:
                         "font": p.get("font", role_settings.get("font")),
                         "spacing": p.get("spacing", role_settings.get("spacing")),
                         "seconds": float(p.get("seconds") or role_settings.get("seconds") or 3),
-                        "role": p.get("role", "text"), "run": bool(p.get("run"))})
+                        "role": p.get("role", "text"), "run": bool(p.get("run")),
+                        "run_time": role_settings.get("run_time", "once")})
         return out
 
     def _duration(self, page: dict, two_line: bool, line=None) -> float:
@@ -325,11 +297,19 @@ class SimEngine:
         if m:
             t = m(page, line) or 0
             if t:
-                d = t if self.settings["interior"].get("run_time", "once") == "once" else max(d, t + 0.5)
+                d = t if page.get("run_time", "once") == "once" else max(d, t + 0.5)
         return d
 
     def _show(self, pages: list[dict], now: float, two_line: bool, line) -> dict:
         return self._spec(self._pick(pages, now, two_line, line), line)
+
+    def _int_settings(self, two_line: bool) -> dict:
+        """Settings of the interior display: two-line panels use section interior_2 when the system has it."""
+        s = self.settings["interior"]
+        s2 = self.settings.get("interior_2") if two_line else None
+        if not s2:
+            return s
+        return {**{k: v for k, v in s.items() if k != "sequences"}, **s2}
 
     def _pick(self, pages: list[dict], now: float, two_line: bool, line=None) -> dict | None:
         """Choose the page for `now`; on two-line panels a heading pairs with the next page."""
@@ -375,21 +355,25 @@ class SimEngine:
 
     # ---- displays -----------------------------------------------------------
     def interior(self, now: float | None = None, two_line: bool = False) -> dict:
-        s = self.settings["interior"]
+        s = self._int_settings(two_line)
         now = self.clock() if now is None else now
         ctx = self._context(now)
         st = self.route.stops
         ln = self.route.line if s.get("line") == "always" else None   # line number on every page
+        full = self.route.line
+
+        def show(pages, line):
+            return self._show(pages, now, two_line, line)
         if self.phase == "idle" or not st:
-            return self._show(self._pages("destination", ctx, s), now, two_line, self.route.line)
+            return show(self._pages("destination", ctx, s), full)
         if self.message and s.get("message_mode") == "override":
-            return self._show(self._pages("message", ctx, s), now, two_line, ln)
+            return show(self._pages("message", ctx, s), ln)
         if self.phase == "ended":
-            return self._show(self._pages("final", ctx, s), now, two_line, ln)
+            return show(self._pages("final", ctx, s), ln)
         if self.phase == "at_stop":
             if s.get("at_stop") == "stop_name":
-                return self._show(self._pages("stop", ctx, s), now, two_line, ln)
-            return self._show(self._pages("destination", ctx, s), now, two_line, self.route.line)
+                return show(self._pages("stop", ctx, s), ln)
+            return show(self._pages("destination", ctx, s), full)
         pages = []
         for it in s.get("items") or ["next"]:
             if it == "zone" and not ctx["zone"]:
@@ -397,7 +381,7 @@ class SimEngine:
             pages += self._pages(it, ctx, s)
         if self.message:
             pages += self._pages("message", ctx, s)
-        return self._show(pages, now, two_line, ln)
+        return show(pages, ln)
 
     def via_stops(self) -> list:
         """Via stops (marked via: true) still ahead, without the terminal."""
@@ -409,12 +393,12 @@ class SimEngine:
 
     def _ext_settings(self) -> dict:
         s = self.settings.get("exterior") or {}
-        return {"seconds": s.get("seconds", 4)}     # no default font: the panel formats the text
+        # no default font: the panel formats the text
+        return {"seconds": s.get("seconds", 4), "sequences": s.get("sequences") or {}}
 
     def _seq_for(self, base: str, role: str) -> str:
-        seqs = self.settings["interior"].get("sequences") or {}
         name = f"{base}_{role}"
-        return name if seqs.get(name) or DEFAULT_SEQUENCES.get(name) else base
+        return name if self._seq(name, self._ext_settings()) else base
 
     def exterior(self, now: float | None = None, two_line: bool = False, role: str = "front") -> dict:
         now = self.clock() if now is None else now
@@ -427,11 +411,14 @@ class SimEngine:
         remaining via stop; the panel itself flips through them."""
         now = self.clock() if now is None else now
         ctx = self._context(now)
-        seqs = self.settings["interior"].get("sequences") or {}
         name = self._seq_for("via", role)
+        seq = self._seq(name, self._ext_settings())
+        # a page with the next stop shows it already -> it is left out of the via list (PID: only once)
+        shown = ctx["next_stop"] if any("{next_stop}" in str(p.get("text", "")) for p in seq) else None
         out = []
-        for p in seqs.get(name) or DEFAULT_SEQUENCES.get(name, []):
-            stops = self.via_stops() if "{via_stop}" in str(p.get("text", "")) else [None]
+        for p in seq:
+            stops = ([x for x in self.via_stops() if x.name != shown]
+                     if "{via_stop}" in str(p.get("text", "")) else [None])
             for stop in stops:
                 c = {**ctx, "via_stop": stop.name if stop else ""}
                 if not self._ok(p, c):

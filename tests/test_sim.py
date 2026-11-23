@@ -151,9 +151,10 @@ def test_order_for_panel():
 
 
 # ---------------------------------------------------------------- DPP format (preset)
-def test_dpp_preset(route, univ):
-    from busepanel.sim.engine import preset_settings
-    e = SimEngine(route, {"interior": preset_settings("dpp")}, clock=lambda: 0.0)
+def test_pid_tram_system(route, univ):
+    from busepanel.sim.engine import load_formats, system_settings
+    fm = load_formats(str(pathlib.Path(__file__).parent / "data" / "pracovni_slozka" / "systemy"))
+    e = SimEngine(route, system_settings("pid_tramvaj", fm), clock=lambda: 0.0)
     e.event("start")
     d = e.interior()                                   # zastávka: šipka + cíl velkými písmeny
     assert d["line"] == "7" and d["text"] == "{icon:sipka} SÍDLIŠTĚ DUKLA"

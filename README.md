@@ -14,7 +14,18 @@ Ověřeno na vnitřním panelu **BS 120**. Běží na Windows, Linuxu i macOS.
 | **gBUSE** | gBUSE1 | Editor dat panelu: linky, cíle, zastávky, konfigurace, fonty a ikony, import z CSV/Excelu. Data jsou v čitelném YAML a převádějí se z/do HEX beze ztráty. |
 | **Loader** | BSLoader | Vyhledání panelu, nahrání dat s kontrolou, záloha, konzole IBIS povelů. |
 | **Živě** | – | Panel jako displej: volný text, hodiny, odjezdová tabule. |
-| **Simulace** | – | Linka se směry a kurzy, vozidlo s libovolným počtem periferií (vnitřní BS120, vnější DOT-LED v1–v4, LCD), překlápění stránek (příští zastávka, směr, zóna, čas), mimořádnosti, API pro externí řízení a WebSocket pro ESP brány. |
+| **Simulace** | – | Linka se směry a kurzy, vozidlo s libovolným počtem periferií (vnitřní BS120 a dvouřádek, vnější DOT-LED v1–v4, LCD), systémy zobrazení (PID autobusy, PID tramvaje, DPMP), překlápění stránek (příští zastávka, směr, zóna, čas), mimořádnosti, API pro externí řízení a WebSocket pro ESP brány. |
+
+## Rozhraní
+
+Webové rozhraní (`busepanel serve`, http://127.0.0.1:8090) má v postranním panelu stejné sekce jako tabulka výše:
+
+| Sekce | Stránky |
+|---|---|
+| **gBUSE** | **Databáze** – texty, konfigurace, fonty a ikony, import; převod YAML ↔ HEX |
+| **Loader** | **Připojení a nahrávání** – vyhledání panelu, nahrání dat, záloha, konzole povelů IBIS |
+| **Živě** | **Ruční texty** – volný text, hodiny, odjezdová tabule |
+| **Simulace** | **Jízda** (ovládání, přepnutí systému zobrazení), **Linky** (směry, kurzy, spoje), **Vozidla** (panely ve vozidle), **Systémy zobrazení** (co ukazují displeje, náhled) |
 
 ## Instalace
 
@@ -78,6 +89,8 @@ Port lze zadat přes `-p`, například `-p /dev/ttyUSB0` nebo `-p COM5`, přípa
 
 ## Ověřené chování BS 120 (podrobně v docs/PROTOKOL.md)
 
+Ověřený panel odpovídá modelu **BS 120.0A** (dříve BS 120.A / BS 120.08 135): 8×135 bodů, červené LED.
+
 **Sběrnice a nahrávání:**
 - IBIS: 1200 Bd, 7E2, **DTR musí být 0**.
 - Servisní režim (`ESC S <adr>`) běží na 9600 Bd, s binárními rámci; mazání `07`, zápis `05`, čtení `06`.
@@ -100,8 +113,15 @@ Port lze zadat přes `-p`, například `-p /dev/ttyUSB0` nebo `-p COM5`, přípa
 
 ## Další typy panelů
 
-Profily jsou v [`busepanel/panels/profiles.yaml`](busepanel/panels/profiles.yaml). BS 220 (dvouřádkový) je zatím jen
-odhad. gBUSE1 1.12 s cykly zatím podporovaný není.
+Profily jsou v [`busepanel/panels/profiles.yaml`](busepanel/panels/profiles.yaml). gBUSE1 1.12 s cykly zatím
+podporovaný není. Bez fyzického panelu se simulují (odhad, viz docs/PROTOKOL.md kap. 11):
+
+- **jednořádek jiné délky** (8×120 v autobusech, minimum PID 8×128) – u panelu ve vozidle `columns: 120`,
+- **dvouřádek 16×128** (`type: BS220`, v BSLoaderu „Panel vnitřní dvojřádek“, minimum PID) – nahoře číslo
+  linky a nadpis stránky („příští zastávka/next:“, „směr/direction:“ …), dole text přes celou šířku; obsah je
+  sekce `interior_2` systému zobrazení (systém **PID – autobusy** podle standardu PID pro autobusy),
+- **tramvajový jednořádek** je stejný BS 120 8×135; obsah podle standardu PID pro tramvaje = systém
+  **PID – tramvaje**.
 
 **Vnější panely (BS 210, gBUSE0)** se v simulaci emulují: čtení databáze gBUSE0 (`.hex`) a interpret záznamů
 ([`busepanel/gbuse0/`](busepanel/gbuse0)). Bez databáze se použije varianta podle modelu: v1 = BS 210.0C čelní
@@ -109,13 +129,14 @@ odhad. gBUSE1 1.12 s cykly zatím podporovaný není.
 i přesný model (`BS 210.0B`, starší `BS 210.B`, zářivkový `BS 110.19-112-1`) – varianta se pak vybere sama. Zápis databáze gBUSE0 zatím není.
 Co je ověřené a co odhad, popisuje [docs/PROTOKOL.md](docs/PROTOKOL.md), kap. 4.6 a 10.
 
-## Simulace: vozidlo, linka a skladba textů
+## Simulace: vozidlo, linka a systém zobrazení
 
 Vozidlo (`vozidla/*.yaml`) má libovolný počet panelů. Každý panel je buď fyzický (COM port + adresa IBIS),
 na síti (ESP), nebo virtuální náhled. Panely na stejném COM portu nebo ESP zařízení sdílejí jednu linku IBIS.
 Typy panelů jsou v [`busepanel/peripherals/`](busepanel/peripherals/__init__.py).
 
 ```yaml
+system: pid_autobus      # systém zobrazení ze složky systemy/
 panels:
   - {name: Vnitřní, type: BS120, role: interior, output: serial, port: "", address: 10}   # "" = nalezený převodník
   - {name: Čelní, type: BS210, variant: v1, role: front, output: serial, port: ""}
@@ -144,7 +165,7 @@ courses:
 
 Na stránce **Linky** se edituje celý soubor: záložky směrů (cíl, kód cíle, zastávky; „Obrácený směr“ založí
 protisměr), kurzy se seznamem spojů (směr, odjezd, Od / Do pro zkrácený spoj, vlastní cíl) a mimořádnosti
-společné pro linku. Simulovaný spoj se vybírá v Jízdě nebo tlačítkem ▶ u spoje; jeho zastávky jsou v editoru
+společné pro linku. Simulovaný spoj se vybírá v **Jízdě** nebo tlačítkem ▶ u spoje; jeho zastávky jsou v editoru
 směru podbarvené. Tlačítko **Další spoj** (událost `next_trip`) přejde na další spoj kurzu. Stará plochá trasa
 se uloží zase plochá, dokud nepřibude druhý směr nebo kurz. API: `POST /api/sim/trip` s
 `{"course": "1", "index": 0}` nebo `{"direction": "A"}`; `POST /api/sim/line/update` / `line/save` s celou linkou.
@@ -155,16 +176,28 @@ nebo celý panel. Volba „Běžící text: aspoň doba položky“ (`run_time: 
 Rychlost posuvu je v profilu panelu (`scroll_ms`, BS120: 20 ms/sloupec, odhad) a u každého panelu ve vozidle
 ji jde zkalibrovat polem „Posuv [ms/sloupec]“.
 
-**Skladba textů** (formáty) je v YAML: vestavěné v [`busepanel/sim/formats/`](busepanel/sim/formats), vlastní ve
-složce `formaty/` pracovní složky (stejná struktura, podsložky = skupiny). Upravují se na stránce **Formáty textů**
-s živým náhledem na zvoleném panelu (vnitřní BS120, čelní, boční, zadní) a v zvolené situaci (na trase, v zastávce,
-konečná, mimořádnost) nad načtenou linkou. Vestavěné formáty nejdou přepsat, ukládají se jako kopie.
-Vozidlo si formát jen vybírá (`settings.interior.format`) a do svého souboru ukládá jen to, čím se od formátu liší;
-úprava formátu se tak projeví ve všech vozidlech, která ho používají. Starší vozidla s úplnou kopií nastavení
-fungují dál – při uložení se zjednoduší a jejich vlastní skladbu jde tlačítkem uložit jako nový formát. Sekvence `exterior` (případně `exterior_side`,
-`exterior_rear`) určuje cíl na vnějších panelech, sekvence `via` řádek nácestných zastávek. Stránka s
-`{via_stop}` se zopakuje pro každou zbývající nácestnou zastávku a panel je sám překlápí. Bez fontu si vnější
+**Systémy zobrazení** určují, co ukazují všechny druhy displejů. Jsou to YAML soubory ve složce `systemy/`
+pracovní složky (podsložky = skupiny; starší složka `formaty/` se čte také). Každý systém má sekce:
+
+| sekce | displej |
+|---|---|
+| `interior` | vnitřní jednořádek (BS 120) |
+| `interior_2` | vnitřní dvouřádek (BS 220) – nepovinná, bez ní se použijí stránky jednořádku |
+| `exterior` | vnější panely: sekvence `exterior` (případně `exterior_side`, `exterior_rear`) = cíl, `via` = nácestné |
+
+Upravují se na stránce **Systémy zobrazení** s živým náhledem na zvoleném panelu a v zvolené situaci (na trase,
+v zastávce, konečná, mimořádnost) nad načtenou linkou. **Soubor vozidla popisuje jen panely ve vozidle** a odkaz
+na systém (`system: pid_autobus`); v modulu Jízda jde systém přepnout jen pro aktuální jízdu. Bez systému platí
+skrytý výchozí [`busepanel/sim/default_system.yaml`](busepanel/sim/default_system.yaml). Starší vozidla s
+`settings.interior.format` fungují dál a při uložení se převedou na `system:`.
+Stránka s `{via_stop}` se zopakuje pro každou zbývající nácestnou zastávku a panel je sám překlápí;
+`{next_stop}` je příští zastávka (na boční panel PID „Přes zastávky:“ – příští – nácestné). Bez fontu si vnější
 panel text naformátuje sám.
+
+Vzorová pracovní složka v `tests/data/pracovni_slozka/systemy/` obsahuje systémy **PID – autobusy** (standard
+kvality PID pro autobusy, příloha 2, 2024: dvouřádek Obraz 1–7, boční panel s přeblikáváním nácestných),
+**PID – tramvaje** (příloha pro tramvaje 2025: linka stále, „- na znamení / request stop“, „> CÍL“) a
+**DPMP – Pardubice**.
 
 ## Doplňky
 

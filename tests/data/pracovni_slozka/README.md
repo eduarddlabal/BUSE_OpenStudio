@@ -1,6 +1,7 @@
 # Testovací pracovní složka
 
-Ukázkové linky (`trasy/`, včetně linky se směry a kurzy `linka3_kurzy.yaml`) a vozidla (`vozidla/` –
+Ukázkové linky (`trasy/`, včetně linky se směry a kurzy `linka3_kurzy.yaml`), systémy zobrazení (`systemy/` –
+PID autobusy, PID tramvaje, DPMP) a vozidla (`vozidla/` – jen panely + odkaz `system:`;
 podsložky se v UI zobrazí jako skupiny: `test/` jen náhledy v počítači, `jednoradek/` s fyzickým BS120 na
 COM portu). Databáze panelu tu není, vytvoří ji `busepanel quickstart` nebo tlačítko „Sestavit“.
 

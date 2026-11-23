@@ -1,0 +1,37 @@
+# PID – tramvaje. Podle Standardů kvality PID pro tramvaje, příloha „Odbavovací a informační zařízení ve
+# vozidlech PID“ (prosinec 2024, platnost 1. 1. 2025).
+#   interior – vnitřní jednořádkový LED panel (min. 8×128, červený), číslo linky trvale vlevo:
+#              mimo zastávku příští zastávka (na znamení běžícím textem „- na znamení / request stop“),
+#              v zastávce šipka + cíl, na konečné běžící text.
+#   exterior – přední a boční: cíl VERZÁLKAMI; boční dole přeblikávají po 2 s „Přes zastávky:“ – příští
+#              zastávka – nácestné (tenký font); zadní: jen linka.
+# Dvouřádkový vnitřní panel tramvaje nemají – na dvouřádku se ukážou stránky jednořádku v dolním řádku.
+title: PID – tramvaje
+interior:
+  items: [next]
+  seconds: 4
+  time_format: "%H:%M"
+  at_stop: line_dest
+  run_time: once
+  message_mode: override
+  line: always
+  font: 3
+  spacing: 1
+  sequences:
+    next:
+      - {text: "{name}{icons}", when: not_request}
+      - {text: "{name}{icons} - na znamení / request stop {icon:znameni}", when: request, run: true}
+    destination: [{text: "{icon:sipka} {DESTINATION}{dest_icons}"}]
+    stop: [{text: "{name}{icons}"}]
+    zone: [{text: "{zone} {zone_name}"}]
+    time: [{text: "{time}"}]
+    message: [{text: "{message}", run: true}]
+    final: [{text: "Konečná zastávka, prosíme vystupte / Final stop, please leave the tram.", run: true}]
+exterior:
+  seconds: 4
+  sequences:
+    exterior: [{text: "{DESTINATION}"}]
+    via:
+      - {text: "Přes zastávky:", font: 1, seconds: 2}
+      - {text: "{next_stop}", font: 1, seconds: 2}
+      - {text: "{via_stop}", font: 1, seconds: 2}

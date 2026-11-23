@@ -1,6 +1,10 @@
 // LED panel renderer for frames in the server's preview format:
 // {line: item|null, dest: item|null}, item = {cols, inv, width, start, lo, hi, run}
-export function drawCols(canvas, cols, columns = 135, rows = 8, upper = null) {
+// interior LED panels are red (BS 120.0A: 625 nm, PID standards)
+const RED = { on: "#ff3b2f", off: "#2a1514", glow: "#ff2a1a" };
+const AMBER = { on: "#ffb02e", off: "#2a2118", glow: "#ff9d00" };
+
+export function drawCols(canvas, cols, columns = 135, rows = 8, upper = null, color = RED) {
   // rows > 8: two-line panel, `upper` = columns of the upper line, `cols` = lower line
   const ctx = canvas.getContext("2d");
   const s = Math.max(2, Math.floor(canvas.width / columns)), r = s * 0.36;
@@ -9,8 +13,8 @@ export function drawCols(canvas, cols, columns = 135, rows = 8, upper = null) {
   for (let x = 0; x < columns; x++) for (let y = 0; y < rows; y++) {
     const src = rows > 8 ? (y < 8 ? (upper || []) : cols) : cols, yy = rows > 8 ? y % 8 : y;
     const on = ((src[x] || 0) >> (7 - yy)) & 1;
-    ctx.fillStyle = on ? "#ffb02e" : "#2a2118";
-    ctx.shadowBlur = on ? s * 0.6 : 0; ctx.shadowColor = "#ff9d00";
+    ctx.fillStyle = on ? color.on : color.off;
+    ctx.shadowBlur = on ? s * 0.6 : 0; ctx.shadowColor = color.glow;
     ctx.beginPath(); ctx.arc(x * s + s / 2 + 2, y * s + s / 2 + 2, r, 0, 7); ctx.fill();
   }
   ctx.shadowBlur = 0;
@@ -64,14 +68,17 @@ export class LedView {
           blit(f, d, d.lo + span - (off % (d.width + span)), d.lo, d.hi);
         } else blit(f, d, d.start, d.lo, d.hi);
       }
-      if (frame.line) {
-        for (let x = g.line_left; x <= g.line_right; x++) f[x] = 0;
-        blit(f, frame.line, frame.line.start, frame.line.lo, frame.line.hi);
-      }
       let upper = null;
-      if ((g.rows || 8) > 8) {
+      const two = (g.rows || 8) > 8;
+      if (two) {
+        // PID layout: line number + heading in the upper row, the text over the whole lower row
         upper = new Array(g.columns).fill(0);
         if (frame.heading) blit(upper, frame.heading, frame.heading.start, frame.heading.lo, frame.heading.hi);
+      }
+      if (frame.line) {
+        const row = two ? upper : f;
+        for (let x = g.line_left; x <= g.line_right; x++) row[x] = 0;
+        blit(row, frame.line, frame.line.start, frame.line.lo, frame.line.hi);
       }
       drawCols(this.canvas, f, g.columns, g.rows || 8, upper);
     };

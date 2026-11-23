@@ -1,0 +1,25 @@
+# DPMP (Pardubice) – vnitřní BS120: příští zastávka / čas / zóna, v zastávce linka + cíl.
+title: DPMP – Pardubice
+interior:
+  items: [next, time, zone]
+  seconds: 3
+  time_format: "%H:%M"
+  at_stop: line_dest
+  run_time: once
+  message_mode: override
+  font: 3
+  spacing: 1
+  sequences:
+    next:
+      - {text: "{name}"}
+      - {text: "zastávka na znamení", font: 0, when: request}
+    destination: [{text: "{destination}"}]
+    zone: [{text: "Zóna: {zone}"}]
+    time: [{text: "Čas: {time}"}]
+    message: [{text: "{message}"}]
+    final: [{text: "Konečná zastávka - prosíme, vystupte"}]
+    stop: [{text: "{name}{icons}"}]
+exterior:
+  seconds: 4
+  sequences:
+    exterior: [{text: "{destination}"}]

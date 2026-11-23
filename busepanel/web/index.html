@@ -24,15 +24,17 @@
 
 <div class="layout">
 <nav class="modules">
+  <div class="navgroup" title="náhrada gBUSE1 – editor dat panelu">gBUSE</div>
+  <button data-module="gbuse"><b>Databáze</b><small>linky, cíle, fonty, import → HEX</small></button>
+  <div class="navgroup" title="náhrada BSLoaderu">Loader</div>
+  <button data-module="loader"><b>Připojení a nahrávání</b><small>vyhledání, záloha, povely IBIS</small></button>
+  <div class="navgroup">Živě</div>
+  <button data-module="live"><b>Ruční texty</b><small>volný text, hodiny, odjezdy</small></button>
+  <div class="navgroup">Simulace</div>
   <button data-module="jizda"><b>Jízda</b><small>ovládání simulace</small></button>
-  <div class="navgroup">Příprava</div>
   <button data-module="linky"><b>Linky</b><small>směry, kurzy, spoje</small></button>
-  <button data-module="vozidla"><b>Vozidla</b><small>panely, výběr formátu</small></button>
-  <button data-module="formaty"><b>Formáty textů</b><small>skladba textů, náhled</small></button>
-  <div class="navgroup">Panel a data</div>
-  <button data-module="loader"><b>Připojení</b><small>nahrávání, záloha, povely</small></button>
-  <button data-module="gbuse"><b>Databáze gBUSE</b><small>editor dat → HEX</small></button>
-  <button data-module="live"><b>Ruční texty</b><small>text, hodiny, odjezdy</small></button>
+  <button data-module="vozidla"><b>Vozidla</b><small>panely ve vozidle</small></button>
+  <button data-module="formaty"><b>Systémy zobrazení</b><small>co ukazují displeje, náhled</small></button>
 </nav>
 <div class="content">
 <section class="ledwrap" data-module="gbuse">
@@ -317,6 +319,7 @@
       <label>Linka <select id="jLine"></select></label>
       <label style="flex:2">Spoj <select id="rTrip" style="width:100%"></select></label>
       <label>Vozidlo <select id="jVeh"></select></label>
+      <label title="Co se na panelech zobrazuje – soubory ve složce systemy/">Systém zobrazení <select id="jSystem"></select></label>
     </div>
     <p id="rTripNote" class="muted small" hidden></p>
     <div class="row simctl">
@@ -399,11 +402,12 @@
 <div class="tab" data-module="formaty" id="tab-formaty" hidden>
   <div class="cols fmtcols">
     <div class="list">
-      <h3>Formáty textů</h3>
-      <p class="muted small">Vestavěné formáty nejdou přepsat – upravte je a uložte jako kopii. Vlastní formáty jsou ve složce
-        <code>formaty/</code> pracovní složky, podsložky se zobrazí jako skupiny.</p>
+      <h3>Systémy zobrazení</h3>
+      <p class="muted small">Systém zobrazení říká, co ukazují všechny druhy displejů (vnitřní jednořádek, dvouřádek,
+        vnější panely). Vozidlo určuje jen, jaké panely má. Soubory jsou ve složce <code>systemy/</code> pracovní
+        složky, podsložky se zobrazí jako skupiny.</p>
       <div id="fmtList" class="reclist"></div>
-      <div class="row"><button id="fmtNew">+ Nový formát</button></div>
+      <div class="row"><button id="fmtNew">+ Nový systém</button></div>
     </div>
     <div class="editor">
       <div class="row">
@@ -425,6 +429,11 @@
         <canvas id="pvCanvas" width="1080" height="70"></canvas>
         <div id="pvPages" class="pvpages"></div>
       </div>
+      <div class="segtabs" id="fmtSection"></div>
+      <p id="fmtSectionNote" class="muted small"></p>
+      <label class="chk" id="fmtOwnWrap"><input type="checkbox" id="fmtOwn"> vlastní obsah pro dvouřádkový panel
+        (jinak se použijí stránky jednořádku; stránka s rolí „nadpis“ jde do horního řádku vedle čísla linky)</label>
+      <div id="fmtGeneral">
       <h3>Obecné</h3>
       <div class="row">
         <label class="chk"><input type="checkbox" data-item="next" checked> příští zastávka</label>
@@ -441,26 +450,18 @@
       </div>
       <div class="grid2">
         <label>Formát času (strftime) <input id="sTime" class="mono" value="%H:%M"></label>
-        <label>Vnější panely: doba stránky [s] <input id="sExtSeconds" type="number" min="1" step="0.5"></label>
       </div>
+      </div>
+      <div id="fmtExtGeneral" class="grid2">
+        <label>Doba stránky [s] <input id="sExtSeconds" type="number" min="1" step="0.5"></label>
+      </div>
+      <div id="fmtSeqWrap">
       <h3>Skladba textů</h3>
       <p class="muted small">Každý údaj je sekvence stránek, které se na panelu překlápějí. Stránka = text, vlastní font
         a mezera, doba zobrazení a podmínka. Jeden běžící text = sekvence s jedinou stránkou.
         Na dvouřádkových panelech se stránka s rolí „nadpis“ zobrazí na horním řádku spolu s následující stránkou.</p>
       <div class="row">
-        <select id="seqSelect">
-          <option value="next">Příští zastávka (na trase)</option>
-          <option value="destination">Směr / cíl (v zastávce)</option>
-          <option value="exterior">Vnější panely – cíl (čelní a ostatní)</option>
-          <option value="exterior_side">Vnější panely – cíl na bočním</option>
-          <option value="exterior_rear">Vnější panely – cíl na zadním</option>
-          <option value="via">Vnější panely – řádek nácestných zastávek</option>
-          <option value="zone">Tarifní zóna</option>
-          <option value="time">Čas</option>
-          <option value="message">Mimořádnost</option>
-          <option value="final">Konečná</option>
-          <option value="stop">Název zastávky (v zastávce)</option>
-        </select>
+        <select id="seqSelect"></select>
         <button id="seqAdd">+ Stránka</button><button id="seqDefault">Výchozí</button>
       </div>
       <div class="stopwrap"><table class="stops seq">
@@ -469,11 +470,13 @@
       <p class="muted small">Proměnné: <code>{name}</code> zastávka, <code>{icons}</code> ikony, <code>{zone}</code> číslo zóny,
         <code>{zone_name}</code> název zóny, <code>{destination}</code> cíl, <code>{DESTINATION}</code> cíl velkými písmeny,
         <code>{dest_icons}</code> ikony cílové zastávky, <code>{via}</code> nácestné zastávky (zaškrtnuté „Přes“),
-        <code>{via_stop}</code> jedna nácestná zastávka (řádek nácestných: stránka pro každou), <code>{line}</code> linka,
+        <code>{via_stop}</code> jedna nácestná zastávka (řádek nácestných: stránka pro každou),
+        <code>{next_stop}</code> příští zastávka (i v zastávce), <code>{next_icons}</code> její ikony, <code>{line}</code> linka,
         <code>{time}</code> čas, <code>{message}</code> text mimořádnosti. Ikony i v textu: <code>{icon:vlak}</code>.
         Vnitřní panely: font 0 je tenký, 3 normální (podle fontů v databázi); prázdný font nebo mezera = hodnota
         z „Font / mezera“ výše. Vnější panely: fonty gBUSE0 (0–3 malé, 5 střední, 6–9 velké, 11 drobný); bez fontu si
         panel text naformátuje sám (největší font, který se vejde).</p>
+      </div>
     </div>
   </div>
 </div>
@@ -488,16 +491,13 @@
       </div>
       <div id="vehPanels"></div>
       <div class="row"><button id="vehAdd">+ Panel</button><button id="vehApply">Použít</button></div>
-      <h3>Skladba textů</h3>
+      <h3>Systém zobrazení</h3>
       <div class="row">
-        <label style="flex:1">Formát textů <select id="vFormat"></select></label>
-        <button id="vFormatEdit">Upravit formát</button>
+        <label style="flex:1">Výchozí systém vozidla <select id="vFormat"></select></label>
+        <button id="vFormatEdit">Upravit systém</button>
       </div>
-      <p id="vOverrides" class="muted small"></p>
-      <div class="row" id="vOvrRow" hidden>
-        <button id="vOvrSave">Uložit jako nový formát</button>
-        <button id="vOvrDrop" class="danger">Zahodit úpravy vozidla</button>
-      </div>
+      <p class="muted small">Vozidlo popisuje jen své panely. Co se na nich zobrazuje, určuje systém zobrazení
+        (stránka Systémy zobrazení); při jízdě ho jde přepnout v modulu Jízda.</p>
     </div>
 
     <div class="card">

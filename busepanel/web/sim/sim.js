@@ -423,53 +423,32 @@ const loadVehicle = guard(async (p) => {
 $("#vehLoad").onclick = () => loadVehicle($("#vehSelect").value);
 $("#jVeh").onchange = () => loadVehicle($("#jVeh").value);
 
-// ------------------------------------------------------------------ text format of the vehicle
-const KEY_NAMES = { items: "položky v cyklu", seconds: "doba stránky", at_stop: "v zastávce", message_mode: "mimořádnost",
-  line: "číslo linky", run_time: "běžící text", font: "font", spacing: "mezera", time_format: "formát času" };
+// ------------------------------------------------------------------ display system (systém zobrazení)
 async function loadFormatList() {
   sim.formats = (await api("/api/sim/formats")).formats;
 }
+function systemOptions(cur, missing) {
+  const groups = {};
+  for (const f of sim.formats || []) (groups[f.group || ""] = groups[f.group || ""] || []).push(f);
+  const opt = (f) => `<option value="${esc(f.name)}" ${f.name === cur ? "selected" : ""}>${esc(f.title)}</option>`;
+  return `<option value="" ${cur ? "" : "selected"}>(výchozí vestavěný)</option>` +
+    (missing ? `<option value="${esc(cur)}" selected>${esc(cur)} (nenalezen)</option>` : "") +
+    Object.entries(groups).map(([g, fs]) => (g ? `<optgroup label="${esc(g)}">` + fs.map(opt).join("") + "</optgroup>" : fs.map(opt).join(""))).join("");
+}
 function renderVehicleFormat() {
   if (!sim.vehicle) return;
-  const info = sim.vinfo || {}, cur = info.format || ((sim.vehicle.settings || {}).interior || {}).format || "zakladni";
-  const list = sim.formats || [];
-  const group = (f) => (f.builtin ? "Vestavěné" : f.group || "Vlastní");
-  const groups = {};
-  for (const f of list) (groups[group(f)] = groups[group(f)] || []).push(f);
-  $("#vFormat").innerHTML = (info.format_missing ? `<option value="${esc(cur)}">${esc(cur)} (nenalezen)</option>` : "") +
-    Object.entries(groups).map(([g, fs]) => `<optgroup label="${esc(g)}">` +
-      fs.map((f) => `<option value="${esc(f.name)}" ${f.name === cur ? "selected" : ""}>${esc(f.title)}</option>`).join("") + "</optgroup>").join("");
-  const ov = info.overrides || [];
-  const label = (k) => {
-    const [role, key, seq] = k.split(".");
-    if (key === "sequences") return "sekvence „" + seq + "“";
-    return (role === "exterior" ? "vnější: " : "") + (KEY_NAMES[key] || key);
-  };
-  $("#vOverrides").textContent = ov.length
-    ? "Vozidlo má vlastní úpravy proti formátu: " + ov.map(label).join(", ") + ". Ty mají přednost před formátem."
-    : "Vozidlo používá formát beze změn – úpravy formátu se projeví hned.";
-  $("#vOvrRow").hidden = !ov.length;
+  const info = sim.vinfo || {}, cur = info.system || "";
+  $("#vFormat").innerHTML = systemOptions(cur, info.system_missing);
+  $("#jSystem").innerHTML = systemOptions(cur, info.system_missing);
 }
-$("#vFormat").onchange = () => {
-  const s = sim.vehicle.settings || (sim.vehicle.settings = {});
-  s.interior = { ...(s.interior || {}), format: $("#vFormat").value };
-  applyVehicle();
-};
+// Vozidla: default system stored in the vehicle file (with Uložit)
+$("#vFormat").onchange = () => { sim.vehicle.system = $("#vFormat").value; applyVehicle(); };
 $("#vFormatEdit").onclick = () => window.dispatchEvent(new CustomEvent("buse:goto", { detail: { module: "formaty", format: $("#vFormat").value } }));
-$("#vOvrDrop").onclick = () => {
-  if (!confirm("Zahodit vlastní úpravy vozidla a používat jen vybraný formát?")) return;
-  sim.vehicle.settings = { interior: { format: $("#vFormat").value } };
-  applyVehicle();
-};
-$("#vOvrSave").onclick = guard(async () => {
-  const name = prompt("Název souboru nového formátu (ve složce formaty/):", ($("#vehPath").value.split("/").pop() || "vozidlo").replace(/\.ya?ml$/, ""));
-  if (!name) return;
-  const title = prompt("Název formátu:", sim.vehicle.name || name);
-  if (title === null) return;
-  const r = await api("/api/sim/vehicle/to-format", { name, title });
-  sim.vehicle = r.config; sim.vinfo = r;
-  await loadFormatList(); renderVehicleFormat();
-  toast("Skladba vozidla uložena jako formát " + name + (sim.vinfo && $("#vehPath").value ? " – vozidlo ho teď používá" : ""));
+// Jízda: system for this run only (the vehicle file is not changed)
+$("#jSystem").onchange = guard(async () => {
+  const r = await api("/api/sim/vehicle/system", { name: $("#jSystem").value });
+  sim.vehicle = r.config; sim.vinfo = r; renderVehicleFormat();
+  toast("Systém zobrazení: " + (r.system_title || "výchozí vestavěný"));
 });
 window.addEventListener("buse:formats-changed", guard(async () => {
   await loadFormatList();

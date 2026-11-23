@@ -1,8 +1,12 @@
-# Text format (skladba textů) – a ready-made set of sequences selectable in the vehicle editor.
-# Own formats: put more *.yaml files here or into the working folder formaty/ (same structure).
-# Sequences: see ../displays_doc.txt. Interior fonts = gBUSE fonts (0 thin, 3 normal);
+# Built-in fallback display system – used only when a vehicle names no system (or a missing one); it is not
+# offered in the UI. Display systems live in the working folder systemy/ (same structure):
+#   interior    – single-line interior panel (BS120): general settings + sequences
+#   interior_2  – two-line interior panel (optional; without it the single-line pages are used, a page with
+#                 role "heading" goes to the upper row next to the line number)
+#   exterior    – exterior panels: seconds + sequences exterior / exterior_side / exterior_rear / via
+# Sequences: see displays_doc.txt. Interior fonts = gBUSE fonts (0 thin, 3 normal);
 # exterior fonts = gBUSE0 fonts (0–3 small, 5 medium, 6–9 large, 11 tiny).
-title: Základní (příští zastávka / čas / zóna)
+title: Výchozí (příští zastávka / čas / zóna)
 interior:
   items: [next, time, zone]
   seconds: 3
