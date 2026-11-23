@@ -1,13 +1,31 @@
 name: Testovací autobus (test v počítači)
 panels:
-- name: Vnitřní
+- name: Vnitřní BS120
+  type: BS120
   role: interior
-  profile: BS120
   output: virtual
-- name: Čelní
+- name: Čelní BS210 (v1)
+  type: BS210
+  variant: v1
   role: front
-  profile: BS120
   output: virtual
+- name: Boční BS210 (v2)
+  type: BS210
+  variant: v2
+  stop_field: bottom
+  role: side
+  output: virtual
+- name: Zadní BS210 (v4)
+  type: BS210
+  variant: v4
+  role: rear
+  output: virtual
+- name: LCD
+  type: LCD
+  role: interior
+  output: lcd
+  http_port: 8091
+  host: 127.0.0.1
 settings:
   interior:
     items:
