@@ -53,7 +53,7 @@ busepanel serve                     # otevře http://127.0.0.1:8090
 Vozidla lze třídit do libovolných podsložek `vozidla/` (např. zvlášť testovací jen v počítači a zvlášť
 s fyzickým panelem); v seznamu vozidel se podsložky zobrazí jako skupiny.
 
-Pak v prohlížeči: **Simulace** → načíst trasu → **▶ Start**. Mezerníkem posouváš jízdu, šipkou ← jdeš zpět, A je příjezd, D odjezd.
+Pak v prohlížeči: **Jízda** → vybrat linku a vozidlo → **▶ Start**. Mezerníkem posouváš jízdu, šipkou ← jdeš zpět, A je příjezd, D odjezd.
 
 Port lze zadat přes `-p`, například `-p /dev/ttyUSB0` nebo `-p COM5`, případně proměnnou `BUSE_PORT`. Jinak se převodník najde automaticky.
 
@@ -104,8 +104,9 @@ Profily jsou v [`busepanel/panels/profiles.yaml`](busepanel/panels/profiles.yaml
 odhad. gBUSE1 1.12 s cykly zatím podporovaný není.
 
 **Vnější panely (BS 210, gBUSE0)** se v simulaci emulují: čtení databáze gBUSE0 (`.hex`) a interpret záznamů
-([`busepanel/gbuse0/`](busepanel/gbuse0)). Bez databáze se použije varianta v1 čelní 140×19, v2 boční s číslem
-110×19 nebo v4 zadní 28×19 s originálními fonty gBUSE0. Zápis databáze gBUSE0 zatím není.
+([`busepanel/gbuse0/`](busepanel/gbuse0)). Bez databáze se použije varianta podle modelu: v1 = BS 210.0C čelní
+140×19, v2 = BS 210.0B boční 112×19, v4 = BS 210.0A zadní 28×19, s originálními fonty gBUSE0. Jako `type` jde zadat
+i přesný model (`BS 210.0B`, starší `BS 210.B`, zářivkový `BS 110.19-112-1`) – varianta se pak vybere sama. Zápis databáze gBUSE0 zatím není.
 Co je ověřené a co odhad, popisuje [docs/PROTOKOL.md](docs/PROTOKOL.md), kap. 4.6 a 10.
 
 ## Simulace: vozidlo, linka a skladba textů
@@ -141,9 +142,9 @@ courses:
     - {direction: A, departure: "07:00", to: "Semtín, zastávka"}   # zkrácený spoj – cíl = poslední zastávka
 ```
 
-V kartě **Linka** se edituje celý soubor: záložky směrů (cíl, kód cíle, zastávky; „Obrácený směr“ založí
+Na stránce **Linky** se edituje celý soubor: záložky směrů (cíl, kód cíle, zastávky; „Obrácený směr“ založí
 protisměr), kurzy se seznamem spojů (směr, odjezd, Od / Do pro zkrácený spoj, vlastní cíl) a mimořádnosti
-společné pro linku. Simulovaný spoj se vybírá nahoře nebo tlačítkem ▶ u spoje; jeho zastávky jsou v editoru
+společné pro linku. Simulovaný spoj se vybírá v Jízdě nebo tlačítkem ▶ u spoje; jeho zastávky jsou v editoru
 směru podbarvené. Tlačítko **Další spoj** (událost `next_trip`) přejde na další spoj kurzu. Stará plochá trasa
 se uloží zase plochá, dokud nepřibude druhý směr nebo kurz. API: `POST /api/sim/trip` s
 `{"course": "1", "index": 0}` nebo `{"direction": "A"}`; `POST /api/sim/line/update` / `line/save` s celou linkou.
@@ -155,7 +156,12 @@ Rychlost posuvu je v profilu panelu (`scroll_ms`, BS120: 20 ms/sloupec, odhad) a
 ji jde zkalibrovat polem „Posuv [ms/sloupec]“.
 
 **Skladba textů** (formáty) je v YAML: vestavěné v [`busepanel/sim/formats/`](busepanel/sim/formats), vlastní ve
-složce `formaty/` pracovní složky (stejná struktura). Sekvence `exterior` (případně `exterior_side`,
+složce `formaty/` pracovní složky (stejná struktura, podsložky = skupiny). Upravují se na stránce **Formáty textů**
+s živým náhledem na zvoleném panelu (vnitřní BS120, čelní, boční, zadní) a v zvolené situaci (na trase, v zastávce,
+konečná, mimořádnost) nad načtenou linkou. Vestavěné formáty nejdou přepsat, ukládají se jako kopie.
+Vozidlo si formát jen vybírá (`settings.interior.format`) a do svého souboru ukládá jen to, čím se od formátu liší;
+úprava formátu se tak projeví ve všech vozidlech, která ho používají. Starší vozidla s úplnou kopií nastavení
+fungují dál – při uložení se zjednoduší a jejich vlastní skladbu jde tlačítkem uložit jako nový formát. Sekvence `exterior` (případně `exterior_side`,
 `exterior_rear`) určuje cíl na vnějších panelech, sekvence `via` řádek nácestných zastávek. Stránka s
 `{via_stop}` se zopakuje pro každou zbývající nácestnou zastávku a panel je sám překlápí. Bez fontu si vnější
 panel text naformátuje sám.

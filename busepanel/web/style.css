@@ -32,9 +32,9 @@ label.chk { flex-direction: row; align-items: center; gap: 6px; font-size: 14px;
 .tabs button { border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 10px 14px; background: none; }
 .tabs button.active { border-bottom-color: var(--accent); font-weight: 600; }
 main { padding: 16px; max-width: 1400px; margin: 0 auto; }
-.cols { display: grid; grid-template-columns: minmax(260px, 380px) 1fr; gap: 16px; }
+.cols { display: grid; grid-template-columns: minmax(240px, 380px) minmax(0, 1fr); gap: 16px; }
 .cols3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
-@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } }
+@media (max-width: 1000px) { .cols { grid-template-columns: minmax(0, 1fr); } }
 .list, .editor, .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .card { margin-bottom: 16px; }
 .card h3, .editor h3 { margin: 0; font-size: 15px; }
@@ -74,11 +74,38 @@ dialog form { display: flex; flex-direction: column; gap: 10px; }
 code { background: var(--bg); padding: 0 3px; border-radius: 3px; }
 
 /* ---- modules (BUSE Studio 2) ---- */
-.modules { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; background: var(--panel); border-bottom: 1px solid var(--line); }
-.modules button { border: 0; border-radius: 0; border-bottom: 3px solid transparent; background: none; padding: 10px 8px; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.layout { display: grid; grid-template-columns: 200px minmax(0, 1fr); min-height: calc(100vh - 50px); }
+.content { min-width: 0; }
+.modules { display: flex; flex-direction: column; gap: 2px; padding: 10px 8px; background: var(--panel); border-right: 1px solid var(--line);
+  position: sticky; top: 0; align-self: start; height: calc(100vh - 50px); overflow-y: auto; }
+.modules button { border: 0; border-left: 3px solid transparent; border-radius: 0 6px 6px 0; background: none; padding: 7px 10px; text-align: left;
+  display: flex; flex-direction: column; gap: 0; }
 .modules button small { color: var(--muted); font-size: 11px; }
-.modules button.active { border-bottom-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
-@media (max-width: 560px) { .modules button small { display: none; } }
+.modules button.active { border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.navgroup { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; padding: 14px 10px 4px; }
+@media (max-width: 760px) {
+  .layout { grid-template-columns: 1fr; }
+  .modules { flex-direction: row; position: static; height: auto; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 4px; }
+  .modules button { border-left: 0; border-bottom: 3px solid transparent; border-radius: 0; white-space: nowrap; }
+  .modules button.active { border-bottom-color: var(--accent); }
+  .modules button small, .navgroup { display: none; }
+}
+body { padding-bottom: 38px; }
+.comm { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--panel); border-top: 1px solid var(--line); }
+.commbar { width: 100%; border: 0; border-radius: 0; display: flex; gap: 12px; align-items: center; padding: 7px 16px; background: none; text-align: left; }
+.commbar span:first-child { font-weight: 600; }
+#commLast { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-family: ui-monospace, Consolas, monospace; }
+.comm .out { display: none; margin: 0 16px 10px; max-height: 32vh; }
+.comm.open .out { display: block; }
+#toast { bottom: 50px; }
+.jsel label { flex: 1; min-width: 12em; }
+.simstops { display: flex; flex-wrap: wrap; gap: 4px; }
+.simstops button { padding: 3px 8px; font-size: 12px; }
+.simstops button.done { color: var(--muted); }
+.simstops button.cur { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); font-weight: 600; }
+.simstops button.via::after { content: " •"; color: var(--accent); }
+.vozcols { grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); }
+@media (max-width: 960px) { .vozcols { grid-template-columns: 1fr; } }
 .simctl button { padding: 8px 14px; }
 .sep { width: 1px; height: 26px; background: var(--line); margin: 0 4px; }
 .simstatus { padding: 8px 10px; background: var(--bg); border-radius: 6px; border: 1px solid var(--line); }
@@ -98,3 +125,13 @@ table.stops button { padding: 1px 6px; }
 .course.sim { border-color: var(--accent); }
 table.stops tr.sim td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 table.stops td select { max-width: 9em; }
+.fmtgroup { padding: 8px 4px 2px; text-transform: uppercase; letter-spacing: .05em; font-size: 11px; }
+.fmtrec { grid-template-columns: 1fr auto; }
+.fmtprev { border: 1px solid var(--line); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+#pvCanvas { width: 100%; height: auto; display: block; background: var(--led-bg); border-radius: 6px; image-rendering: pixelated; }
+.pvpages { display: flex; flex-wrap: wrap; gap: 4px; }
+.pvpages button { padding: 2px 8px; font-size: 12px; }
+.pvpages button.cur { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); font-weight: 600; }
+button:disabled { opacity: .45; cursor: default; }
+.fmtcols { grid-template-columns: minmax(200px, 300px) minmax(0, 1fr); }
+@media (max-width: 1000px) { .fmtcols { grid-template-columns: minmax(0, 1fr); } .fmtcols .reclist { max-height: 30vh; } }

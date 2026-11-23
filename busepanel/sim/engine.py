@@ -22,20 +22,40 @@ FORMATS_DIR = os.path.join(os.path.dirname(__file__), "formats")
 FORMAT_ALIASES = {"dpp": "linka_stale"}       # names used by BUSE Studio 2.x vehicle files
 
 
+def _format_files(d: str, recursive: bool):
+    for root, dirs, files in os.walk(d):
+        dirs.sort()
+        for fn in sorted(files):
+            if fn.endswith((".yaml", ".yml")):
+                full = os.path.join(root, fn)
+                yield os.path.splitext(os.path.relpath(full, d))[0].replace(os.sep, "/"), full
+        if not recursive:
+            break
+
+
 def load_formats(extra_dir: str | None = None) -> dict:
-    """Text formats (skladba textů): built-in sim/formats/*.yaml + <working folder>/formaty/*.yaml.
-    name -> {"title", "interior": settings incl. sequences}"""
+    """Text formats (skladba textů): built-in sim/formats/*.yaml + <working folder>/formaty/**/*.yaml
+    (subfolders = groups, name "group/file"). name -> {"title", "interior", "exterior", "builtin", "path"}"""
     out = {}
-    for d in (FORMATS_DIR, extra_dir):
+    for d, builtin in ((FORMATS_DIR, True), (extra_dir, False)):
         if not d or not os.path.isdir(d):
             continue
-        for fn in sorted(os.listdir(d)):
-            if fn.endswith((".yaml", ".yml")):
-                with open(os.path.join(d, fn), encoding="utf-8") as f:
+        for name, full in _format_files(d, recursive=not builtin):
+            if not builtin and name in BUILTIN_NAMES:
+                continue                                  # built-in names cannot be replaced
+            try:
+                with open(full, encoding="utf-8") as f:
                     data = yaml.safe_load(f) or {}
-                if isinstance(data.get("interior"), dict):
-                    out[os.path.splitext(fn)[0]] = {"title": str(data.get("title") or fn), "interior": data["interior"]}
+            except (OSError, yaml.YAMLError):
+                continue
+            if isinstance(data.get("interior"), dict):
+                out[name] = {"title": str(data.get("title") or name), "interior": data["interior"],
+                             "exterior": dict(data.get("exterior") or {}), "builtin": builtin,
+                             "path": None if builtin else full}
     return out
+
+
+BUILTIN_NAMES = {n for n, _ in _format_files(FORMATS_DIR, recursive=False)}
 
 
 PRESETS = load_formats()
@@ -69,7 +89,79 @@ def preset_settings(name: str, extra_dir: str | None = None) -> dict:
     return {**copy.deepcopy(formats[name]["interior"]), "format": name}
 
 
+def format_name(settings: dict | None) -> str:
+    name = str(((settings or {}).get("interior") or {}).get("format") or "zakladni")
+    return FORMAT_ALIASES.get(name, name)
+
+
+def resolve_settings(settings: dict | None, formats: dict | None = None) -> dict:
+    """Vehicle settings = its text format (formaty/ or built-in) + the vehicle's own overrides.
+    A vehicle file stores only `interior.format` and what it changes; old files with a full copy work too."""
+    formats = PRESETS if formats is None else formats
+    name = format_name(settings)
+    f = formats.get(name) or formats.get("zakladni") or {}
+    base = {"interior": {**copy.deepcopy(f.get("interior") or {}), "format": name},
+            "exterior": copy.deepcopy(f.get("exterior") or {})}
+    for role, vals in (settings or {}).items():
+        vals = copy.deepcopy(vals or {})
+        seq = vals.pop("sequences", None)
+        base.setdefault(role, {}).update(vals)
+        if seq:
+            base[role].setdefault("sequences", {}).update(seq)
+    base["interior"]["format"] = name
+    return base
+
+
+LEGACY_KEYS = {"interior": {"next_format", "request_suffix", "zone_format", "final_text", "format"},
+               "exterior": {"font", "spacing", "format"}}
+
+
+def settings_overrides(settings: dict | None, formats: dict | None = None) -> dict:
+    """Only what a vehicle changes against its format (what is stored in the vehicle file).
+    Old keys (next_format, exterior format …) are first turned into sequences, so nothing is lost."""
+    formats = PRESETS if formats is None else formats
+    name = format_name(settings)
+    if name not in formats:
+        return copy.deepcopy(settings or {})
+    full = merge_settings(resolve_settings({"interior": {"format": name}}, formats))
+    mine = merge_settings(resolve_settings(settings, formats))
+    out = {}
+    for role, vals in mine.items():
+        base = full.get(role, {})
+        o = {}
+        for k, v in vals.items():
+            if k in LEGACY_KEYS.get(role, ()):
+                continue
+            if k == "sequences":
+                seq = {n: pg for n, pg in (v or {}).items() if base.get("sequences", {}).get(n) != pg}
+                if seq:
+                    o["sequences"] = copy.deepcopy(seq)
+            elif base.get(k) != v:
+                o[k] = copy.deepcopy(v)
+        if o:
+            out[role] = o
+    out["interior"] = {"format": name, **out.get("interior", {})}
+    return out
+
+
+def override_keys(settings: dict | None, formats: dict | None = None) -> list[str]:
+    """Readable list of what the vehicle changes against its format (for the UI)."""
+    ov = settings_overrides(settings, formats)
+    keys = []
+    for role, vals in ov.items():
+        for k, v in vals.items():
+            if k == "format":
+                continue
+            if k == "sequences":
+                keys += [f"{role}.sequences.{n}" for n in v]
+            else:
+                keys.append(f"{role}.{k}")
+    return keys
+
+
 def merge_settings(user: dict | None) -> dict:
+    if ((user or {}).get("interior") or {}).get("format"):
+        user = resolve_settings(user)      # built-in formats; the server resolves formaty/ beforehand
     s = copy.deepcopy(DEFAULT_SETTINGS)
     for role, vals in (user or {}).items():
         vals = dict(vals or {})

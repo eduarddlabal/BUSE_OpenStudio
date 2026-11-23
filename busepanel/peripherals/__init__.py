@@ -29,15 +29,35 @@ from .lcd import LcdSlot
 TYPES = {
     "BS120": {"title": "BS 120 – vnitřní jednořádkový (LED, volný text)", "class": "interior"},
     "BS220": {"title": "BS 220 – vnitřní dvouřádkový (neověřeno)", "class": "interior"},
-    "BS210": {"title": "BS 210 – vnější DOT-LED (gBUSE0, odhad)", "class": "exterior"},
+    "BS210": {"title": "BS 210 – vnější DOT-LED (gBUSE0; 210.0C čelní, 210.0B boční, 210.0A zadní)", "class": "exterior"},
     "LCD": {"title": "LCD panel – webová stránka (doplněk)", "class": "lcd"},
 }
 
 
+def _norm(t) -> str:
+    return str(t or "").upper().replace(" ", "")
+
+
+def model_variant(t) -> str | None:
+    """Variant of an exact model mark: "BS 210.0C" / "BS210.C" -> "v1" (also BS 110 of the same size)."""
+    t = _norm(t)
+    for k, v in VARIANTS.items():
+        m = _norm(v.get("model"))
+        if m and t in (m, m.replace(".0", ".")):
+            return k
+    size = t.split(".", 1)[1] if t.startswith("BS110.") else ""     # BS 110.19-140-1 = rows-columns-?
+    for k, v in VARIANTS.items():
+        if size.startswith(f"{v['rows']}-{v['columns']:03d}"):
+            return k
+    return None
+
+
 def peripheral_type(p: dict) -> str:
-    t = str(p.get("type") or "").upper().replace(" ", "")
+    t = _norm(p.get("type"))
     if t in TYPES:
         return t
+    if t.startswith(("BS210", "BS110")):
+        return "BS210"
     if p.get("output") == "lcd":
         return "LCD"
     prof = str(p.get("profile") or "BS120").upper().replace(" ", "")
@@ -115,7 +135,7 @@ def _exterior_db(p: dict, role: str, base_dir: str):
         full = path if os.path.isabs(path) else os.path.join(base_dir, path)
         from ..gbuse0.database import load_hex
         return load_hex(full)
-    variant = p.get("variant") or ROLE_VARIANT.get(role, "v1")
+    variant = p.get("variant") or model_variant(p.get("type")) or ROLE_VARIANT.get(role, "v1")
     return variant_database(variant, p.get("stop_field"), p.get("columns"), p.get("rows"), p.get("stop_rows"))
 
 
@@ -125,4 +145,5 @@ def describe() -> dict:
             "variants": {k: v.get("title", k) for k, v in VARIANTS.items()}}
 
 
-__all__ = ["Bus", "Peripheral", "PanelSlot", "ExteriorSlot", "LcdSlot", "TYPES", "build_peripherals", "describe"]
+__all__ = ["Bus", "Peripheral", "PanelSlot", "ExteriorSlot", "LcdSlot", "TYPES", "build_peripherals", "describe",
+           "model_variant"]

@@ -50,7 +50,7 @@ def lit(panel, field):
 
 
 # ---------------------------------------------------------------- variants
-@pytest.mark.parametrize("v,cols,fields", [("v1", 140, {"line", "dest"}), ("v2", 110, {"line", "dest"}),
+@pytest.mark.parametrize("v,cols,fields", [("v1", 140, {"line", "dest"}), ("v2", 112, {"line", "dest"}),
                                            ("v4", 28, {"line"})])
 def test_variants(v, cols, fields):
     db = variant_database(v)
@@ -321,3 +321,66 @@ def test_running_text_one_pass(univ, route):
 def test_scroll_ms_per_panel(univ):
     per, _ = build_peripherals({"panels": [{"name": "a", "type": "BS120", "output": "virtual", "scroll_ms": 35}]}, univ)
     assert per[0].profile.geometry.scroll_ms == 35 and profile("BS120").geometry.scroll_ms == 20
+
+
+# ---------------------------------------------------------------- text formats as own files, vehicle = format + overrides
+def test_formats_subfolders_and_builtin_names(tmp_path):
+    from busepanel.sim.engine import load_formats
+    (tmp_path / "skupina").mkdir()
+    (tmp_path / "skupina" / "muj.yaml").write_text("title: Můj\ninterior: {seconds: 5}\nexterior: {seconds: 6}\n", encoding="utf-8")
+    (tmp_path / "zakladni.yaml").write_text("title: Podvrh\ninterior: {seconds: 9}\n", encoding="utf-8")
+    fm = load_formats(str(tmp_path))
+    assert fm["skupina/muj"]["exterior"]["seconds"] == 6 and not fm["skupina/muj"]["builtin"]
+    assert fm["zakladni"]["builtin"] and fm["zakladni"]["title"] != "Podvrh"      # built-in cannot be replaced
+
+
+def test_vehicle_settings_are_format_plus_overrides(tmp_path):
+    from busepanel.sim.engine import (load_formats, merge_settings, override_keys, preset_settings, resolve_settings,
+                                      settings_overrides)
+    (tmp_path / "f.yaml").write_text("title: F\ninterior: {seconds: 7, items: [next]}\n", encoding="utf-8")
+    fm = load_formats(str(tmp_path))
+    full_copy = {"interior": preset_settings("zakladni"), "exterior": {"font": 3, "spacing": 1, "seconds": 4}}
+    assert settings_overrides(full_copy, fm) == {"interior": {"format": "zakladni"}}     # old full copy = no changes
+    mine = {"interior": {"format": "f", "message_mode": "override"}}
+    r = merge_settings(resolve_settings(mine, fm))
+    assert (r["interior"]["seconds"], r["interior"]["items"], r["interior"]["message_mode"]) == (7, ["next"], "override")
+    assert override_keys(mine, fm) == ["interior.message_mode"]
+    old = {"interior": {"format": "dpp", "next_format": "Příští: {name}"}, "exterior": {"format": "{DESTINATION}"}}
+    ov = settings_overrides(old, fm)
+    assert ov["interior"]["format"] == "linka_stale" and "next_format" not in ov["interior"]
+    assert merge_settings(resolve_settings(ov, fm))["interior"]["sequences"]["exterior"] == [{"text": "{DESTINATION}"}]
+
+
+def test_format_api_and_preview(tmp_path, univ):
+    import shutil
+    from busepanel.server import sim_api as A
+    work = tmp_path / "w"
+    shutil.copytree(DATA, work)
+    A.init(str(work))
+    A.SIM.db = univ
+    A.route_load(A.PathReq(path="trasy/linka3_kurzy.yaml"))
+    A.vehicle_load(A.PathReq(path="vozidla/test/autobus.yaml"))
+    z = A.format_get("zakladni")
+    A.format_save(A.FormatSave(name="moje/pomaly", title="Pomalý", interior={**z["interior"], "seconds": 6}))
+    assert (work / "formaty" / "moje" / "pomaly.yaml").exists()
+    assert any(f["name"] == "moje/pomaly" and f["group"] == "moje" for f in A.formats_list()["formats"])
+    with pytest.raises(Exception):
+        A.format_save(A.FormatSave(name="zakladni", interior={}))                       # built-in name
+    with pytest.raises(Exception):
+        A.format_save(A.FormatSave(name="../ven", interior={}))
+    pv = A.format_preview(A.PreviewReq(interior={**z["interior"], "seconds": 6}, panel={"type": "BS120"}, phase="driving", pos=1))
+    assert pv["pages"] and all(p["seconds"] == pytest.approx(6, abs=0.15) for p in pv["pages"] if not p["frame"]["dest"].get("run"))
+    ext = A.format_preview(A.PreviewReq(interior=z["interior"], panel={"type": "BS210", "variant": "v1", "role": "front"}))
+    assert ext["pages"][0]["frame"]["matrix"]
+    A.vehicle_save(A.VehicleSave(config={**A.SIM.vehicle_cfg, "settings": {"interior": {"format": "moje/pomaly"}}}))
+    assert A.SIM.engine.settings["interior"]["seconds"] == 6
+    v = A.vehicle_to_format(A.NameReq(name="moje/z_vozidla", title="Z vozidla"))
+    assert v["format"] == "moje/z_vozidla" and v["overrides"] == []
+
+
+@pytest.mark.parametrize("t,variant", [("BS 210.0C", "v1"), ("BS210.B", "v2"), ("bs 210.0a", "v4"),
+                                       ("BS 110.19-112-1", "v2"), ("BS 110.19-028-1", "v4"), ("BS210", None)])
+def test_model_variant(t, variant):
+    from busepanel.peripherals import model_variant, peripheral_type
+    assert model_variant(t) == variant
+    assert peripheral_type({"type": t}) == "BS210"

@@ -1,26 +1,33 @@
-# Exterior DOT-LED panels (gBUSE0, BS210) – simulation variants.
+# Exterior DOT-LED panels (gBUSE0, series BS 210) – simulation variants.
+# The model number is the technology series (BS 110 flip-dot / fluorescent, BS 210 DOT-LED, BS 310 LED);
+# the suffix is the size: certificates IDS JMK 2014 and PID 2020 list BS 210.0C front 19×140,
+# BS 210.0B side 19×112, BS 210.0A rear 19×28 (older marks BS 210.C/.B/.A). Sizes agree with real gBUSE0
+# databases (Brno ADcel0/ADbok4/ADzad7, Košice PANEL1-3, Ostrava, Praha).
 # Columns / rows are 0-based here, y = row from the TOP. A database (gBUSE0 HEX) given to the panel
 # overrides these fields; without one the panel uses the original gBUSE0 fonts (gbuse0_font.yaml).
 #
-#   v1 – main (front) panel         140 x 19   line + destination
-#   v2 – side panel with the number 110 x 19   line + destination
-#   v4 – rear panel                  28 x 19   line only
+#   v1 – BS 210.0C front panel          140 x 19   line + destination
+#   v2 – BS 210.0B side panel           112 x 19   line + destination
+#   v4 – BS 210.0A rear panel            28 x 19   line only
 # stop_field: top | bottom splits the destination field: a via-stop line (zD / zN) above or below the
 # destination; stop_rows: its height (default 10 on top, 8 at the bottom).
 v1:
-  title: v1 – hlavní (čelní) panel 140×19
+  title: v1 – BS 210.0C čelní 140×19
+  model: BS 210.0C
   columns: 140
   rows: 19
   line: [0, 27]
   dest: [28, 139]
 v2:
-  title: v2 – boční panel s číslem 110×19
-  columns: 110
+  title: v2 – BS 210.0B boční 112×19
+  model: BS 210.0B
+  columns: 112
   rows: 19
   line: [0, 27]
-  dest: [28, 109]
+  dest: [28, 111]
 v4:
-  title: v4 – zadní panel 28×19
+  title: v4 – BS 210.0A zadní 28×19
+  model: BS 210.0A
   columns: 28
   rows: 19
   line: [0, 27]

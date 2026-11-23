@@ -1,15 +1,18 @@
 """Simulation module API (/api/sim/*, /ws/sim) – e.g. for OMSI: manual control now, plugin later."""
 from __future__ import annotations
 
+import copy
 import json
 import os
+import re
 import time
 
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
 from ..core.project import Project, load_yaml, dump_yaml
-from ..sim.engine import DEFAULT_SETTINGS, SimEngine, merge_settings
+from ..sim.engine import (BUILTIN_NAMES, DEFAULT_SETTINGS, DEFAULT_SEQUENCES, SimEngine, format_name, load_formats,
+                          merge_settings, override_keys, resolve_settings, settings_overrides)
 from ..sim.line import Line
 from ..sim.route import Route
 from ..sim.universal_db import build_universal
@@ -276,14 +279,25 @@ def defaults():
             "presets": {k: {"title": v["title"], "interior": preset_settings(k, extra)} for k, v in formats.items()}}
 
 
+def _formats() -> dict:
+    return load_formats(SIM.path("formaty"))
+
+
 @router.get("/api/sim/vehicle")
 def vehicle_get():
-    return {"path": SIM.vehicle_path, "config": SIM.vehicle_cfg}
+    st = SIM.vehicle_cfg.get("settings")
+    fm = _formats()
+    return {"path": SIM.vehicle_path, "config": SIM.vehicle_cfg, "format": format_name(st),
+            "format_missing": format_name(st) not in fm, "overrides": override_keys(st, fm)}
 
 
 @router.post("/api/sim/vehicle/load")
 def vehicle_load(r: PathReq):
-    SIM.vehicle_cfg = load_yaml(SIM.path(r.path))
+    cfg = load_yaml(SIM.path(r.path))
+    # only what differs from the format (an old file with a full copy of the settings behaves the same);
+    # the file itself changes only when the vehicle is saved
+    cfg["settings"] = settings_overrides(cfg.get("settings"), _formats())
+    SIM.vehicle_cfg = cfg
     SIM.vehicle_path = r.path
     _rebuild()
     return vehicle_get()
@@ -291,13 +305,156 @@ def vehicle_load(r: PathReq):
 
 @router.post("/api/sim/vehicle/save")
 def vehicle_save(r: VehicleSave):
-    SIM.vehicle_cfg = r.config
+    cfg = dict(r.config)
+    cfg["settings"] = settings_overrides(cfg.get("settings"), _formats())   # only what differs from the format
+    r.config = cfg
+    SIM.vehicle_cfg = cfg
     if r.path:
         os.makedirs(os.path.dirname(SIM.path(r.path)), exist_ok=True)
         dump_yaml(r.config, SIM.path(r.path))
         SIM.vehicle_path = r.path
     _rebuild()
     return vehicle_get()
+
+
+# ------------------------------------------------------------------ text formats (skladba textů)
+_NAME = re.compile(r"^[\w\- ]+(/[\w\- ]+)*$")
+
+
+def _format_path(name: str) -> str:
+    name = (name or "").strip().strip("/")
+    if not _NAME.match(name) or ".." in name:
+        raise HTTPException(400, "neplatný název formátu (písmena, číslice, -, _, mezera; podsložky přes /)")
+    if name in BUILTIN_NAMES:
+        raise HTTPException(400, f"„{name}“ je vestavěný formát – uložte ho pod jiným názvem")
+    return SIM.path(os.path.join("formaty", *name.split("/")) + ".yaml")
+
+
+@router.get("/api/sim/formats")
+def formats_list():
+    out = []
+    for name, f in _formats().items():
+        group = "" if f["builtin"] else (name.rsplit("/", 1)[0] if "/" in name else "")
+        out.append({"name": name, "title": f["title"], "builtin": f["builtin"], "group": group})
+    return {"formats": out, "default_sequences": DEFAULT_SEQUENCES, "vehicle_format": format_name(SIM.vehicle_cfg.get("settings"))}
+
+
+@router.get("/api/sim/format")
+def format_get(name: str):
+    f = _formats().get(name)
+    if f is None:
+        raise HTTPException(404, f"formát {name} neexistuje")
+    full = merge_settings({"interior": copy.deepcopy(f["interior"]), "exterior": copy.deepcopy(f["exterior"])})
+    full["interior"].pop("format", None)
+    return {"name": name, "title": f["title"], "builtin": f["builtin"], "interior": full["interior"],
+            "exterior": full.get("exterior") or {}}
+
+
+class FormatSave(BaseModel):
+    name: str
+    title: str = ""
+    interior: dict
+    exterior: dict = {}
+
+
+@router.post("/api/sim/format/save")
+def format_save(r: FormatSave):
+    path = _format_path(r.name)
+    interior = {k: v for k, v in r.interior.items() if k != "format"}
+    data = {"title": r.title or r.name.rsplit("/", 1)[-1], "interior": interior}
+    ext = {k: v for k, v in (r.exterior or {}).items() if k not in ("font", "spacing", "format")}
+    if ext:
+        data["exterior"] = ext
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    dump_yaml(data, path)
+    _rebuild()
+    return {**formats_list(), "saved": r.name.strip().strip("/")}
+
+
+class NameReq(BaseModel):
+    name: str
+    title: str = ""
+
+
+@router.post("/api/sim/format/delete")
+def format_delete(r: NameReq):
+    path = _format_path(r.name)
+    if not os.path.exists(path):
+        raise HTTPException(404, f"formát {r.name} neexistuje")
+    if format_name(SIM.vehicle_cfg.get("settings")) == r.name:
+        raise HTTPException(400, "formát používá načtené vozidlo – nejdřív mu vyberte jiný")
+    os.remove(path)
+    _rebuild()
+    return formats_list()
+
+
+@router.post("/api/sim/vehicle/to-format")
+def vehicle_to_format(r: NameReq):
+    """Save the vehicle's whole text composition (format + its overrides) as a new format and switch to it."""
+    full = resolve_settings(SIM.vehicle_cfg.get("settings"), _formats())
+    format_save(FormatSave(name=r.name, title=r.title, interior=full["interior"], exterior=full.get("exterior") or {}))
+    name = r.name.strip().strip("/")
+    SIM.vehicle_cfg = {**SIM.vehicle_cfg, "settings": {"interior": {"format": name}}}
+    if SIM.vehicle_path:
+        dump_yaml(SIM.vehicle_cfg, SIM.path(SIM.vehicle_path))
+    _rebuild()
+    return vehicle_get()
+
+
+class PreviewReq(BaseModel):
+    interior: dict
+    exterior: dict = {}
+    panel: dict = {}
+    phase: str = "driving"
+    pos: int = 1
+    message: bool = False
+    seconds: float = 40
+
+
+@router.post("/api/sim/format/preview")
+def format_preview(r: PreviewReq):
+    """What one panel shows with an (unsaved) format, as pages with their times – simulated on the
+    loaded line without touching the running simulation."""
+    db = _need_db()
+    t = [time.time()]
+    settings = {"interior": {k: v for k, v in r.interior.items() if k != "format"}, "exterior": r.exterior or {}}
+    eng = SimEngine(SIM.route, settings, clock=lambda: t[0])
+    n = len(SIM.route.stops)
+    if r.phase in ("at_stop", "driving", "ended", "idle"):
+        eng.phase = r.phase
+    eng.pos = max(0, min(r.pos, n - 1)) if n else 0
+    if r.phase == "ended":
+        eng.pos = max(0, n - 1)
+    if r.message:
+        msgs = SIM.route.messages or {}
+        eng.message_key = next(iter(msgs), None)
+        eng.message = msgs[eng.message_key] if eng.message_key else "Text mimořádné informace"
+    eng.since = t[0]
+    panel = {"name": "náhled", "role": "interior", "type": "BS120", **(r.panel or {}), "output": "virtual"}
+    veh = Vehicle.from_config({"panels": [panel]}, eng, db, base_dir=SIM.workdir)
+    slot = veh.panels[0]
+    step, pages, last, t0 = 0.1, [], None, t[0]
+    for k in range(int(min(max(r.seconds, 5), 90) / step)):
+        t[0] = t0 + k * step
+        veh.tick(now=t[0], virtual_only=True)
+        fr = slot.frame(t[0])
+        key = json.dumps({x: y for x, y in (fr or {}).items() if x not in ("log", "changed", "mode_title")}, sort_keys=True)
+        if key != last:
+            pages.append({"start": round(k * step, 2), "frame": fr, "_key": key})
+            last = key
+    total = round(min(max(r.seconds, 5), 90), 2)
+    keys = [p["_key"] for p in pages]
+    for j in range(1, len(keys)):                      # one cycle: the first pages come again from j on
+        m = min(2, len(keys) - j)                       # (not all of them – the clock page may change)
+        if m >= 2 and keys[j:j + m] == keys[:m] or (m == 1 and j > 1 and keys[j] == keys[0]):
+            total, pages = pages[j]["start"], pages[:j]
+            break
+    for p in pages:
+        p.pop("_key", None)
+    for i, p in enumerate(pages):
+        p["seconds"] = round((pages[i + 1]["start"] if i + 1 < len(pages) else total) - p["start"], 2)
+    return {"pages": pages, "total": total, "stop": SIM.route.stops[eng.pos].name if n else "",
+            "line": SIM.route.line, "phase": eng.phase}
 
 
 # ------------------------------------------------------------------ database
@@ -343,7 +500,7 @@ def _rebuild(keep_state: bool = True):
     running = bool(SIM.vehicle and SIM.vehicle.running)
     if SIM.vehicle:
         SIM.vehicle.stop()
-    SIM.engine = SimEngine(SIM.route, SIM.vehicle_cfg.get("settings"))
+    SIM.engine = SimEngine(SIM.route, resolve_settings(SIM.vehicle_cfg.get("settings"), _formats()))
     if keep_state and old is not None:
         SIM.engine.phase, SIM.engine.pos = old.phase, min(old.pos, max(0, len(SIM.route.stops) - 1))
         SIM.engine.message, SIM.engine.message_key = old.message, old.message_key

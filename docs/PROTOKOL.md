@@ -508,7 +508,12 @@ Skutečný vnější panel ani palubní počítač BS100 k dispozici nemáme. Em
 gBUSE0 a dBUSE. Co je odhad:
 
 - **Varianty bez databáze** ([`exterior.yaml`](../busepanel/peripherals/exterior.yaml)): v1 čelní 140×19, v2 boční
-  s číslem 110×19, v4 zadní 28×19. Pole linky má 28 sloupců. Fonty jsou originální fonty gBUSE0 0–12
+  112×19, v4 zadní 28×19. Pole linky má 28 sloupců. Rozměry a označení modelů jsou **ověřené**: certifikát
+  IDS JMK (2014) a seznam certifikovaných zařízení PID (2020) uvádějí BS 210.0C čelní 19×140, BS 210.0B boční
+  19×112, BS 210.0A zadní 19×28 (dříve BS 210.C/.B/.A); stejné rozměry mají zářivkové BS 110.19-140-1 /
+  19-112-1 / 19-028-1. Odpovídají i skutečné databáze gBUSE0 (Brno, Košice, Ostrava, Praha). Číslo modelu
+  je technologická řada (BS 110 zářivkový, BS 210 DOT-LED, BS 310 LED – ty má zadní 19×32 a čelní 19×144),
+  ne poloha panelu; BSLoader typ pozná z odpovědi panelu, rozměry čte z panelu. Fonty jsou originální fonty gBUSE0 0–12
   ([`gbuse0_font.yaml`](../busepanel/peripherals/gbuse0_font.yaml)), převzaté z dat gBUSE0. Soubory `*.fnt`
   editoru gBUSE0 k dispozici nejsou.
 - **Řádek nácestných zastávek**: `stop_field: top` (10 řádků nahoře) nebo `bottom` (8 řádků dole, cíl nad ním).

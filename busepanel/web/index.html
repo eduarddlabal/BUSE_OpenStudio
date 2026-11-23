@@ -9,7 +9,7 @@
 <body>
 <header class="top">
   <div class="brand">BUSE&nbsp;Studio</div>
-  <div class="project">
+  <div class="project" data-only="gbuse">
     <select id="fileSelect" title="Soubory v pracovní složce"></select>
     <button id="btnOpen">Otevřít</button>
     <button id="btnNew">Nový…</button>
@@ -20,17 +20,25 @@
   <div class="panelstat"><span id="panelPort" class="pill">COM?</span></div>
 </header>
 
+
+
+<div class="layout">
+<nav class="modules">
+  <button data-module="jizda"><b>Jízda</b><small>ovládání simulace</small></button>
+  <div class="navgroup">Příprava</div>
+  <button data-module="linky"><b>Linky</b><small>směry, kurzy, spoje</small></button>
+  <button data-module="vozidla"><b>Vozidla</b><small>panely, výběr formátu</small></button>
+  <button data-module="formaty"><b>Formáty textů</b><small>skladba textů, náhled</small></button>
+  <div class="navgroup">Panel a data</div>
+  <button data-module="loader"><b>Připojení</b><small>nahrávání, záloha, povely</small></button>
+  <button data-module="gbuse"><b>Databáze gBUSE</b><small>editor dat → HEX</small></button>
+  <button data-module="live"><b>Ruční texty</b><small>text, hodiny, odjezdy</small></button>
+</nav>
+<div class="content">
 <section class="ledwrap" data-module="gbuse">
   <canvas id="led" width="1350" height="100"></canvas>
   <div class="ledinfo"><span id="ledInfo"></span></div>
 </section>
-
-<nav class="modules">
-  <button data-module="gbuse" class="active"><b>gBUSE</b><small>editor dat → HEX</small></button>
-  <button data-module="loader"><b>Loader</b><small>nahrávání, záloha, povely</small></button>
-  <button data-module="live"><b>Živě</b><small>text, hodiny, odjezdy</small></button>
-  <button data-module="sim"><b>Simulace</b><small>linka, vozidlo, OMSI</small></button>
-</nav>
 <nav class="tabs" data-for="gbuse">
   <button data-tab="texts" class="active">Texty</button>
   <button data-tab="config">Konfigurace</button>
@@ -299,12 +307,18 @@
     <pre id="liveOut" class="out"></pre>
   </div>
 </div>
-<div class="tab" data-module="sim" id="tab-sim" hidden>
+<div class="tab" data-module="jizda" id="tab-jizda" hidden>
   <div class="card">
     <div class="row" style="justify-content:space-between">
-      <h3>Řízení simulace</h3>
+      <h3>Jízda</h3>
       <span id="simDb" class="muted small"></span>
     </div>
+    <div class="row jsel">
+      <label>Linka <select id="jLine"></select></label>
+      <label style="flex:2">Spoj <select id="rTrip" style="width:100%"></select></label>
+      <label>Vozidlo <select id="jVeh"></select></label>
+    </div>
+    <p id="rTripNote" class="muted small" hidden></p>
     <div class="row simctl">
       <button id="simStart" class="primary">▶ Start / Odeslat na panely</button>
       <button id="simStop">■ Zastavit odesílání</button>
@@ -325,12 +339,14 @@
       <button data-ev="clear_message">Zrušit (Esc)</button>
     </div>
     <div id="simStatus" class="simstatus"></div>
+    <div id="simStops" class="simstops" title="kliknutím skočíte na zastávku"></div>
     <div id="simPanels" class="simpanels"></div>
-    <details><summary>Záznam odeslaných povelů</summary><pre id="simLog" class="out"></pre></details>
   </div>
 
-  <div class="cols3">
-    <div class="card">
+</div>
+
+<div class="tab" data-module="linky" id="tab-linky" hidden>
+  <div class="card">
       <h3>Linka</h3>
       <div class="row">
         <select id="routeSelect"></select><button id="routeLoad">Načíst</button>
@@ -338,9 +354,8 @@
       </div>
       <div class="row">
         <label>Číslo linky <input id="rLine" style="width:6em"></label>
-        <label style="flex:1">Simulovaný spoj <select id="rTrip" style="width:100%"></select></label>
+        <span class="muted small" style="flex:1">Spoj k simulaci vyberete v Jízdě nebo tlačítkem ▶ u spoje.</span>
       </div>
-      <p id="rTripNote" class="muted small" hidden></p>
 
       <h3>Směry</h3>
       <div class="row dirtabs" id="rDirTabs"></div>
@@ -379,18 +394,38 @@
       <p class="muted small">Ikony: <span id="iconNames"></span>. V textech se píší jako <code>{icon:metro}</code>.</p>
     </div>
 
-    <div class="card">
-      <h3>Vozidlo a panely</h3>
+</div>
+
+<div class="tab" data-module="formaty" id="tab-formaty" hidden>
+  <div class="cols fmtcols">
+    <div class="list">
+      <h3>Formáty textů</h3>
+      <p class="muted small">Vestavěné formáty nejdou přepsat – upravte je a uložte jako kopii. Vlastní formáty jsou ve složce
+        <code>formaty/</code> pracovní složky, podsložky se zobrazí jako skupiny.</p>
+      <div id="fmtList" class="reclist"></div>
+      <div class="row"><button id="fmtNew">+ Nový formát</button></div>
+    </div>
+    <div class="editor">
       <div class="row">
-        <select id="vehSelect"></select><button id="vehLoad">Načíst</button>
-        <input id="vehPath" value="vozidla/autobus.yaml" title="libovolná podsložka vozidla/ se v seznamu zobrazí jako skupina" style="flex:1"><button id="vehSave" class="primary">Uložit</button>
+        <label style="flex:1">Název <input id="fmtTitle"></label>
+        <span id="fmtFile" class="muted small"></span>
       </div>
-      <div id="vehPanels"></div>
-      <div class="row"><button id="vehAdd">+ Panel</button><button id="vehApply">Použít</button></div>
-      <h3>Vnitřní panel</h3>
       <div class="row">
-        <label>Formát <select id="sPreset"></select></label><button id="sPresetApply">Použít formát</button>
+        <button id="fmtSave" class="primary">Uložit</button><button id="fmtSaveAs">Uložit jako…</button>
+        <button id="fmtRevert">Zahodit změny</button><button id="fmtDel" class="danger">Smazat</button>
+        <span id="fmtState" class="muted small"></span>
       </div>
+      <div class="fmtprev">
+        <div class="row">
+          <label>Náhled na panelu <select id="pvPanel"></select></label>
+          <label>Situace <select id="pvSit"></select></label>
+          <label>Zastávka <select id="pvStop"></select></label>
+          <span id="pvInfo" class="muted small" style="flex:1"></span>
+        </div>
+        <canvas id="pvCanvas" width="1080" height="70"></canvas>
+        <div id="pvPages" class="pvpages"></div>
+      </div>
+      <h3>Obecné</h3>
       <div class="row">
         <label class="chk"><input type="checkbox" data-item="next" checked> příští zastávka</label>
         <label class="chk"><input type="checkbox" data-item="time" checked> čas</label>
@@ -404,7 +439,10 @@
         <label>Mimořádnost <select id="sMsgMode"><option value="cycle">přidat do cyklu</option><option value="override">přebít vše</option></select></label>
         <label>Font / mezera <span class="row"><input id="sFont" type="number" min="0" max="15" style="width:4em"><input id="sSpacing" type="number" min="0" max="15" style="width:4em"></span></label>
       </div>
-      <label>Formát času (strftime) <input id="sTime" class="mono" value="%H:%M"></label>
+      <div class="grid2">
+        <label>Formát času (strftime) <input id="sTime" class="mono" value="%H:%M"></label>
+        <label>Vnější panely: doba stránky [s] <input id="sExtSeconds" type="number" min="1" step="0.5"></label>
+      </div>
       <h3>Skladba textů</h3>
       <p class="muted small">Každý údaj je sekvence stránek, které se na panelu překlápějí. Stránka = text, vlastní font
         a mezera, doba zobrazení a podmínka. Jeden běžící text = sekvence s jedinou stránkou.
@@ -435,7 +473,31 @@
         <code>{time}</code> čas, <code>{message}</code> text mimořádnosti. Ikony i v textu: <code>{icon:vlak}</code>.
         Vnitřní panely: font 0 je tenký, 3 normální (podle fontů v databázi); prázdný font nebo mezera = hodnota
         z „Font / mezera“ výše. Vnější panely: fonty gBUSE0 (0–3 malé, 5 střední, 6–9 velké, 11 drobný); bez fontu si
-        panel text naformátuje sám (největší font, který se vejde). Vlastní formáty: složka <code>formaty/</code>.</p>
+        panel text naformátuje sám (největší font, který se vejde).</p>
+    </div>
+  </div>
+</div>
+
+<div class="tab" data-module="vozidla" id="tab-vozidla" hidden>
+  <div class="cols vozcols">
+    <div class="card">
+      <h3>Vozidlo a panely</h3>
+      <div class="row">
+        <select id="vehSelect"></select><button id="vehLoad">Načíst</button>
+        <input id="vehPath" value="vozidla/autobus.yaml" title="libovolná podsložka vozidla/ se v seznamu zobrazí jako skupina" style="flex:1"><button id="vehSave" class="primary">Uložit</button>
+      </div>
+      <div id="vehPanels"></div>
+      <div class="row"><button id="vehAdd">+ Panel</button><button id="vehApply">Použít</button></div>
+      <h3>Skladba textů</h3>
+      <div class="row">
+        <label style="flex:1">Formát textů <select id="vFormat"></select></label>
+        <button id="vFormatEdit">Upravit formát</button>
+      </div>
+      <p id="vOverrides" class="muted small"></p>
+      <div class="row" id="vOvrRow" hidden>
+        <button id="vOvrSave">Uložit jako nový formát</button>
+        <button id="vOvrDrop" class="danger">Zahodit úpravy vozidla</button>
+      </div>
     </div>
 
     <div class="card">
@@ -456,6 +518,8 @@
   </div>
 </div>
 </main>
+</div>
+</div>
 
 <dialog id="dlgNew">
   <form method="dialog">
@@ -467,6 +531,10 @@
   </form>
 </dialog>
 
+<div id="comm" class="comm">
+  <button id="commToggle" class="commbar"><span>Komunikace – odeslané povely</span><span id="commLast" class="muted small"></span><span id="commArrow">▲</span></button>
+  <pre id="simLog" class="out"></pre>
+</div>
 <div id="toast"></div>
 <script type="module" src="/static/main.js"></script>
 </body>

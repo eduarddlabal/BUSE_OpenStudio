@@ -22,12 +22,18 @@ async function loadSimFiles() {
   const opt = (list) => list.map((x) => `<option>${esc(x)}</option>`).join("");
   $("#routeSelect").innerHTML = opt(f.routes) || "<option value=''>(žádné trasy)</option>";
   $("#vehSelect").innerHTML = vehOptions(f.vehicles) || "<option value=''>(žádná vozidla)</option>";
+  const pick = (sel, list, cur, html) => { $(sel).innerHTML = (cur && !list.includes(cur) ? `<option value="">(neuloženo)</option>` : "") + html;
+    $(sel).value = list.includes(cur) ? cur : ""; };
+  pick("#jLine", f.routes, f.route_path, opt(f.routes) || "<option value=''>(žádné linky)</option>");
+  pick("#jVeh", f.vehicles, f.vehicle_path, vehOptions(f.vehicles) || "<option value=''>(žádná vozidla)</option>");
+  if (f.route_path && f.routes.includes(f.route_path)) $("#routeSelect").value = f.route_path;
+  if (f.vehicle_path && f.vehicles.includes(f.vehicle_path)) $("#vehSelect").value = f.vehicle_path;
   $("#dbSelect").innerHTML = opt(f.databases) || "<option value=''>(žádné databáze)</option>";
   const all = await api("/api/files");
   $("#dbBase").innerHTML = `<option value="gbuse">originální font gBUSE</option><option value="builtin">vestavěný font (BUSE Studio)</option>` + opt(all.files.filter((x) => x.endsWith(".hex") || x.endsWith(".yaml")));
   if (f.route_path) $("#routePath").value = f.route_path;
   if (f.vehicle_path) $("#vehPath").value = f.vehicle_path;
-  $("#simDb").textContent = f.db_path ? "databáze: " + f.db_path : "⚠ není vybraná databáze panelu (vpravo dole)";
+  $("#simDb").textContent = f.db_path ? "databáze: " + f.db_path : "⚠ není vybraná databáze panelu (Vozidla → Univerzální databáze panelu)";
 }
 
 // ------------------------------------------------------------------ line: directions, courses, trips
@@ -303,6 +309,12 @@ $("#rAddMsg").onclick = () => { const m = sim.data.messages = sim.data.messages 
   m["zprava" + n] = "Text mimořádné informace"; renderMsgs(); pushLine(); };
 
 // ---- files
+const loadLine = guard(async (p) => {
+  if (!p) return;
+  sim.dir = null; setRouteInfo(await api("/api/sim/route/load", { path: p })); $("#routePath").value = p; toast("Linka načtena");
+  loadSimFiles();
+});
+$("#jLine").onchange = () => loadLine($("#jLine").value);
 $("#routeLoad").onclick = guard(async () => {
   const p = $("#routeSelect").value; if (!p) return;
   sim.dir = null; setRouteInfo(await api("/api/sim/route/load", { path: p })); $("#routePath").value = p; toast("Linka načtena");
@@ -386,96 +398,83 @@ function renderVehicle() {
     if (["type", "output", "role"].includes(f)) renderVehicle();
   });
   $("#vehPanels").querySelectorAll("[data-a=del]").forEach((b) => b.onclick = () => { v.panels.splice(+b.closest(".vpanel").dataset.i, 1); renderVehicle(); });
-  const s = v.settings || (v.settings = {}), i = s.interior || (s.interior = {}), e = s.exterior || (s.exterior = {});
-  $$("[data-item]").forEach((c) => c.checked = (i.items || ["next", "time", "zone"]).includes(c.dataset.item));
-  $("#sSeconds").value = i.seconds ?? 4; $("#sAtStop").value = i.at_stop || "line_dest"; $("#sMsgMode").value = i.message_mode || "cycle";
-  $("#sLine").value = i.line || "at_stop"; $("#sRunTime").value = i.run_time || "once";
-  $("#sPreset").innerHTML = Object.entries(sim.presets || {}).map(([k, p]) =>
-    `<option value="${k}" ${k === (i.format || "zakladni") ? "selected" : ""}>${esc(p.title)}</option>`).join("");
-  $("#sFont").value = i.font ?? 3; $("#sSpacing").value = i.spacing ?? 1;
-  $("#sTime").value = i.time_format ?? "%H:%M";
-  if (!i.sequences) i.sequences = JSON.parse(JSON.stringify(sim.defaultSeqs || {}));
-  delete i.next_format; delete i.request_suffix; delete i.zone_format; delete i.final_text; delete e.format;
-  renderSeq();
-}
-function readSettings() {
-  const s = sim.vehicle.settings;
-  s.interior = { ...s.interior, items: $$("[data-item]").filter((c) => c.checked).map((c) => c.dataset.item),
-    seconds: +$("#sSeconds").value, at_stop: $("#sAtStop").value, message_mode: $("#sMsgMode").value, line: $("#sLine").value, run_time: $("#sRunTime").value,
-    font: +$("#sFont").value, spacing: +$("#sSpacing").value, time_format: $("#sTime").value };
-  delete s.exterior.font; delete s.exterior.spacing;      // exterior: fonts only per page (else autoformat)
+  renderVehicleFormat();
 }
 $("#vehAdd").onclick = () => {
   sim.vehicle.panels.push({ name: "Nový panel", type: "BS120", role: "interior", profile: "BS120", output: "virtual" });
   renderVehicle();
 };
 const applyVehicle = guard(async (path) => {
-  readSettings();
-  sim.vehicle = (await api("/api/sim/vehicle/save", { path: path || null, config: sim.vehicle })).config;
+  const r = await api("/api/sim/vehicle/save", { path: path || null, config: sim.vehicle });
+  sim.vehicle = r.config; sim.vinfo = r;
   sim.views = {}; $("#simPanels").innerHTML = "";
-  renderSeq();                       // placeholders show the current default font / spacing
+  renderVehicleFormat();
   toast(path ? "Vozidlo uloženo" : "Nastavení použito");
 });
 $("#vehApply").onclick = () => applyVehicle();
-$("#sPresetApply").onclick = () => {
-  const p = (sim.presets || {})[$("#sPreset").value]; if (!p) return;
-  sim.vehicle.settings.interior = JSON.parse(JSON.stringify(p.interior));
-  renderVehicle(); applyVehicle();
-};
-$$("#tab-sim [data-item], #sSeconds, #sAtStop, #sMsgMode, #sLine, #sFont, #sSpacing, #sTime")
-  .forEach((el) => el.addEventListener("change", () => applyVehicle()));
 $("#vehSave").onclick = guard(async () => { await applyVehicle($("#vehPath").value); loadSimFiles(); });
-$("#vehLoad").onclick = guard(async () => {
-  const p = $("#vehSelect").value; if (!p) return;
-  sim.vehicle = (await api("/api/sim/vehicle/load", { path: p })).config; $("#vehPath").value = p;
+const loadVehicle = guard(async (p) => {
+  if (!p) return;
+  const r = await api("/api/sim/vehicle/load", { path: p });
+  sim.vehicle = r.config; sim.vinfo = r; $("#vehPath").value = p;
   sim.views = {}; $("#simPanels").innerHTML = ""; renderVehicle();
+  loadSimFiles();
 });
+$("#vehLoad").onclick = () => loadVehicle($("#vehSelect").value);
+$("#jVeh").onchange = () => loadVehicle($("#jVeh").value);
 
-// ------------------------------------------------------------------ sequences (pages)
-const WHEN = { always: "vždy", request: "na znamení", not_request: "ne na znamení", via: "je „přes“", zone: "má zónu" };
-const ROLE = { text: "text", heading: "nadpis" };
-// default pages of a sequence – from the selected format (preset), else the built-in defaults
-const seqDefaults = () => (sim.presets?.[sim.vehicle.settings.interior.format]?.interior.sequences) || sim.defaultSeqs || {};
-function seqList() {
-  const i = sim.vehicle.settings.interior, name = $("#seqSelect").value;
-  i.sequences = i.sequences || {};
-  if (!i.sequences[name]) i.sequences[name] = JSON.parse(JSON.stringify(seqDefaults()[name] || []));
-  return i.sequences[name];
+// ------------------------------------------------------------------ text format of the vehicle
+const KEY_NAMES = { items: "položky v cyklu", seconds: "doba stránky", at_stop: "v zastávce", message_mode: "mimořádnost",
+  line: "číslo linky", run_time: "běžící text", font: "font", spacing: "mezera", time_format: "formát času" };
+async function loadFormatList() {
+  sim.formats = (await api("/api/sim/formats")).formats;
 }
-function renderSeq() {
+function renderVehicleFormat() {
   if (!sim.vehicle) return;
-  const pages = seqList();
-  const opts = (obj, sel) => Object.entries(obj).map(([k, t]) => `<option value="${k}" ${k === (sel || Object.keys(obj)[0]) ? "selected" : ""}>${t}</option>`).join("");
-  $("#seqPages").innerHTML = pages.map((p, i) => `<tr data-i="${i}">
-    <td><input data-f="text" value="${esc(p.text || "")}" class="mono" style="min-width:14em;width:100%"></td>
-    <td><input data-f="font" type="number" min="0" max="15" value="${p.font ?? ""}" placeholder="${sim.vehicle.settings.interior.font ?? 3}" style="width:3.5em"></td>
-    <td><input data-f="spacing" type="number" min="0" max="15" value="${p.spacing ?? ""}" placeholder="${sim.vehicle.settings.interior.spacing ?? 1}" style="width:3.5em"></td>
-    <td><input data-f="seconds" type="number" min="0.5" step="0.5" value="${p.seconds ?? ""}" style="width:4em"></td>
-    <td><select data-f="when">${opts(WHEN, p.when)}</select></td>
-    <td><select data-f="role">${opts(ROLE, p.role)}</select></td>
-    <td><input data-f="run" type="checkbox" ${p.run ? "checked" : ""}></td>
-    <td class="nowrap"><button data-a="up">↑</button><button data-a="del" class="danger">×</button></td></tr>`).join("");
-  $("#seqPages").querySelectorAll("[data-f]").forEach((el) => el.onchange = () => {
-    const p = pages[+el.closest("tr").dataset.i], f = el.dataset.f;
-    if (el.type === "checkbox") { if (el.checked) p[f] = true; else delete p[f]; }
-    else if (el.type === "number") { if (el.value === "") delete p[f]; else p[f] = +el.value; }
-    else if ((f === "when" && el.value === "always") || (f === "role" && el.value === "text")) delete p[f];
-    else p[f] = el.value;
-    applyVehicle();
-  });
-  $("#seqPages").querySelectorAll("[data-a]").forEach((b) => b.onclick = () => {
-    const i = +b.closest("tr").dataset.i;
-    if (b.dataset.a === "del") pages.splice(i, 1);
-    if (b.dataset.a === "up" && i > 0) [pages[i - 1], pages[i]] = [pages[i], pages[i - 1]];
-    renderSeq(); applyVehicle();
-  });
+  const info = sim.vinfo || {}, cur = info.format || ((sim.vehicle.settings || {}).interior || {}).format || "zakladni";
+  const list = sim.formats || [];
+  const group = (f) => (f.builtin ? "Vestavěné" : f.group || "Vlastní");
+  const groups = {};
+  for (const f of list) (groups[group(f)] = groups[group(f)] || []).push(f);
+  $("#vFormat").innerHTML = (info.format_missing ? `<option value="${esc(cur)}">${esc(cur)} (nenalezen)</option>` : "") +
+    Object.entries(groups).map(([g, fs]) => `<optgroup label="${esc(g)}">` +
+      fs.map((f) => `<option value="${esc(f.name)}" ${f.name === cur ? "selected" : ""}>${esc(f.title)}</option>`).join("") + "</optgroup>").join("");
+  const ov = info.overrides || [];
+  const label = (k) => {
+    const [role, key, seq] = k.split(".");
+    if (key === "sequences") return "sekvence „" + seq + "“";
+    return (role === "exterior" ? "vnější: " : "") + (KEY_NAMES[key] || key);
+  };
+  $("#vOverrides").textContent = ov.length
+    ? "Vozidlo má vlastní úpravy proti formátu: " + ov.map(label).join(", ") + ". Ty mají přednost před formátem."
+    : "Vozidlo používá formát beze změn – úpravy formátu se projeví hned.";
+  $("#vOvrRow").hidden = !ov.length;
 }
-$("#seqSelect").onchange = renderSeq;
-$("#seqAdd").onclick = () => { seqList().push({ text: "" }); renderSeq(); };
-$("#seqDefault").onclick = () => {
-  sim.vehicle.settings.interior.sequences[$("#seqSelect").value] = JSON.parse(JSON.stringify(seqDefaults()[$("#seqSelect").value] || []));
-  renderSeq(); applyVehicle();
+$("#vFormat").onchange = () => {
+  const s = sim.vehicle.settings || (sim.vehicle.settings = {});
+  s.interior = { ...(s.interior || {}), format: $("#vFormat").value };
+  applyVehicle();
 };
+$("#vFormatEdit").onclick = () => window.dispatchEvent(new CustomEvent("buse:goto", { detail: { module: "formaty", format: $("#vFormat").value } }));
+$("#vOvrDrop").onclick = () => {
+  if (!confirm("Zahodit vlastní úpravy vozidla a používat jen vybraný formát?")) return;
+  sim.vehicle.settings = { interior: { format: $("#vFormat").value } };
+  applyVehicle();
+};
+$("#vOvrSave").onclick = guard(async () => {
+  const name = prompt("Název souboru nového formátu (ve složce formaty/):", ($("#vehPath").value.split("/").pop() || "vozidlo").replace(/\.ya?ml$/, ""));
+  if (!name) return;
+  const title = prompt("Název formátu:", sim.vehicle.name || name);
+  if (title === null) return;
+  const r = await api("/api/sim/vehicle/to-format", { name, title });
+  sim.vehicle = r.config; sim.vinfo = r;
+  await loadFormatList(); renderVehicleFormat();
+  toast("Skladba vozidla uložena jako formát " + name + (sim.vinfo && $("#vehPath").value ? " – vozidlo ho teď používá" : ""));
+});
+window.addEventListener("buse:formats-changed", guard(async () => {
+  await loadFormatList();
+  if (sim.vehicle) { const r = await api("/api/sim/vehicle"); sim.vinfo = r; renderVehicleFormat(); }
+}));
 
 // ------------------------------------------------------------------ database
 $("#dbBuild").onclick = guard(async () => {
@@ -500,12 +499,12 @@ async function ev(type, extra = {}) {
   render(await api("/api/sim/event", { type, ...extra }));
   if (type === "next_trip") setRouteInfo(await api("/api/sim/route"));
 }
-$$("#tab-sim [data-ev]").forEach((b) => b.onclick = guard(() => ev(b.dataset.ev)));
+$$("#tab-jizda [data-ev]").forEach((b) => b.onclick = guard(() => ev(b.dataset.ev)));
 $("#simMsgSend").onclick = guard(() => ev("message", { text: $("#simMsgText").value }));
 $("#simStart").onclick = guard(async () => render(await api("/api/sim/start", {})));
 $("#simStop").onclick = guard(async () => render(await api("/api/sim/stop", {})));
 document.addEventListener("keydown", (e) => {
-  if (!sim.active || ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
+  if (!sim.active || sim.page !== "jizda" || ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement.tagName)) return;
   const map = { " ": "next", ArrowRight: "next", ArrowLeft: "prev", a: "arrive", d: "depart", Escape: "clear_message" };
   const k = map[e.key];
   if (k) { e.preventDefault(); guard(() => ev(k))(); }
@@ -520,7 +519,7 @@ function render(s) {
     ${e.course ? ` · kurz ${esc(e.course)}, spoj ${e.trip + 1}${e.departure ? " (" + esc(e.departure) + ")" : ""}` : e.direction ? ` · směr ${esc(e.direction)}` : ""}
     ${e.message ? ` · <span class="warn">mimořádnost: ${esc(e.message)}</span>` : ""}
     · odesílání na panely: <b>${s.running ? "běží" : "zastaveno"}</b>`
-    : `<span class="warn"><b>Není vybraná databáze panelu.</b> Vpravo dole v kartě „Univerzální databáze panelu“ klikněte
+    : `<span class="warn"><b>Není vybraná databáze panelu.</b> V sekci Vozidla v kartě „Univerzální databáze panelu“ klikněte
        na „Sestavit“ (nebo vyberte existující a „Použít existující“). Pak se zobrazí panely vozidla.</span>`;
   for (const p of s.panels || []) {
     let box = sim.views[p.name];
@@ -546,8 +545,33 @@ function render(s) {
     cv.hidden = !p.frame;
     if (p.frame) box.view.show(p.frame, p.frame.geometry);
   }
-  $("#simLog").textContent = (s.log || []).join("\n");
+  renderStopStrip(e);
+  const log = s.log || [];
+  const pre = $("#simLog"), atEnd = pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 4;
+  pre.textContent = log.join("\n");
+  if (atEnd) pre.scrollTop = pre.scrollHeight;
+  $("#commLast").textContent = log.length ? log[log.length - 1] : "";
 }
+function renderStopStrip(e) {
+  const stops = (sim.route && sim.route.stops) || [], key = stops.map((x) => x.name).join("|");
+  const box = $("#simStops");
+  if (box.dataset.key !== key) {
+    box.dataset.key = key;
+    box.innerHTML = stops.map((x, i) => `<button data-i="${i}" class="${x.via ? "via" : ""}">${i + 1}. ${esc(x.name)}</button>`).join("");
+    box.querySelectorAll("button").forEach((b) => b.onclick = guard(() => ev("goto", { index: +b.dataset.i, phase: "at_stop" })));
+  }
+  const pos = e ? e.pos : -1, ended = e && e.phase === "ended";
+  box.querySelectorAll("button").forEach((b) => {
+    const i = +b.dataset.i;
+    b.classList.toggle("cur", !!e && e.phase !== "idle" && i === pos);
+    b.classList.toggle("done", !!e && e.phase !== "idle" && (i < pos || ended));
+  });
+}
+$("#commToggle").onclick = () => {
+  const c = $("#comm"); c.classList.toggle("open");
+  $("#commArrow").textContent = c.classList.contains("open") ? "▼" : "▲";
+  if (c.classList.contains("open")) $("#simLog").scrollTop = $("#simLog").scrollHeight;
+};
 
 async function poll() {
   if (!sim.active) return;
@@ -555,16 +579,18 @@ async function poll() {
   sim.polling = setTimeout(poll, 400);
 }
 
-export async function activateSim(on) {
-  sim.active = on;
+export async function activateSim(on, page) {
+  sim.active = on; sim.page = page;
   clearTimeout(sim.polling);
   if (!on) return;
   if (!sim.route) {
     sim.profiles = (await api("/api/profiles")).profiles;
     const ri = await api("/api/sim/route");
-    sim.vehicle = (await api("/api/sim/vehicle")).config;
+    const vi = await api("/api/sim/vehicle");
+    sim.vehicle = vi.config; sim.vinfo = vi;
+    await loadFormatList();
     const d = await api("/api/sim/defaults");
-    sim.defaultSeqs = d.sequences; sim.presets = d.presets;
+    sim.defaultSeqs = d.sequences;
     sim.ptypes = d.peripherals.types; sim.variants = d.peripherals.variants;
     const ic = await api("/api/icons");
     $("#iconNames").textContent = ic.icons.map((i) => i.name).join(", ");
