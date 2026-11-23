@@ -237,6 +237,27 @@ class ProjectBundle:
             "counts": self.aggregated_counts(),
         }
 
+    def resolved_vehicle_config(self, workdir: str | None = None) -> dict | None:
+        """Load bundle's simulation vehicle config and resolve relative panel database paths."""
+        sim = self.simulation or {}
+        v_cfg = sim.get("vehicle_data")
+        if v_cfg is None and isinstance(sim.get("vehicle"), str) and not sim["vehicle"].startswith("template:"):
+            vp = os.path.join(self.base_dir, sim["vehicle"])
+            if os.path.exists(vp):
+                v_cfg = load_yaml(vp)
+        if not isinstance(v_cfg, dict):
+            return None
+        resolved = copy.deepcopy(v_cfg)
+        for pitem in resolved.get("panels") or []:
+            dbp = pitem.get("database")
+            if isinstance(dbp, str) and not os.path.isabs(dbp):
+                cand = os.path.join(self.base_dir, dbp)
+                if os.path.exists(cand):
+                    pitem["database"] = os.path.relpath(cand, workdir) if workdir else os.path.abspath(cand)
+        if sim.get("system") and not resolved.get("system"):
+            resolved["system"] = sim["system"]
+        return resolved
+
     # ---- record propagation across panels ------------------------------
     @staticmethod
     def _extract_lines(src: Project, section: str, value) -> tuple[str, str]:

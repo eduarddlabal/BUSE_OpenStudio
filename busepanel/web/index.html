@@ -841,11 +841,16 @@
     </div>
 
     <div class="card">
-      <h3>Univerzální databáze panelu</h3>
-      <p class="muted small">Fonty + ikony + čísla linek 1–999. Nahraje se do panelu jednou; všechny texty pak jdou dynamicky
-        (volný text <code>v</code> + <code>x9996/x9997</code>).</p>
+      <h3>Univerzální projekt pro simulaci</h3>
+      <p class="muted small">Fonty + ikony + čísla linek 1–999 (pro vnitřní i vnější panely gBUSE0).
+        Nahraje se do panelu jednou; dynamické texty pak posílá simulace přes IBIS.</p>
+      <label>Název projektu <input id="dbName" value="Univerzální autobus (simulace)" placeholder="např. Linka 7 – testovací autobus"></label>
       <label>Fonty převzít z <select id="dbBase"></select></label>
-      <label>Uložit jako <input id="dbOut" value="databaze/univerzalni/projekt.yaml"></label>
+      <label>Uložit jako <input id="dbOut" value="projekty/univerzalni/projekt.yaml"></label>
+      <div class="row" style="gap:14px;flex-wrap:wrap">
+        <label class="inline"><input type="checkbox" id="dbBundle" checked> Vícepanelový projekt (všechny panely vozidla)</label>
+        <label class="inline"><input type="checkbox" id="dbApplyVeh" checked> Použít sestavu panelů</label>
+      </div>
       <div class="row"><button id="dbBuild" class="primary">Sestavit</button></div>
       <div class="row"><select id="dbSelect"></select><button id="dbOpen">Použít existující</button></div>
       <div class="row"><button id="dbToLoader">Otevřít v gBUSE a nahrát přes Loader…</button></div>

@@ -11,12 +11,13 @@ from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
 from ..core import appsettings
+from ..core.bundle import ProjectBundle
 from ..core.project import Project, load_yaml, dump_yaml
 from ..sim.engine import (DEFAULT_SETTINGS, DEFAULT_SEQUENCES, LEGACY_DIRS, SECTION_TITLES, SECTIONS, SYSTEMS_DIR,
                           SimEngine, load_formats, merge_settings, resolve_settings, system_settings, vehicle_system)
 from ..sim.line import Line
 from ..sim.route import Route
-from ..sim.universal_db import build_universal
+from ..sim.universal_db import build_universal, build_universal_bundle
 from ..sim.vehicle import Vehicle
 
 router = APIRouter()
@@ -33,11 +34,11 @@ EXAMPLE_ROUTE = {
 }
 EXAMPLE_VEHICLE = {
     "name": "Testovací autobus",
-    "panels": [{"name": "Vnitřní (náhled)", "role": "interior", "profile": "BS120", "output": "virtual"},
-               {"name": "Čelní (náhled)", "role": "front", "profile": "BS120", "output": "virtual"},
-               {"name": "Vnitřní BS120", "role": "interior", "profile": "BS120", "output": "serial",
-                "port": "", "address": 10, "enabled": False}],          # "" = auto-detected adapter
-
+    "panels": [
+        {"name": "Čelní BS210", "type": "BS210", "variant": "v1", "role": "front", "output": "virtual"},
+        {"name": "Boční BS210", "type": "BS210", "variant": "v2", "stop_field": "bottom", "role": "side", "output": "virtual"},
+        {"name": "Vnitřní BS120", "type": "BS120", "profile": "BS120", "role": "interior", "output": "virtual"},
+    ],
 }
 
 
@@ -66,15 +67,107 @@ class Sim:
 SIM = Sim()
 
 
-DEFAULT_DB = "databaze/univerzalni/projekt.yaml"
+_DEFAULT_DB_CANDIDATES = (
+    "projekty/univerzalni/projekt.yaml",
+    "databaze/univerzalni/projekt.yaml",
+)
+DEFAULT_DB = "projekty/univerzalni/projekt.yaml"
+
+
+def _load_sim_project(abs_path: str) -> tuple[Project, ProjectBundle | None]:
+    low = abs_path.lower()
+    if low.endswith((".yaml", ".yml")):
+        if ProjectBundle.is_bundle_yaml(abs_path):
+            bundle = ProjectBundle.load(abs_path)
+            pe = next((p for p in bundle.panels if p.format == "gbuse1" and p.project is not None), None)
+            if pe is None:
+                pe = next((p for p in bundle.panels if p.project is not None), None)
+            if pe is None or pe.project is None:
+                raise ValueError(f"projekt {abs_path} neobsahuje žádnou databázi panelu")
+            return pe.project, bundle
+        return Project.load(abs_path), None
+    if low.endswith(".bin"):
+        return Project.from_bin(abs_path), None
+    return Project.from_hex(abs_path), None
+
+
+def _is_sim_project_yaml(full: str) -> bool:
+    if ProjectBundle.is_bundle_yaml(full):
+        return True
+    try:
+        with open(full, encoding="utf-8", errors="replace") as fh:
+            head = "".join(fh.readline() for _ in range(30))
+        return "fonts:" in head and ("panel:" in head or "config:" in head or "lines:" in head)
+    except OSError:
+        return False
+
+
+def _scan_project_entries() -> list[dict]:
+    """Scan `projekty/` and legacy `databaze/` for bundles and standalone databases."""
+    seen: set[str] = set()
+    entries: list[dict] = []
+    for folder in ("projekty", "databaze"):
+        base = SIM.path(folder)
+        if not os.path.isdir(base):
+            continue
+        for root, dirs, fs in os.walk(base):
+            dirs[:] = sorted(d for d in dirs if not d.startswith("."))
+            if "projekt.yaml" in fs and ProjectBundle.is_bundle_yaml(os.path.join(root, "projekt.yaml")):
+                if "panely" in dirs:
+                    dirs.remove("panely")
+            for f in sorted(fs):
+                full = os.path.join(root, f)
+                low = f.lower()
+                rel = os.path.relpath(full, SIM.workdir).replace("\\", "/")
+                if rel in seen:
+                    continue
+                if low.endswith((".yaml", ".yml")):
+                    if f in ("fonts.yaml", "zive.yaml", "vozidlo.yaml") or not _is_sim_project_yaml(full):
+                        continue
+                    seen.add(rel)
+                    if ProjectBundle.is_bundle_yaml(full):
+                        try:
+                            b = ProjectBundle.load(full)
+                            entries.append({
+                                "path": rel,
+                                "kind": "bundle",
+                                "name": str(b.meta.get("name") or rel),
+                                "panels": len(b.panels),
+                                "formats": sorted({pe.format for pe in b.panels}),
+                            })
+                        except Exception:      # noqa: BLE001
+                            entries.append({"path": rel, "kind": "bundle", "name": rel, "panels": 0, "formats": []})
+                    else:
+                        entries.append({"path": rel, "kind": "yaml", "name": rel, "panels": 1, "formats": []})
+                elif low.endswith((".hex", ".bin")):
+                    seen.add(rel)
+                    entries.append({"path": rel, "kind": low.rsplit(".", 1)[-1], "name": rel, "panels": 1, "formats": []})
+    entries.sort(key=lambda e: (0 if e["kind"] == "bundle" else 1, e["path"]))
+    return entries
+
+
+def _find_default_db() -> str | None:
+    for cand in _DEFAULT_DB_CANDIDATES:
+        if os.path.exists(SIM.path(cand)):
+            return cand
+    for item in _scan_project_entries():
+        if item["kind"] in ("bundle", "yaml"):
+            return item["path"]
+    return None
 
 
 def init(workdir: str):
     SIM.workdir = os.path.abspath(workdir)
     appsettings.load(SIM.workdir)
-    if os.path.exists(SIM.path(DEFAULT_DB)):
+    cand = _find_default_db()
+    if cand and os.path.exists(SIM.path(cand)):
         try:
-            SIM.db, SIM.db_path = Project.load(SIM.path(DEFAULT_DB)), DEFAULT_DB
+            db, bundle = _load_sim_project(SIM.path(cand))
+            SIM.db, SIM.db_path = db, cand
+            if bundle is not None and SIM.vehicle_path is None:
+                vcfg = bundle.resolved_vehicle_config(SIM.workdir)
+                if vcfg:
+                    SIM.vehicle_cfg = _clean_vehicle(vcfg)
             _rebuild()
         except Exception as e:      # noqa: BLE001
             SIM._log(f"univerzální databázi nelze načíst: {e}")
@@ -101,8 +194,10 @@ def _list(folder, exts=(".yaml", ".yml")):
 # ------------------------------------------------------------------ files
 @router.get("/api/sim/files")
 def files():
+    projects = _scan_project_entries()
     return {"routes": _list("trasy"), "vehicles": _list("vozidla"),
-            "databases": _list("databaze", (".yaml", ".hex")),
+            "databases": [p["path"] for p in projects],
+            "projects": projects,
             "route_path": SIM.route_path, "vehicle_path": SIM.vehicle_path, "db_path": SIM.db_path}
 
 
@@ -481,20 +576,53 @@ def format_preview(r: PreviewReq):
 
 
 # ------------------------------------------------------------------ database
+class OpenDbReq(BaseModel):
+    path: str
+    apply_vehicle: bool = False
+
+
 @router.post("/api/sim/db/open")
-def db_open(r: PathReq):
+def db_open(r: OpenDbReq):
     p = SIM.path(r.path)
-    SIM.db = Project.from_hex(p) if p.lower().endswith(".hex") else Project.load(p)
+    db, bundle = _load_sim_project(p)
+    SIM.db = db
     SIM.db_path = r.path
+    if bundle is not None and r.apply_vehicle:
+        vcfg = bundle.resolved_vehicle_config(SIM.workdir)
+        if vcfg:
+            SIM.vehicle_cfg = _clean_vehicle(vcfg)
+            SIM.vehicle_path = None
     _rebuild()
-    return {"path": r.path, "fonts": [f.id for f in SIM.db.fonts.fonts]}
+    return {
+        "path": r.path,
+        "kind": "bundle" if bundle is not None else "single",
+        "fonts": [f.id for f in SIM.db.fonts.fonts],
+        "panels": [pe.info() for pe in bundle.panels] if bundle is not None else None,
+        "vehicle": SIM.vehicle_cfg.get("name"),
+    }
+
+
+def _interior_panel_params() -> tuple[str, int | None, int]:
+    """Derive (panel_type, columns, ibis_address) from active SIM.vehicle_cfg."""
+    from ..peripherals import TYPES, peripheral_type
+    for p in SIM.vehicle_cfg.get("panels") or []:
+        ptype = peripheral_type(p)
+        if TYPES.get(ptype, {}).get("class") == "interior":
+            prof = str(p.get("profile") or ptype or "BS120")
+            cols = int(p["columns"]) if p.get("columns") else None
+            addr = int(p.get("address", p.get("ibis_address", 10)))
+            return prof, cols, addr
+    return "BS120", None, 10
 
 
 class BuildReq(BaseModel):
-    base: str
-    out: str = "databaze/univerzalni/projekt.yaml"
+    base: str = "gbuse"
+    out: str = DEFAULT_DB
     version: str = "UNIV"
+    name: str = ""
     extra_lines: list[str] = []
+    bundle: bool = False
+    apply_vehicle: bool = True
 
 
 @router.post("/api/sim/db/build")
@@ -504,14 +632,59 @@ def db_build(r: BuildReq):
         base = None                                   # font set shipped with BUSE Studio
         font = "builtin" if r.base in ("builtin", "vestavěný") else "gbuse"
     else:
-        b = SIM.path(r.base)
-        base = Project.from_hex(b) if b.lower().endswith(".hex") else Project.load(b)
+        base, _ = _load_sim_project(SIM.path(r.base))
     extra = sorted({Route.load(SIM.path(f)).line for f in _list("trasy")} | {SIM.route.line} | set(r.extra_lines))
-    db = build_universal(base, version=r.version, extra_lines=extra, font=font)
+
+    if r.bundle:
+        out_path = r.out or DEFAULT_DB
+        if not os.path.basename(out_path).endswith((".yaml", ".yml")):
+            out_path = os.path.join(out_path, "projekt.yaml").replace("\\", "/")
+        bname = r.name.strip() or (SIM.vehicle_cfg.get("name") or "Univerzální autobus (simulace)")
+        bundle = build_universal_bundle(
+            base,
+            version=r.version,
+            extra_lines=extra,
+            font=font,
+            name=bname,
+            vehicle_cfg=SIM.vehicle_cfg,
+        )
+        bundle.save(SIM.path(out_path))
+        db, loaded = _load_sim_project(SIM.path(out_path))
+        SIM.db, SIM.db_path = db, out_path
+        if r.apply_vehicle and loaded is not None:
+            vcfg = loaded.resolved_vehicle_config(SIM.workdir)
+            if vcfg:
+                SIM.vehicle_cfg = _clean_vehicle(vcfg)
+                SIM.vehicle_path = None
+        _rebuild()
+        return {
+            "path": out_path,
+            "kind": "bundle",
+            "fonts": [f.id for f in SIM.db.fonts.fonts],
+            "line_map": SIM.db.data.get("line_map"),
+            "panels": [pe.info() for pe in loaded.panels] if loaded is not None else [],
+        }
+
+    ptype, cols, addr = _interior_panel_params()
+    db = build_universal(
+        base,
+        version=r.version,
+        extra_lines=extra,
+        panel_type=ptype,
+        ibis_address=addr,
+        font=font,
+        columns=cols,
+        name=r.name.strip() or "Univerzální databáze (gBUSE1)",
+    )
     db.save(SIM.path(r.out))
     SIM.db, SIM.db_path = Project.load(SIM.path(r.out)), r.out
     _rebuild()
-    return {"path": r.out, "fonts": [f.id for f in SIM.db.fonts.fonts], "line_map": SIM.db.data.get("line_map")}
+    return {
+        "path": r.out,
+        "kind": "single",
+        "fonts": [f.id for f in SIM.db.fonts.fonts],
+        "line_map": SIM.db.data.get("line_map"),
+    }
 
 
 # ------------------------------------------------------------------ run

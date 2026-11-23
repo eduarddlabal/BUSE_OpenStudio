@@ -198,7 +198,25 @@ def cmd_upload(a):
         with open(a.project, encoding="ascii") as f:
             text = f.read()
     else:
-        p = Project.load(a.project)
+        from .core.bundle import ProjectBundle
+        if ProjectBundle.is_bundle_yaml(a.project):
+            b = ProjectBundle.load(a.project)
+            if getattr(a, "panel", None):
+                pe = b.panel(a.panel)
+                if pe is None or pe.project is None:
+                    avail = ", ".join(x.id for x in b.panels)
+                    sys.exit(f"Panel '{a.panel}' v projektu není (dostupné: {avail}).")
+            else:
+                pe = next((x for x in b.panels if x.format == "gbuse1" and x.project is not None),
+                          b.panels[0] if b.panels else None)
+                if pe is None or pe.project is None:
+                    sys.exit("Vícepanelový projekt neobsahuje žádný panel.")
+            print(f"Panel z projektu: {pe.id} ({pe.name}, {pe.format})")
+            p = pe.project
+        elif a.project.lower().endswith(".bin"):
+            p = Project.from_bin(a.project)
+        else:
+            p = Project.load(a.project)
         text, problems = p.to_hex()
         for x in problems:
             print("CHYBA:", x)
@@ -288,13 +306,12 @@ def cmd_live_build(a):
 
 
 def cmd_quickstart(a):
-    """Prepare a working folder on a clean computer: universal database (original gBUSE fonts),
+    """Prepare a working folder on a clean computer: universal project (gBUSE0 + gBUSE1),
     example route, vehicle with the detected USB adapter; optionally upload to the panel."""
     import shutil
-    from .core.project import dump_yaml
     from .sim.route import Route
     from .core.gbuse_font import FONT_SOURCES
-    from .sim.universal_db import build_universal
+    from .sim.universal_db import build_universal, build_universal_bundle
     from .server.sim_api import EXAMPLE_VEHICLE
     wd = os.path.abspath(a.workdir)
     port = _port(a)
@@ -307,20 +324,49 @@ def cmd_quickstart(a):
         if not os.path.exists(dst):
             shutil.copy(os.path.join(ex, "trasy", f), dst)
         lines.append(Route.load(dst).line)
-    db = build_universal(None, extra_lines=lines, ibis_address=a.address, font=a.font)
-    db_path = os.path.join(wd, "databaze", "univerzalni", "projekt.yaml")
-    db.save(db_path)
-    veh = dict(EXAMPLE_VEHICLE)
-    veh["panels"] = [{"name": "Panel (náhled)", "role": "interior", "profile": "BS120", "output": "virtual"},
-                     {"name": "Vnitřní BS120", "role": "interior", "profile": "BS120", "output": "serial",
-                      "port": port, "address": a.address, "enabled": True}]
+
+    rel_proj = os.path.join("projekty", "univerzalni", "projekt.yaml")
+    db_path = os.path.join(wd, rel_proj)
+    if getattr(a, "single", False):
+        db = build_universal(None, extra_lines=lines, ibis_address=a.address, font=a.font)
+        db.save(db_path)
+        panels_cfg = [
+            {"name": "Panel (náhled)", "role": "interior", "profile": "BS120", "output": "virtual"},
+            {"name": "Vnitřní BS120", "role": "interior", "profile": "BS120", "output": "serial",
+             "port": port, "address": a.address, "enabled": True},
+        ]
+        line_map = db.data.get("line_map") or {}
+        upload_proj = db
+    else:
+        bundle_panels = [
+            {"id": "celni", "name": "Čelní BS210", "role": "front", "type": "BS210", "variant": "v1", "ibis_address": 1},
+            {"id": "bocni", "name": "Boční BS210", "role": "side", "type": "BS210", "variant": "v2", "stop_field": "bottom", "ibis_address": 2},
+            {"id": "vnitrni", "name": "Vnitřní BS120", "role": "interior", "type": "BS120", "profile": "BS120", "columns": 135, "ibis_address": a.address},
+        ]
+        bundle = build_universal_bundle(None, extra_lines=lines, font=a.font, panels=bundle_panels)
+        bundle.save(db_path)
+        panels_cfg = [
+            {"name": "Čelní BS210", "type": "BS210", "variant": "v1", "role": "front", "output": "virtual",
+             "database": "projekty/univerzalni/panely/celni/projekt.yaml"},
+            {"name": "Boční BS210", "type": "BS210", "variant": "v2", "stop_field": "bottom", "role": "side", "output": "virtual",
+             "database": "projekty/univerzalni/panely/bocni/projekt.yaml"},
+            {"name": "Vnitřní BS120 (náhled)", "type": "BS120", "profile": "BS120", "role": "interior", "output": "virtual"},
+            {"name": "Vnitřní BS120", "type": "BS120", "profile": "BS120", "role": "interior", "output": "serial",
+             "port": port, "address": a.address, "enabled": True},
+        ]
+        vn = bundle.panel("vnitrni")
+        upload_proj = vn.project if vn and vn.project is not None else bundle.panels[0].project
+        line_map = (upload_proj.data.get("line_map") if upload_proj else None) or {}
+
+    veh = {**dict(EXAMPLE_VEHICLE), "panels": panels_cfg}
     dump_yaml(veh, os.path.join(wd, "vozidla", "autobus.yaml"))
+    kind_desc = "jednopanelová gBUSE1" if getattr(a, "single", False) else "vícepanelový gBUSE0 + gBUSE1"
     print(f"Pracovní složka: {wd}")
-    print(f"  databaze/univerzalni/projekt.yaml  ({FONT_SOURCES[a.font]}, ikony, linky; mapa linek {db.data['line_map']})")
+    print(f"  {rel_proj.replace(os.sep, '/')}  ({kind_desc}, {FONT_SOURCES[a.font]}, ikony, linky; mapa linek {line_map})")
     print(f"  trasy/  ({', '.join(lines)})")
     print(f"  vozidla/autobus.yaml  (panel na {port}, IBIS adresa {a.address})")
-    if a.upload:
-        text, problems = db.to_hex()
+    if a.upload and upload_proj is not None:
+        text, problems = upload_proj.to_hex()
         r = Panel_upload(port, a.address, text)
         print(r)
     print()
@@ -373,7 +419,8 @@ def main(argv=None):
     s.add_argument("--line"); s.add_argument("--stop"); s.add_argument("--png"); s.add_argument("--scroll", type=int, default=0)
     s.set_defaults(f=cmd_render)
     s = dev(sub.add_parser("upload", help="nahrát projekt nebo HEX do panelu"))
-    s.add_argument("project"); s.add_argument("--force", action="store_true")
+    s.add_argument("project"); s.add_argument("--panel", help="ID panelu při nahrávání vícepanelového projektu")
+    s.add_argument("--force", action="store_true")
     s.add_argument("--no-verify", action="store_true"); s.set_defaults(f=cmd_upload)
     s = sub.add_parser("import", help="hromadný import z CSV/XLSX do projektu")
     s.add_argument("project"); s.add_argument("file"); s.add_argument("-o", "--output")
@@ -404,9 +451,10 @@ def main(argv=None):
     s.add_argument("--schedule"); s.add_argument("--keys", default="001,002")
     s.add_argument("--interval", type=float, default=10.0); s.add_argument("--offset", type=int, default=0)
     s.set_defaults(f=cmd_live)
-    s = dev(sub.add_parser("quickstart", help="připravit pracovní složku na čistém počítači (databáze, ukázková trasa, vozidlo)"))
+    s = dev(sub.add_parser("quickstart", help="připravit pracovní složku na čistém počítači (projekt, ukázková trasa, vozidlo)"))
     s.add_argument("--workdir", default=".")
     s.add_argument("--upload", action="store_true", help="rovnou nahrát univerzální databázi do panelu")
+    s.add_argument("--single", action="store_true", help="vytvořit jen jednopanelovou gBUSE1 databázi místo vícepanelové")
     s.add_argument("--font", default="gbuse", choices=["gbuse", "builtin"],
                    help="fonty databáze: gbuse = originální font gBUSE (výchozí), builtin = vestavěný")
     s.set_defaults(f=cmd_quickstart)

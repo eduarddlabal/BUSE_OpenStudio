@@ -46,7 +46,7 @@ Nízkoúrovňový popis binárního formátu, hlaviček, ukazatelů a IBIS povel
 | MNEMO a skladba gBUSE0 | [`busepanel/gbuse0/mnemo.py`](../busepanel/gbuse0/mnemo.py) | Kompilátor/dekompilátor oficiálního MNEMO (`to_mnemo`/`from_mnemo`), automatické formátování přes `AFC`/`AFD` (`autoformat_line`), skládání 1řádkových/2řádkových/střídaných záznamů (`compose_record`/`decompose_record`). |
 | Pomocné formáty | [`busepanel/gbuse0/formats.py`](../busepanel/gbuse0/formats.py) | Sekční soubory (`.lin`, `.cil`, `.ci4`, `.dru`, `.zst`, `.mim`, `.dop`, `.kod`, `.aL`/`.LA`, `.afm`/`.afc`/`.afd`), `.txt` (`$` šablony i DOS `@` Kamenických) a ekvivalenty BS100/BS230 (`.bbd`/`.bbf`). |
 | Hromadný import tabulek | [`busepanel/core/importers.py`](../busepanel/core/importers.py) | Načtení záznamů z CSV a XLSX do projektu. |
-| Server a Web UI | [`busepanel/server/app.py`](../busepanel/server/app.py), [`busepanel/web/gbuse/gbuse.js`](../busepanel/web/gbuse/gbuse.js) | REST endpointy pod `/api/*` a webový editor v prohlížeči. |
+| Server a Web UI | [`busepanel/server/app.py`](../busepanel/server/app.py) (`*_api.py`), [`busepanel/web/gbuse/`](../busepanel/web/gbuse/gbuse.js) | Modulární FastAPI routery (`projects_api`, `bundle_api`, `editor_api`, `fonts_api`, `hardware_api`, `live_api`, `sim_api`) pod `/api/*` a nativní ES moduly prohlížečového editoru. |
 | Příkazová řádka | [`busepanel/cli.py`](../busepanel/cli.py) | Příkazy `new`, `import-hex`, `export-hex`, `check`, `render`, `import`, `upload`, `backup`. |
 
 ---
@@ -70,7 +70,7 @@ projekty/<nazev>/
   - **Prázdný projekt (`empty_bus_3` / `empty_bus_4` / jednopanelový)**: čistá konfigurace pouze s originálními fonty.
 - **Rozkopírování záznamu na ostatní panely (`⇄`)**: v editoru *Texty* lze jedním tlačítkem zkopírovat upravovaný záznam na ostatní panely sady – každý cílový panel si jej sám naformátuje (gBUSE0 přes své `AFC`/`AFD` a rozměry oken, gBUSE1 přes `autoformat_gbuse1` a případné zapnutí běžícího textu `t1`; zadní panel `rear` přebírá jen linky).
 - **Společný náhled a ZIP export**: přepínač *Zobrazit všechny panely* vykreslí všechny panely soupravy najednou nad stejnou linkou/cílem/zastávkou; tlačítko *ZIP (vše)* vyexportuje `<id>.hex` a `<id>.bin` pro každý panel, společné `ekvivalenty.bbd` i kontrolní `manifest.txt`.
-- **Sdílené šablony**: globální šablony zůstávají v pracovních složkách `systemy/`, `vozidla/`, `trasy/` a `zive/` a jsou volitelné – databáze gBUSE funguje plně i bez simulátoru.
+- **Sdílené šablony a propojení se simulací**: globální šablony zůstávají v pracovních složkách `systemy/`, `vozidla/`, `trasy/` a `zive/` a jsou volitelné – databáze gBUSE funguje plně i bez simulátoru. Simulace (karta *Vozidla → Univerzální projekt pro simulaci* i příkaz `busepanel quickstart`) umí sestavit nebo otevřít vícepanelový projekt pod `projekty/` (např. `projekty/univerzalni/projekt.yaml` se zpětnou podporou starších databází v `databaze/`) a automaticky odvodit konfiguraci panelů vozidla včetně napojení vnějších `gBUSE0` panelů (`.yaml`, `.hex`, `.bin` i sady `ProjectBundle`).
 
 U jednopanelového projektu určuje rodinu klíč `panel.format` (`gbuse0` nebo `gbuse1`); při otevření `.hex`/`.bin` ji program pozná podle prvního bajtu (`0x57`/`0x55` = `gBUSE0`, `0xAB`/`0xAA` = `gBUSE1`). Kliknutím na **+ Přidat panel** lze kdykoliv i jednopanelový projekt rozšířit na vícepanelovou sadu.
 

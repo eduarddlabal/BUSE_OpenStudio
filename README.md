@@ -51,15 +51,15 @@ sudo usermod -aG dialout $USER     # pak se odhlásit a znovu přihlásit
 mkdir ~/panel && cd ~/panel
 busepanel scan                      # najde panel a jeho IBIS adresu (např. "adresa 10: aV…")
 busepanel quickstart -a 10          # připraví pracovní složku (viz níže)
-busepanel upload databaze/univerzalni/projekt.yaml -a 10
+busepanel upload projekty/univerzalni/projekt.yaml -a 10
 #   -> panel VYPNOUT A ZAPNOUT (čísla linek se z nových dat načtou až po restartu)
 busepanel serve                     # otevře http://127.0.0.1:8090
 ```
 
 `quickstart` vytvoří:
-- `databaze/univerzalni/projekt.yaml`: univerzální databázi s originálním fontem gBUSE (tenký 0, normální 3; `--font builtin` = vestavěný font), ikonami (přímo v textových fontech na kódech 0xAA–0xAE, 0xF0, 0xF5–0xFE) a čísly linek. Ostatní texty pak aplikace posílá dynamicky volným textem.
+- `projekty/univerzalni/projekt.yaml`: univerzální vícepanelový projekt (`gBUSE0` čelní + boční i `gBUSE1` vnitřní BS120) s originálním fontem gBUSE (`--font builtin` = vestavěný font), ikonami, čísly linek 1–999 a automatickým mapováním ostatních linek (`--single` vytvoří jen jednopanelovou `gBUSE1` databázi). Ostatní texty pak simulace posílá dynamicky volným textem.
 - `trasy/`: ukázkovou trasu regionální linky 607 Pardubice → Chlumec nad Cidlinou s tarifními zónami IDS IREDO. Zdroj: veřejná data CIS JŘ a IREDO.
-- `vozidla/autobus.yaml`: vozidlo s náhledem a se skutečným panelem na nalezeném převodníku.
+- `vozidla/autobus.yaml`: vozidlo napojené na panely univerzálního projektu i na fyzický BS120 na nalezeném převodníku.
 
 Vozidla lze třídit do libovolných podsložek `vozidla/` (např. zvlášť testovací jen v počítači a zvlášť
 s fyzickým panelem); v seznamu vozidel se podsložky zobrazí jako skupiny.

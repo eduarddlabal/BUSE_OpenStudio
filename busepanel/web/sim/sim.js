@@ -28,12 +28,24 @@ async function loadSimFiles() {
   pick("#jVeh", f.vehicles, f.vehicle_path, vehOptions(f.vehicles) || "<option value=''>(žádná vozidla)</option>");
   if (f.route_path && f.routes.includes(f.route_path)) $("#routeSelect").value = f.route_path;
   if (f.vehicle_path && f.vehicles.includes(f.vehicle_path)) $("#vehSelect").value = f.vehicle_path;
-  $("#dbSelect").innerHTML = opt(f.databases) || "<option value=''>(žádné databáze)</option>";
+  const projects = f.projects || (f.databases || []).map((p) => ({ path: p, kind: "", name: p, panels: 1 }));
+  $("#dbSelect").innerHTML = projects.length
+    ? projects.map((p) => {
+        const tag = p.kind === "bundle" ? `${p.panels} panely` : (p.kind || "db");
+        const label = p.name && p.name !== p.path ? `${p.name} (${tag}) – ${p.path}` : p.path;
+        return `<option value="${esc(p.path)}">${esc(label)}</option>`;
+      }).join("")
+    : "<option value=''>(žádné projekty)</option>";
+  if (f.db_path && projects.some((p) => p.path === f.db_path)) $("#dbSelect").value = f.db_path;
   const all = await api("/api/files");
-  $("#dbBase").innerHTML = `<option value="gbuse">originální font gBUSE</option><option value="builtin">vestavěný font (BUSE Studio)</option>` + opt(all.files.filter((x) => x.endsWith(".hex") || x.endsWith(".yaml")));
+  const srcItems = (all.projects || []).filter((x) => ["bundle", "yaml", "hex", "bin"].includes(x.kind));
+  const baseOpts = srcItems.length
+    ? srcItems.map((x) => `<option value="${esc(x.path)}">${esc(x.name || x.path)} (${esc(x.kind)}) – ${esc(x.path)}</option>`).join("")
+    : opt((all.files || []).filter((x) => x.endsWith(".hex") || x.endsWith(".bin") || x.endsWith(".yaml")));
+  $("#dbBase").innerHTML = `<option value="gbuse">originální font gBUSE</option><option value="builtin">vestavěný font (BUSE Studio)</option>` + baseOpts;
   if (f.route_path) $("#routePath").value = f.route_path;
   if (f.vehicle_path) $("#vehPath").value = f.vehicle_path;
-  $("#simDb").textContent = f.db_path ? "databáze: " + f.db_path : "⚠ není vybraná databáze panelu (Vozidla → Univerzální databáze panelu)";
+  $("#simDb").textContent = f.db_path ? "projekt/databáze: " + f.db_path : "⚠ není vybraný projekt panelu (Vozidla → Univerzální projekt pro simulaci)";
 }
 
 // ------------------------------------------------------------------ line: directions, courses, trips
@@ -375,7 +387,7 @@ function renderVehicle() {
       ${ext ? `<label>Varianta <select data-f="variant">${opts(sim.variants, p.variant || { front: "v1", side: "v2", rear: "v4" }[p.role] || "v1")}</select></label>
         <label>Nácestné zastávky <select data-f="stop_field">${opts(STOP_FIELD, p.stop_field || "")}</select></label>
         <label>Ovládání <select data-f="control">${opts(CONTROL, p.control || "text")}</select></label>
-        <label>Databáze gBUSE0 (.hex, volitelně) <input data-f="database" value="${esc(p.database || "")}" placeholder="bez databáze – originální font gBUSE0"></label>` : ""}
+        <label>Databáze gBUSE0 (.yaml/.hex/.bin, volitelně) <input data-f="database" value="${esc(p.database || "")}" placeholder="bez databáze – originální font gBUSE0"></label>` : ""}
       ${!lcd && !ext ? `<label title="rychlost běžícího textu – změřte na panelu: (šířka textu + šířka pole) sloupců za naměřenou dobu">Posuv [ms/sloupec] <input data-f="scroll_ms" type="number" min="1" max="500" value="${p.scroll_ms ?? ""}" placeholder="podle profilu" style="width:6em"></label>` : ""}
       ${lcd ? "" : `<label>Panel <select data-f="output">${opts(panelOutputs, p.output || "virtual")}</select></label>`}
       ${!lcd && p.output === "serial" ? `<label>Port / adresa <span class="row"><input data-f="port" value="${esc(p.port || "")}" placeholder="auto" style="width:8em"><input data-f="address" type="number" value="${p.address ?? 10}" style="width:4em"></span></label>` : ""}
@@ -458,13 +470,30 @@ window.addEventListener("buse:formats-changed", guard(async () => {
 }));
 
 // ------------------------------------------------------------------ database
+async function refreshAfterDbChange() {
+  const v = await api("/api/sim/vehicle");
+  sim.vehicle = v.config; sim.vinfo = v;
+  sim.views = {}; $("#simPanels").innerHTML = "";
+  renderVehicle();
+  await loadSimFiles();
+  if (typeof loadFiles === "function") await loadFiles();
+}
 $("#dbBuild").onclick = guard(async () => {
-  const r = await api("/api/sim/db/build", { base: $("#dbBase").value, out: $("#dbOut").value });
-  toast("Univerzální databáze sestavena: " + r.path); loadSimFiles();
+  const r = await api("/api/sim/db/build", {
+    base: $("#dbBase").value,
+    out: $("#dbOut").value,
+    name: $("#dbName").value,
+    bundle: $("#dbBundle").checked,
+    apply_vehicle: $("#dbApplyVeh").checked,
+  });
+  toast((r.kind === "bundle" ? "Vícepanelový projekt sestaven: " : "Univerzální databáze sestavena: ") + r.path);
+  await refreshAfterDbChange();
 });
 $("#dbOpen").onclick = guard(async () => {
   const p = $("#dbSelect").value; if (!p) return;
-  await api("/api/sim/db/open", { path: p }); toast("Databáze: " + p); loadSimFiles();
+  await api("/api/sim/db/open", { path: p, apply_vehicle: $("#dbApplyVeh").checked });
+  toast("Databáze/projekt: " + p);
+  await refreshAfterDbChange();
 });
 $("#dbToLoader").onclick = guard(async () => {
   const f = await api("/api/sim/files");

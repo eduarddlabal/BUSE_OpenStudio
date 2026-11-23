@@ -136,6 +136,25 @@ def _exterior_db(p: dict, role: str, base_dir: str):
     path = p.get("database")
     if path:
         full = path if os.path.isabs(path) else os.path.join(base_dir, path)
+        low = full.lower()
+        if low.endswith((".yaml", ".yml")):
+            from ..core.bundle import ProjectBundle
+            from ..core.project import Project
+            if ProjectBundle.is_bundle_yaml(full):
+                b = ProjectBundle.load(full)
+                pid = p.get("panel_id")
+                pe = b.panel(str(pid)) if pid else None
+                if pe is None or pe.format != "gbuse0" or pe.project is None:
+                    pe = next((x for x in b.panels if x.role == role and x.format == "gbuse0" and x.project is not None), None)
+                if pe is None:
+                    pe = next((x for x in b.panels if x.format == "gbuse0" and x.project is not None), None)
+                if pe is None or pe.project is None:
+                    raise ValueError(f"projekt {path} neobsahuje žádný gBUSE0 panel pro roli {role}")
+                return pe.project.to_gbuse0()[0]
+            return Project.load(full).to_gbuse0()[0]
+        if low.endswith(".bin"):
+            from ..gbuse0.database import load_bin
+            return load_bin(full)
         from ..gbuse0.database import load_hex
         return load_hex(full)
     variant = p.get("variant") or model_variant(p.get("type")) or ROLE_VARIANT.get(role, "v1")
