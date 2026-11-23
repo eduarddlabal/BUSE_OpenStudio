@@ -1,13 +1,13 @@
 // BUSE Studio – module switching and start-up
 import { $, $$, api, guard, st } from "./common/core.js";
-import { loadFiles, setProject, drawFrame, loadFonts, showConfig } from "./gbuse/gbuse.js";
+import { loadFiles, setProject, drawFrame, loadFonts, showConfig, showCycles } from "./gbuse/gbuse.js";
 import { loadPorts } from "./loader/loader.js";
 import "./live/live.js";
 import { activateSim } from "./sim/sim.js";
 import { activateFormats, openFormat } from "./formats/formats.js";
 
 const TABS = { jizda: ["jizda"], linky: ["linky"], vozidla: ["vozidla"], formaty: ["formaty"],
-  gbuse: ["texts", "config", "fonts", "import"], loader: ["panel"], live: ["live"], nastaveni: ["nastaveni"] };
+  gbuse: ["projects", "texts", "cycles", "config", "fonts", "import"], loader: ["panel"], live: ["live"], nastaveni: ["nastaveni"] };
 const SIM_PAGES = ["jizda", "linky", "vozidla"];
 const DEFAULT_TAB = Object.fromEntries(Object.entries(TABS).map(([m, t]) => [m, t[0]]));
 const ui = { module: "jizda", tab: { ...DEFAULT_TAB } };
@@ -27,10 +27,13 @@ function show() {
   $$("nav.tabs").forEach((n) => n.hidden = n.dataset.for !== ui.module);
   $$("nav.tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tab === ui.tab[ui.module]));
   $$(".tab").forEach((t) => t.hidden = !(t.dataset.module === ui.module && t.id === "tab-" + ui.tab[ui.module]));
-  $$("section.ledwrap").forEach((s) => s.hidden = s.dataset.module !== ui.module);
-  $$("[data-only]").forEach((el) => el.hidden = el.dataset.only !== ui.module);
   const tab = ui.tab[ui.module];
+  $$("section.ledwrap").forEach((s) => s.hidden = s.dataset.module !== ui.module || (ui.module === "gbuse" && tab === "projects"));
+  $$("[data-only]").forEach((el) => el.hidden = el.dataset.only !== ui.module);
+  if ($("#panelBar")) $("#panelBar").hidden = ui.module !== "gbuse" || !st.project;
+  if (tab === "projects") guard(loadFiles)();
   if (tab === "fonts") guard(loadFonts)();
+  if (tab === "cycles") showCycles();
   if (tab === "config") showConfig();
   if (ui.module === "loader") guard(loadPorts)();
   guard(() => activateSim(SIM_PAGES.includes(ui.module), ui.module))();
@@ -49,6 +52,11 @@ $$("nav.tabs button").forEach((b) => b.onclick = () => {
 window.addEventListener("buse:goto", (e) => {
   if (e.detail.format) openFormat(e.detail.format);
   ui.module = e.detail.module; show();
+});
+window.addEventListener("buse:gbuse-tab", (e) => {
+  ui.module = "gbuse";
+  if (e.detail) ui.tab.gbuse = e.detail;
+  show();
 });
 
 $("#setTight").onchange = guard(async () => {

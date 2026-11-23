@@ -140,4 +140,30 @@ button:disabled { opacity: .45; cursor: default; }
 .segtabs { display: flex; gap: 0; margin: 14px 0 4px; border-bottom: 1px solid var(--line, #444); }
 .segtabs button { border: 1px solid transparent; border-bottom: none; border-radius: 6px 6px 0 0; background: none; padding: 6px 12px; }
 .segtabs button.cur { border-color: var(--line, #444); background: color-mix(in srgb, var(--accent) 14%, transparent); font-weight: 600; }
+.card0 { border: 1px solid var(--line); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px; background: color-mix(in srgb, var(--bg) 50%, transparent); }
+.ledsim { display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 4px; color: #ddd2be; }
+.ledsim input, .ledsim select, .ledsim button { background: #1d1813; border-color: #463a2e; color: #f3eadb; padding: 2px 6px; font-size: 12px; }
+label.btnlike { display: inline-flex; flex-direction: row; align-items: center; gap: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 5px 11px; cursor: pointer; font-size: 14px; color: var(--ink); }
+label.btnlike:hover { border-color: var(--accent); }
+.projbar-title { font-weight: 600; }
+.pill.dirty { border-color: var(--accent); color: var(--accent); }
+.pill.ok { border-color: var(--ok); color: var(--ok); }
+.pill.g0 { border-color: #eab308; color: #b45309; }
+.pill.g1 { border-color: #ef4444; color: #b91c1c; }
+.dropzone { border: 2px dashed var(--line); border-radius: 10px; padding: 14px; text-align: center; color: var(--muted); transition: border-color .15s, background .15s; }
+.dropzone.dragover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--ink); }
+.projgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; margin-top: 6px; }
+.projcard { border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 6px; background: var(--bg); }
+.projcard.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--bg)); }
+.projhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.projtitle { font-weight: 700; font-size: 15px; line-height: 1.25; }
+.projdesc { font-size: 13px; color: var(--ink); }
+.projstats, .projmeta { font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px; }
+.panelbar { display: flex; gap: 10px; align-items: center; padding: 6px 16px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.ledall { display: flex; flex-direction: column; gap: 8px; max-width: 1350px; margin: 0 auto 4px; }
+.ledall-item { display: flex; flex-direction: column; gap: 3px; }
+.ledall-title { color: #d8ccb8; font-size: 12px; display: flex; justify-content: space-between; }
+.ledall-item canvas { width: 100%; max-width: 1350px; height: auto; display: block; image-rendering: pixelated; }
+.pill.multi { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.projactions { display: flex; gap: 6px; margin-top: auto; padding-top: 4px; flex-wrap: wrap; }
 #fmtOwnWrap:not([hidden]) { display: block; margin: 6px 0; }

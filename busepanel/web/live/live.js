@@ -47,3 +47,43 @@ $("#plStart").onclick = guard(async () => {
   liveStatus();
 });
 $("#liveStop").onclick = guard(async () => { await api("/api/live/stop", {}); liveStatus(); });
+
+let loadedPresets = [];
+export async function loadLivePresets() {
+  try {
+    const r = await api("/api/live/templates");
+    loadedPresets = r.presets || [];
+    const sel = $("#livePresetSelect");
+    if (!sel) return;
+    sel.innerHTML = `<option value="">— načíst uloženou předvolbu —</option>` +
+      loadedPresets.map((p, i) => `<option value="${i}">${esc(p.name)} (${p.scope === "project" ? "projekt" : "šablona"})</option>`).join("");
+  } catch { /* ignore */ }
+}
+$("#livePresetApply")?.addEventListener("click", () => {
+  const idx = $("#livePresetSelect").value;
+  if (idx === "") return;
+  const p = loadedPresets[+idx];
+  if (!p) return;
+  $("#ftText").value = p.text || "";
+  if (p.kind) $("#ftKind").value = p.kind;
+  $("#ftFont").value = p.font ?? "";
+  $("#ftSpacing").value = p.spacing ?? "";
+  $("#ftLine").value = p.line || "";
+  toast("Předvolba načtena: " + p.name);
+});
+$("#livePresetSave")?.addEventListener("click", guard(async () => {
+  const name = $("#livePresetName").value.trim() || $("#ftText").value.trim().slice(0, 20) || "Předvolba";
+  const body = {
+    name,
+    text: $("#ftText").value,
+    kind: $("#ftKind").value,
+    line: $("#ftLine").value.trim(),
+    scope: $("#livePresetScope").value,
+  };
+  if ($("#ftFont").value !== "") body.font = +$("#ftFont").value;
+  if ($("#ftSpacing").value !== "") body.spacing = +$("#ftSpacing").value;
+  await api("/api/live/templates/save", body);
+  toast("Předvolba uložena: " + name);
+  await loadLivePresets();
+}));
+loadLivePresets();

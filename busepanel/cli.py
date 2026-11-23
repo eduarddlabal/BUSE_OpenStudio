@@ -76,20 +76,22 @@ def cmd_backup(a):
             f.write(r["eprom"])
         print(f"EPROM → {base}_eprom.bin")
     try:
-        from .core import image as I
-        p = Project.from_image(I.parse(r["flash"]), ibis_address=a.address)
+        p = Project.from_bytes(r["flash"], ibis_address=a.address)
         p.save(base + ".yaml")
-        from .core.image import blocks_to_hex, build
+        hx, _ = p.to_hex()
         with open(base + ".hex", "w", newline="", encoding="ascii") as f:
-            f.write(blocks_to_hex(build(I.parse(r["flash"]))))
+            f.write(hx)
         print(f"projekt → {base}.yaml (+ fonts.yaml), HEX → {base}.hex")
     except Exception as e:      # noqa: BLE001
         print(f"data se nepodařilo převést na projekt: {e}")
 
 
 def _load(path) -> Project:
-    if path.lower().endswith(".hex"):
+    low = path.lower()
+    if low.endswith(".hex"):
         return Project.from_hex(path)
+    if low.endswith(".bin"):
+        return Project.from_bin(path)
     return Project.load(path)
 
 
@@ -112,6 +114,22 @@ def cmd_export_hex(a):
 
 
 def cmd_check(a):
+    from .core.bundle import ProjectBundle
+    if a.project.lower().endswith(".yaml") and ProjectBundle.is_bundle_yaml(a.project):
+        b = ProjectBundle.load(a.project)
+        total = 0
+        for pe in b.panels:
+            if not pe.project:
+                continue
+            rep = pe.project.check()
+            total += len(rep)
+            print(f"[{pe.id}: {pe.name}] ({pe.format.upper()})")
+            for r in rep:
+                print(f"  {r['level']:7} {r['section']} {r['key']}: {r['msg']}")
+            if not rep:
+                print("  v pořádku")
+        print(f"Celkem {total} upozornění" if total else "Všechny panely v pořádku")
+        return
     p = _load(a.project)
     rep = p.check()
     for r in rep:
@@ -119,9 +137,46 @@ def cmd_check(a):
     print(f"{len(rep)} upozornění" if rep else "v pořádku")
 
 
+def cmd_new_bundle(a):
+    from .core.bundle import build_demo_bundle, build_empty_bundle
+    if a.template == "demo_bus":
+        b = build_demo_bundle(name=a.name or "Ukázkový autobus (3 panely)")
+    else:
+        preset_map = {"empty_bus_3": "bus_3", "empty_bus_4": "bus_4",
+                      "empty_gbuse1": "single_gbuse1", "empty_gbuse0": "single_gbuse0"}
+        b = build_empty_bundle(preset=preset_map.get(a.template, "bus_3"), name=a.name or "Prázdný projekt")
+    out = a.output if a.output.lower().endswith(".yaml") else os.path.join(a.output, "projekt.yaml")
+    b.save(out)
+    print(f"nový vícepanelový projekt ({len(b.panels)} panely) → {out}")
+
+
 def cmd_render(a):
     from .core.render import compose
     p = _load(a.project)
+    if p.format == "gbuse0":
+        from .gbuse0.program import frame_to_ascii, frame_to_png, render_combined
+        db, _ = p.to_gbuse0()
+        l_key = a.line.zfill(3) if a.line else None
+        s_key = a.stop.zfill(4) if getattr(a, "stop", None) else None
+        res = render_combined(
+            db,
+            line_key=l_key if a.section != "lines" else None,
+            dest_key=a.key if a.section in ("destinations", "destinations4") else None,
+            stop_key=a.key if a.section == "stops" else s_key,
+            line_rec=db.records.get("LIN", {}).get(a.key) if a.section == "lines" else None,
+        )
+        bits = res["frames"][0]["bits"]
+        if a.png:
+            with open(a.png, "wb") as f:
+                f.write(frame_to_png(bits, res["rows"]))
+            print(f"→ {a.png}")
+        else:
+            print(frame_to_ascii(bits, res["rows"]))
+        for fld, ov in (res.get("overflow") or {}).items():
+            if ov:
+                print(f"pozor: text v poli '{fld}' se nevejde a panel ho ořízne")
+        return
+
     line = p.encode_value(p.data.get("lines", {}).get(a.line))[0] if a.line else None
     sec = p.data.get(a.section, {})
     if a.key not in sec:
@@ -167,15 +222,28 @@ def cmd_import(a):
 
 
 def cmd_new(a):
-    src = Project.from_hex(a.fonts_from)
-    data = {"panel": {"type": "BS120", "ibis_address": a.address},
-            "config": {"version": a.version, "columns": 135, "commands": ["l", "z", "a", "aV"],
-                       "defaults": {"font": 3, "spacing": 1, "interval": 1.0},
-                       "tariff_digits": 1, "cycle_delay": 10, "panel_kind": 1},
-            "fonts": None, "lines": {"000": ""}, "destinations": {"000": ""}}
-    p = Project(data, src.fonts)
+    fmt = getattr(a, "format", "gbuse1")
+    if a.fonts_from:
+        src = _load(a.fonts_from)
+        fonts = src.fonts
+    elif fmt == "gbuse0":
+        import yaml
+        from .core.fonts import FontSet, default_codetable
+        yml = os.path.join(os.path.dirname(__file__), "peripherals", "gbuse0_font.yaml")
+        with open(yml, encoding="utf-8") as fh:
+            fonts = FontSet.from_yaml(yaml.safe_load(fh))
+        fonts.codetable = default_codetable()
+    else:
+        from .core.gbuse_font import fontset
+        fonts = fontset("gbuse")
+
+    if fmt == "gbuse0":
+        p = Project.new_gbuse0(fonts, preset=getattr(a, "preset", "front"),
+                               version=a.version, ibis_address=a.address)
+    else:
+        p = Project.new_gbuse1(fonts, version=a.version, ibis_address=a.address)
     p.save(a.output)
-    print(f"nový projekt → {a.output}")
+    print(f"nový projekt ({fmt}) → {a.output}")
 
 
 def cmd_live(a):
@@ -302,7 +370,7 @@ def main(argv=None):
     s = sub.add_parser("check", help="kontrola projektu"); s.add_argument("project"); s.set_defaults(f=cmd_check)
     s = sub.add_parser("render", help="náhled textu (ASCII nebo PNG)")
     s.add_argument("project"); s.add_argument("key"); s.add_argument("--section", default="destinations")
-    s.add_argument("--line"); s.add_argument("--png"); s.add_argument("--scroll", type=int, default=0)
+    s.add_argument("--line"); s.add_argument("--stop"); s.add_argument("--png"); s.add_argument("--scroll", type=int, default=0)
     s.set_defaults(f=cmd_render)
     s = dev(sub.add_parser("upload", help="nahrát projekt nebo HEX do panelu"))
     s.add_argument("project"); s.add_argument("--force", action="store_true")
@@ -311,10 +379,15 @@ def main(argv=None):
     s.add_argument("project"); s.add_argument("file"); s.add_argument("-o", "--output")
     s.add_argument("--section", default="destinations"); s.add_argument("--replace", action="store_true")
     s.set_defaults(f=cmd_import)
-    s = sub.add_parser("new", help="nový projekt (fonty převezme z HEX)")
-    s.add_argument("output"); s.add_argument("--fonts-from", required=True)
+    s = sub.add_parser("new", help="nový projekt (gBUSE1 nebo gBUSE0)")
+    s.add_argument("output"); s.add_argument("--fonts-from", default="")
+    s.add_argument("--format", choices=["gbuse1", "gbuse0"], default="gbuse1")
+    s.add_argument("--preset", choices=["front", "side", "side_via", "rear"], default="front")
     s.add_argument("--version", default="NOVY"); s.add_argument("-a", "--address", type=int, default=10)
     s.set_defaults(f=cmd_new)
+    s = sub.add_parser("new-bundle", help="nový vícepanelový projekt (gBUSE0 + gBUSE1)")
+    s.add_argument("output"); s.add_argument("--template", choices=["demo_bus", "empty_bus_3", "empty_bus_4", "empty_gbuse1", "empty_gbuse0"], default="demo_bus")
+    s.add_argument("--name", default=""); s.set_defaults(f=cmd_new_bundle)
     s = sub.add_parser("live-build", help="přidat do projektu texty pro hodiny/odjezdy")
     s.add_argument("mode", choices=["clock", "departures"]); s.add_argument("project"); s.add_argument("output")
     s.add_argument("--channel", default="stops", choices=["stops", "split", "dest4"])

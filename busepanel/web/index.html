@@ -10,12 +10,19 @@
 <header class="top">
   <div class="brand">BUSE&nbsp;Studio</div>
   <div class="project" data-only="gbuse">
-    <select id="fileSelect" title="Soubory v pracovní složce"></select>
+    <button id="btnProjects" title="Přehled projektů">Projekty</button>
+    <select id="fileSelect" title="Rychlé přepnutí projektu"></select>
     <button id="btnOpen">Otevřít</button>
     <button id="btnNew">Nový…</button>
-    <button id="btnSave" class="primary">Uložit</button>
-    <button id="btnHex">Stáhnout HEX</button>
-    <span id="projectPath" class="muted"></span>
+    <button id="btnSave" class="primary" title="Uložit (Ctrl+S)">Uložit</button>
+    <button id="btnSaveAs">Uložit jako…</button>
+    <button id="btnHex">HEX</button>
+    <button id="btnBin">BIN</button>
+    <button id="btnZip" hidden title="Stáhnout všechny panely v ZIP">ZIP (vše)</button>
+    <span id="projectFmt" class="pill" hidden></span>
+    <span id="dirtyBadge" class="pill dirty" hidden>● neuloženo</span>
+    <span id="projectTitle" class="projbar-title"></span>
+    <span id="projectPath" class="muted small"></span>
   </div>
   <div class="panelstat"><span id="panelPort" class="pill">COM?</span></div>
 </header>
@@ -39,20 +46,84 @@
   <button data-module="nastaveni"><b>Nastavení</b><small>platí v celém programu</small></button>
 </nav>
 <div class="content">
+<div id="panelBar" class="panelbar" data-only="gbuse" hidden>
+  <div id="panelTabs" class="pvpages"></div>
+  <div class="row" style="margin-left:auto">
+    <button id="btnViewAll" hidden>Zobrazit všechny panely</button>
+    <button id="btnAddPanel">+ Přidat panel</button>
+    <button id="btnRemovePanel" class="danger" hidden>Odebrat panel</button>
+  </div>
+</div>
 <section class="ledwrap" data-module="gbuse">
   <canvas id="led" width="1350" height="100"></canvas>
-  <div class="ledinfo"><span id="ledInfo"></span></div>
+  <div id="ledAllWrap" class="ledall" hidden></div>
+  <div class="ledinfo">
+    <span id="ledInfo"></span>
+    <div id="ledSimBar" class="ledsim" hidden>
+      <span id="ledSim1Wrap" hidden>
+        Režim <select id="simMode"><option value="static">Texty</option><option value="cycle">Cyklus (typ 2)</option></select>
+        Cyklus <select id="simCykId"></select>
+        <button id="simStepPrev">◀</button>
+        <span id="simStepLabel" class="mono">1/1</span>
+        <button id="simStepNext">▶</button>
+        <button id="simStepPlay">▶ Přehrát</button>
+        Text <input id="simFree" value="VOLNÝ TEXT" style="width:9em">
+        Čas <input id="simTime" value="12:34" style="width:4.5em">
+        Pásmo <input id="simZone" value="001000" style="width:5.5em">
+      </span>
+      <span id="ledSim0Wrap" hidden>
+        <button id="sim0AnimToggle">⏸ Pozastavit střídání</button>
+      </span>
+    </div>
+  </div>
 </section>
 <nav class="tabs" data-for="gbuse">
-  <button data-tab="texts" class="active">Texty</button>
+  <button data-tab="projects" class="active">Projekty</button>
+  <button data-tab="texts">Texty</button>
+  <button data-tab="cycles" id="tabBtnCycles">Cykly &amp; DOP</button>
   <button data-tab="config">Konfigurace</button>
   <button data-tab="fonts">Fonty a ikony</button>
-  <button data-tab="import">Import</button>
+  <button data-tab="import">Import / Export</button>
 </nav>
 
 <main>
+<!-- ======================= PROJEKTY ======================= -->
+<div class="tab" data-module="gbuse" id="tab-projects">
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div>
+        <h3 style="margin-bottom:2px">Správce projektů</h3>
+        <span class="muted small">Pracovní složka: <code id="projWorkdir"></code></span>
+      </div>
+      <div class="row">
+        <button id="btnDemoBus" class="primary">★ Ukázkový autobus (Čelní + Boční + Vnitřní)</button>
+        <button id="btnEmptyBus3">☐ Prázdný vícepanelový (jen fonty)</button>
+        <button id="btnNew1">+ Nový gBUSE1</button>
+        <button id="btnNew0">+ Nový gBUSE0</button>
+        <label class="btnlike">Nahrát .hex / .bin / .yaml<input id="projUploadInput" type="file" accept=".hex,.bin,.yaml,.yml" hidden></label>
+      </div>
+    </div>
+    <div id="projDropZone" class="dropzone">
+      Přetáhněte sem soubor <code>.hex</code>, <code>.bin</code> nebo <code>.yaml</code> z počítače – automaticky se převede a otevře jako projekt.
+    </div>
+    <div class="row">
+      <input id="projSearch" placeholder="Hledat projekt podle názvu, verze nebo cesty…" style="flex:1;min-width:220px">
+      <div id="projFilter" class="pvpages">
+        <button data-f="all" class="cur">Vše</button>
+        <button data-f="bundle">Vícepanelové</button>
+        <button data-f="yaml">Jednopanelové YAML</button>
+        <button data-f="hexbin">HEX / BIN</button>
+        <button data-f="gbuse0">gBUSE0</button>
+        <button data-f="gbuse1">gBUSE1</button>
+      </div>
+      <button id="btnProjRefresh">Obnovit</button>
+    </div>
+    <div id="projCards" class="projgrid"></div>
+  </div>
+</div>
+
 <!-- ======================= TEXTY ======================= -->
-<div class="tab" data-module="gbuse" id="tab-texts">
+<div class="tab" data-module="gbuse" id="tab-texts" hidden>
   <div class="cols">
     <div class="list">
       <div class="row">
@@ -75,54 +146,239 @@
           <label>Číslo <input id="edKey"></label>
           <label>Linka pro náhled <select id="edPreviewLine"></select></label>
         </div>
-        <label>Text <input id="edText" class="big"></label>
+        <div class="row">
+          <input id="edText" class="big" style="flex:1" placeholder="Text záznamu">
+          <button id="btnAutoformat1" type="button" title="Automaticky zvolit největší font">Automat</button>
+        </div>
         <div class="grid4">
           <label>Font <select id="edFont"></select></label>
           <label>Mezera <input id="edSpacing" type="number" min="0" max="15"></label>
           <label>Zarovnání
             <select id="edAlign"><option value="center">na střed</option><option value="left">vlevo</option><option value="right">vpravo</option></select>
           </label>
-          <label>Sloupec (ESC s) <input id="edX" type="number" min="0" max="134" placeholder="auto"></label>
+          <label>Sloupec (ESC s) <input id="edX" type="number" min="0" max="224" placeholder="auto"></label>
+        </div>
+        <div class="grid4">
+          <label>Efekt (ESC t)
+            <select id="edEffect">
+              <option value="">statický</option>
+              <option value="1">1 – běžící (t1)</option>
+              <option value="2">2 – posuv zprava (t2)</option>
+              <option value="3">3 – nahrnutí zleva (t3)</option>
+            </select>
+          </label>
+          <label>Interval [s] <input id="edInterval" type="number" min="0.1" max="23.9" step="0.1" placeholder="výchozí"></label>
+          <label class="chk" style="align-self:end"><input id="edRun" type="checkbox"> běžící (t1)</label>
+          <label class="chk" style="align-self:end"><input id="edBlink" type="checkbox"> blikání (b)</label>
         </div>
         <div class="row">
-          <label class="chk"><input id="edRun" type="checkbox"> běžící text</label>
           <label class="chk"><input id="edInv" type="checkbox"> inverze</label>
-          <label class="chk"><input id="edMarkup" type="checkbox"> pokročilý zápis (značky)</label>
+          <label class="chk"><input id="edMarkup" type="checkbox"> značky {…}</label>
+          <label class="chk"><input id="edMnemoChk" type="checkbox"> MNEMO (gBUSE1)</label>
         </div>
         <label id="markupWrap" hidden>Značky <input id="edMarkupText" class="big mono">
-          <small class="muted">{f3} font, {m2} mezera, {run}…{/run} běžící, {inv} inverze, {x:24} sloupec, {1B 61 05} bajty</small></label>
-        <div id="edProblems" class="problems"></div>
+          <small class="muted">{f3} font, {m2} mezera, {t0..t3} efekt, {blink} blikání, {z:15} interval, {run}…{/run}, {inv}, {x:24}, {lf}, {ff}</small></label>
+        <div id="edMnemoWrap" hidden>
+          <label>MNEMO syntaxe (gBUSE1) <textarea id="edMnemoText" rows="2" class="mono"></textarea></label>
+          <div class="row"><button id="btnMnemoApply" type="button">Aplikovat MNEMO</button></div>
+        </div>
         <div class="row">
+          <button id="btnProp1" type="button" hidden title="Automaticky naformátovat a zkopírovat tento záznam na ostatní panely v projektu">⇄ Rozkopírovat na ostatní panely</button>
           <button id="btnShow" class="primary">Zobrazit na panelu</button>
           <button id="btnDelete" class="danger">Smazat</button>
           <span id="edBytes" class="muted mono small"></span>
         </div>
       </div>
+
+      <div id="edForm0" hidden>
+        <div class="grid4">
+          <label>Číslo <input id="ed0Key"></label>
+          <label>Linka pro náhled <select id="ed0PreviewLine"></select></label>
+          <label>Zastávka pro náhled <select id="ed0PreviewStop"></select></label>
+          <label>Ekvivalent BS100/BS230 <input id="ed0Equivalent" maxlength="12" placeholder="max 12 znaků"></label>
+        </div>
+        <div class="row">
+          <label>Režim záznamu
+            <select id="ed0Mode">
+              <option value="1">1 řádek</option>
+              <option value="2">2 řádky (střídání přes |)</option>
+              <option value="mnemo">Pouze MNEMO kód</option>
+            </select>
+          </label>
+          <label class="chk"><input id="ed0Auto" type="checkbox" checked> Automatický formát</label>
+          <button id="btn0Auto" type="button">Naformátovat nyní</button>
+          <button id="btn0Swap" type="button">↕ Prohodit řádky</button>
+        </div>
+        <div class="row">
+          <label class="chk"><input id="ed0Full" type="checkbox"> Celý panel (b)</label>
+          <label class="chk"><input id="ed0Suppress" type="checkbox"> Skrýt zastávky (w)</label>
+          <label>Interval střídání [s] <input id="ed0Interval" type="number" min="0.1" max="23.9" step="0.1" placeholder="výchozí" style="width:6em"></label>
+        </div>
+        <div id="ed0L1Wrap" class="card0">
+          <div class="row"><input id="ed0T1" class="big" style="flex:1" placeholder="1. řádek textu"></div>
+          <div class="grid4">
+            <label>Font 1 <select id="ed0F1"></select></label>
+            <label>Mezera 1 <input id="ed0M1" type="number" min="0" max="15" placeholder="auto"></label>
+            <label>Posun Y <input id="ed0Y1" type="number" min="0" max="27" placeholder="auto"></label>
+            <label>Zarovnání 1 <select id="ed0A1"><option value="center">na střed</option><option value="left">vlevo</option><option value="right">vpravo</option></select></label>
+          </div>
+          <div class="row">
+            <label>Sloupec X <input id="ed0X1" type="number" min="0" max="223" placeholder="auto" style="width:6em"></label>
+            <label class="chk"><input id="ed0I1" type="checkbox"> Inverze 1. řádku</label>
+          </div>
+        </div>
+        <div id="ed0L2Wrap" class="card0" hidden>
+          <div class="row"><input id="ed0T2" class="big" style="flex:1" placeholder="2. řádek (více variant oddělte znakem | )"></div>
+          <div class="grid4">
+            <label>Font 2 <select id="ed0F2"></select></label>
+            <label>Mezera 2 <input id="ed0M2" type="number" min="0" max="15" placeholder="auto"></label>
+            <label>Posun Y <input id="ed0Y2" type="number" min="0" max="27" placeholder="auto"></label>
+            <label>Zarovnání 2 <select id="ed0A2"><option value="center">na střed</option><option value="left">vlevo</option><option value="right">vpravo</option></select></label>
+          </div>
+          <div class="row">
+            <label>Sloupec X <input id="ed0X2" type="number" min="0" max="223" placeholder="auto" style="width:6em"></label>
+            <label class="chk"><input id="ed0I2" type="checkbox"> Inverze 2. řádku</label>
+          </div>
+        </div>
+        <details id="ed0MnemoDetails">
+          <summary>MNEMO kód (gBUSE0)</summary>
+          <textarea id="ed0Mnemo" rows="3" class="mono"></textarea>
+          <div class="row"><button id="btn0ApplyMnemo" type="button">Načíst z MNEMO</button></div>
+        </details>
+        <div class="row">
+          <button id="btnProp0" type="button" hidden title="Automaticky naformátovat a zkopírovat tento záznam na ostatní panely v projektu">⇄ Rozkopírovat na ostatní panely</button>
+          <button id="btn0Show" class="primary">Zobrazit na panelu</button>
+          <button id="btn0Delete" class="danger">Smazat</button>
+          <span id="ed0Bytes" class="muted mono small"></span>
+        </div>
+      </div>
+
+      <div id="edProblems" class="problems"></div>
       <div id="checkOut" class="problems"></div>
     </div>
+  </div>
+</div>
+
+<!-- ======================= CYKLY & DOP (gBUSE1) ======================= -->
+<div class="tab" data-module="gbuse" id="tab-cycles" hidden>
+  <div class="card">
+    <div class="row">
+      <h3>Cykly zobrazení (CYK, typ panelu 2)</h3>
+      <div id="cykTabs" class="pvpages"></div>
+      <select id="cykFmt" title="Zobrazení číselných kódů">
+        <option value="ident">Názvy zdrojů / efektů</option>
+        <option value="dec">DEC</option>
+        <option value="hex">HEX</option>
+      </select>
+    </div>
+    <div class="row">
+      <button id="cykAdd">+ Přidat krok</button>
+      <button id="cykClear" class="danger">Vymazat cyklus</button>
+      <button id="cykPlay" class="primary">Přehrát v náhledu</button>
+      <button id="cykExport">Export .cyk</button>
+      <label class="btnlike">Import .cyk <input id="cykImportFile" type="file" accept=".cyk" hidden></label>
+    </div>
+    <div class="stopwrap">
+      <table class="stops">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>L šířka</th><th>L zdroj</th><th>L DOP</th><th>L efekt vstup/výstup</th><th>L ID</th>
+            <th>P šířka</th><th>P zdroj</th><th>P DOP</th><th>P efekt vstup/výstup</th><th>P ID</th>
+            <th>Čas [s]</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="cykSteps"></tbody>
+      </table>
+    </div>
+    <p class="muted small">Levé okno (L) + Pravé okno (P). Pokud má pravé okno šířku 0, použije se zbytek panelu. Doporučené doplňkové texty (DOP) upravujte v sekci Texty → Doplňkové texty (DOP).</p>
   </div>
 </div>
 
 <!-- ======================= KONFIGURACE ======================= -->
 <div class="tab" data-module="gbuse" id="tab-config" hidden>
   <div class="card">
-    <h3>Panel</h3>
+    <h3>Informace o projektu</h3>
+    <div class="grid2">
+      <label>Název projektu <input id="cfgMetaName" placeholder="např. Brno – čelní BS210"></label>
+      <label>Popis / poznámka <input id="cfgMetaDesc" placeholder="volitelný popis vozidla, linky nebo poznámka"></label>
+    </div>
+    <div id="cfgBundleWrap" class="card0" hidden>
+      <div class="row" style="justify-content:space-between">
+        <b>Vícepanelový projekt – vazba na simulaci a šablony</b>
+        <button id="btnBundleApplySim" type="button">Použít panely a vozidlo v simulaci</button>
+      </div>
+      <div class="grid2">
+        <label>Systém zobrazení (šablona nebo lokální) <select id="cfgBundleSys"></select></label>
+        <label>Výchozí trasa (šablona nebo lokální) <select id="cfgBundleLine"></select></label>
+      </div>
+      <p class="muted small">Moduly Simulace a Živě jsou volitelné – databáze gBUSE0/gBUSE1 funguje plně i bez nich.</p>
+    </div>
+    <h3>Panel a hlavička</h3>
     <div class="grid4">
+      <label>Formát <input id="cfgFormat" readonly></label>
       <label>Typ <input id="cfgType" value="BS120"></label>
+      <label>Firmware <select id="cfgFw"></select></label>
       <label>IBIS adresa <input id="cfgAddr" type="number" min="0" max="15"></label>
       <label>Sloupců <input id="cfgColumns" type="number"></label>
+      <label id="cfgRowsWrap" hidden>Řádků <input id="cfgRows" type="number" min="1" max="28"></label>
       <label>Verze dat (aV) <input id="cfgVersion" maxlength="16"></label>
     </div>
-    <h3>Předvolby</h3>
-    <div class="grid4">
-      <label>Font <input id="cfgFont" type="number" min="0" max="15"></label>
-      <label>Mezera <input id="cfgSpacing" type="number" min="0" max="15"></label>
-      <label>Interval [s] <input id="cfgInterval" type="number" step="0.1"></label>
-      <label>Zpoždění cyklu <input id="cfgCycle" type="number"></label>
+
+    <div id="cfg1Wrap">
+      <h3>Předvolby a parametry gBUSE1</h3>
+      <div class="grid4">
+        <label>Font <input id="cfgFont" type="number" min="0" max="15"></label>
+        <label>Mezera <input id="cfgSpacing" type="number" min="0" max="15"></label>
+        <label>Interval [s] <input id="cfgInterval" type="number" step="0.1"></label>
+        <label>Zpoždění cyklu <input id="cfgCycle" type="number"></label>
+        <label>Typ panelu (panel_kind)
+          <select id="cfgKind">
+            <option value="0">0 – klasický</option>
+            <option value="1">1 – standard BS120</option>
+            <option value="2">2 – s cykly a DOP</option>
+          </select>
+        </label>
+        <label>Počet číslic tarifu <input id="cfgTariff" type="number" min="1" max="3"></label>
+      </div>
     </div>
+
+    <div id="cfg0Wrap" hidden>
+      <h3>Parametry gBUSE0</h3>
+      <div class="grid4">
+        <label>Číslo panelu <input id="cfg0Num" type="number" min="0" max="255"></label>
+        <label>Jas (0–255) <input id="cfg0Bright" type="number" min="0" max="255"></label>
+        <label>Oddělovač FNT <select id="cfg0Sep"><option value=":">:</option><option value=" ">mezera</option><option value=".">tečka</option></select></label>
+        <label>Předvolba rozložení
+          <select id="cfg0Preset">
+            <option value="">— použít šablonu polí —</option>
+            <option value="front">Přední (140×19)</option>
+            <option value="side">Boční (112×19)</option>
+            <option value="side_via">Boční + nácestné (112×19)</option>
+            <option value="rear">Zadní (28×19)</option>
+          </select>
+        </label>
+      </div>
+      <div id="cfg0Props" class="cmdgrid"></div>
+      <h3>Pole zobrazení (souřadnice 1..N odspodu)</h3>
+      <div id="cfg0Fields" class="grid4"></div>
+      <details>
+        <summary>Tabulky automatického formátování (AFC 1řádkové / AFD 2řádkové)</summary>
+        <div class="grid2">
+          <div><h4>AFC (font, mezera, posun)</h4><textarea id="cfg0Afc" rows="6" class="mono small"></textarea></div>
+          <div><h4>AFD (font, mezera, posun)</h4><textarea id="cfg0Afd" rows="6" class="mono small"></textarea></div>
+        </div>
+      </details>
+    </div>
+
     <h3>Povolené IBIS povely</h3>
     <div id="cfgCommands" class="cmdgrid"></div>
-    <p class="muted small">Panel přijímá jen zaškrtnuté povely. Ověřeno na BS120: l, z, x (zastávky 4místné), aV.</p>
+
+    <details>
+      <summary>Kódová tabulka KOD (128 B hex) a formátovací řetězce STR</summary>
+      <label>KOD (128 B hex) <textarea id="cfgKod" rows="3" class="mono small"></textarea></label>
+      <p class="muted small">Formátovací řetězce STR upravujte v sekci Texty → Formátovací řetězce (STR).</p>
+    </details>
   </div>
 </div>
 
@@ -134,19 +390,50 @@
       <div id="glyphList" class="glyphlist"></div>
       <div class="row"><input id="newGlyphChar" placeholder="znak nebo #C1" maxlength="3" style="width:7em"><button id="btnNewGlyph">+ Znak</button></div>
       <div class="row"><button id="btnAddIcons">Vložit sadu ikon (font 14)</button></div>
-      <p class="muted small">Ikony (bus, tramvaj, vlak, metro, výstraha…) jsou ve fontu 14 na kódech C1–CA; v textech <code>{icon:metro}</code>. Šířka znaku až 16 sloupců.</p>
+      <p class="muted small">Ikony (font 14, kódy C1–CA): v textech <code>{icon:metro}</code>. gBUSE0 podporuje výšku znaku 1–28 bodů.</p>
     </div>
     <div class="editor">
       <div id="glyphEditor" hidden>
         <h3 id="glyphTitle"></h3>
         <div class="row">
           <button id="gWidthMinus">− sloupec</button><button id="gWidthPlus">+ sloupec</button>
+          <button id="gHeightMinus">− řádek</button><button id="gHeightPlus">+ řádek</button>
           <button id="gClear">Vymazat</button><button id="gInvert">Invertovat</button>
           <button id="gShiftL">←</button><button id="gShiftR">→</button><button id="gShiftU">↑</button><button id="gShiftD">↓</button>
         </div>
         <canvas id="glyphCanvas" width="400" height="200"></canvas>
         <div class="row"><button id="gSave" class="primary">Uložit znak</button><button id="gDelete" class="danger">Smazat znak</button></div>
       </div>
+
+      <details class="card">
+        <summary>Správce fontů (kopírování, mazání, .fnt)</summary>
+        <div class="grid4">
+          <label>Zdrojový soubor
+            <select id="fmSource">
+              <option value="current">Aktuální projekt</option>
+              <option value="gbuse0">Originální fonty gBUSE0</option>
+              <option value="gbuse1">Originální fonty gBUSE1</option>
+              <option value="builtin">Vestavěný font BUSE Studio</option>
+            </select>
+          </label>
+          <label>Zdrojový font <input id="fmSrcFont" type="number" min="0" max="15" value="0"></label>
+          <label>Cílový font <input id="fmDstFont" type="number" min="0" max="15" value="0"></label>
+          <label>Kód znaku (0xHEX nebo znak) <input id="fmCode" value="A" style="width:6em"></label>
+        </div>
+        <div class="row">
+          <button id="fmNewFont">+ Nový prázdný font</button>
+          <button id="fmCopyGlyph">Kopírovat znak → cíl</button>
+          <button id="fmCopyFont">Kopírovat celý font → cíl</button>
+          <button id="fmCopyAll">Kopírovat všechny fonty</button>
+          <button id="fmDelFont" class="danger">Smazat cílový font</button>
+          <button id="fmDelCodeAll" class="danger">Smazat znak ve všech</button>
+        </div>
+        <div class="row">
+          <button id="fmExportFnt">Export .fnt</button>
+          <label class="btnlike">Import .fnt <input id="fmImportFnt" type="file" accept=".fnt" hidden></label>
+        </div>
+      </details>
+
       <details class="card">
         <summary>Kódová tabulka (kód panelu ↔ znak)</summary>
         <div id="codeTable" class="codetable"></div>
@@ -173,6 +460,38 @@
       <button id="btnImport" class="primary">Importovat</button>
       <button id="btnTemplate">Vzorový CSV</button></div>
     <pre id="impOut" class="out"></pre>
+  </div>
+
+  <div class="card">
+    <h3>Soubory sekcí gBUSE (.lin, .cil, .dru, .zst, .mim, .dop, .cyk, .kod, .aL/.LA, .afm/.afc/.afd, .txt, .bbd/.bbf)</h3>
+    <div class="grid4">
+      <label>Soubor ke vložení <input id="secImpFile" type="file" accept=".lin,.cil,.ci4,.dru,.zst,.mim,.dop,.cyk,.kod,.aL,.LA,.afm,.afc,.afd,.txt,.bbd,.bbf"></label>
+      <label>Sekce (pro .txt)
+        <select id="secImpSection">
+          <option value="destinations">Cíle</option><option value="lines">Linky</option>
+          <option value="stops">Zastávky / Nácestné</option><option value="messages">Mimořádné</option>
+        </select>
+      </label>
+      <label>Exportní formát
+        <select id="secExpExt">
+          <option value=".cil">.cil (Cíle)</option><option value=".lin">.lin (Linky)</option>
+          <option value=".ci4">.ci4 (Cíle 4m.)</option><option value=".dru">.dru (gBUSE0 nácestné)</option>
+          <option value=".zst">.zst (gBUSE1 zastávky)</option><option value=".mim">.mim (Mimořádné)</option>
+          <option value=".dop">.dop (DOP texty)</option><option value=".cyk">.cyk (Cykly)</option>
+          <option value=".kod">.kod (Kódovací tabulka)</option><option value=".aL">.aL (Formátovací STR)</option>
+          <option value=".afm">.afm (AFC+AFD)</option><option value=".afc">.afc (AFC 1ř.)</option>
+          <option value=".afd">.afd (AFD 2ř.)</option><option value=".txt">.txt (Tabulátorový text)</option>
+          <option value=".bbd">.bbd (Ekvivalenty BS100/BS230)</option>
+        </select>
+      </label>
+      <label>Řazení .bbd <select id="secBbdSort"><option value="num">podle čísla</option><option value="alpha">abecedně</option></select></label>
+    </div>
+    <div class="row">
+      <label class="chk"><input id="secImpReplace" type="checkbox"> nahradit cílovou sekci</label>
+      <button id="btnSecImport" class="primary">Importovat soubor sekce</button>
+      <button id="btnSecExport">Exportovat soubor sekce</button>
+    </div>
+    <pre id="secImpOut" class="out"></pre>
   </div>
 </div>
 
@@ -248,6 +567,14 @@
     <div class="row"><b>Výstup živého režimu:</b>
       <select id="liveOutput"><option value="serial">COM port (nastavení v Loaderu)</option><option value="esp">ESP přes WebSocket</option></select>
       <input id="liveDevice" placeholder="ID zařízení ESP" style="width:12em"></div>
+    <div class="row">
+      <b>Předvolby / šablony textů:</b>
+      <select id="livePresetSelect" style="min-width:14em"><option value="">— načíst uloženou předvolbu —</option></select>
+      <button id="livePresetApply" type="button">Použít</button>
+      <input id="livePresetName" placeholder="Název předvolby…" style="width:11em">
+      <select id="livePresetScope"><option value="template">Uložit jako globální šablonu</option><option value="project">Uložit do projektu</option></select>
+      <button id="livePresetSave" type="button">Uložit předvolbu</button>
+    </div>
   </div>
   <div class="card">
     <h3>Volný text na panel (bez nahrávání)</h3>
@@ -537,10 +864,126 @@
 <dialog id="dlgNew">
   <form method="dialog">
     <h3>Nový projekt</h3>
-    <label>Soubor projektu <input id="newPath" value="projekty/novy/projekt.yaml"></label>
-    <label>Fonty převzít z <select id="newFontsFrom"></select></label>
-    <label>Verze dat <input id="newVersion" value="NOVY" maxlength="16"></label>
+    <div class="grid2">
+      <label>Název projektu <input id="newName" placeholder="např. Brno čelní BS210"></label>
+      <label>Popis <input id="newDesc" placeholder="volitelný popis"></label>
+    </div>
+    <label>Formát panelu
+      <select id="newFormat">
+        <option value="gbuse1">gBUSE1 (vnitřní LED 8 řádků – BS120)</option>
+        <option value="gbuse0">gBUSE0 (vnější DOT-LED 1..28 řádků – BS210)</option>
+      </select>
+    </label>
+    <div id="newOpt1">
+      <div class="grid2">
+        <label>Typ panelu
+          <select id="newKind1">
+            <option value="1">typ 1 – standard BS120</option>
+            <option value="2">typ 2 – s cykly a DOP</option>
+            <option value="0">typ 0 – klasický</option>
+          </select>
+        </label>
+        <label>Firmware
+          <select id="newFw1">
+            <option value="2.06">2.06</option>
+            <option value="2.12">2.12</option>
+            <option value="1.xx">1.xx (starý 0xAA)</option>
+          </select>
+        </label>
+      </div>
+      <label>Sloupců <input id="newCols1" type="number" value="135" min="16" max="240"></label>
+    </div>
+    <div id="newOpt0" hidden>
+      <div class="grid2">
+        <label>Rozložení
+          <select id="newPreset0">
+            <option value="front">Přední (140×19)</option>
+            <option value="side">Boční (112×19)</option>
+            <option value="side_via">Boční + nácestné (112×19)</option>
+            <option value="rear">Zadní (28×19)</option>
+            <option value="custom">Vlastní rozměry</option>
+          </select>
+        </label>
+        <label>Firmware
+          <select id="newFw0">
+            <option value="3.08">3.08</option>
+            <option value="3.18">3.18 (+ kA)</option>
+            <option value="2.15">2.15</option>
+            <option value="1.6">1.6 (starý 0x55)</option>
+          </select>
+        </label>
+      </div>
+      <div id="newCustom0" class="grid2" hidden>
+        <label>Sloupců <input id="newCols0" type="number" value="140" min="8" max="224"></label>
+        <label>Řádků <input id="newRows0" type="number" value="19" min="1" max="28"></label>
+      </div>
+    </div>
+    <label>Cesta v pracovní složce <input id="newPath" value="projekty/novy/projekt.yaml"></label>
+    <div class="grid2">
+      <label>Fonty převzít z <select id="newFontsFrom"></select></label>
+      <label>Verze dat (aV) <input id="newVersion" value="NOVY" maxlength="16"></label>
+    </div>
+    <label class="chk"><input id="newSaveNow" type="checkbox" checked> Ihned uložit do pracovní složky</label>
     <div class="row"><button value="cancel">Zrušit</button><button id="newOk" value="ok" class="primary">Vytvořit</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgSaveAs">
+  <form method="dialog">
+    <h3>Uložit projekt jako…</h3>
+    <label>Název projektu <input id="saveAsName" placeholder="např. Ostrava boční (upraveno)"></label>
+    <label>Popis <input id="saveAsDesc" placeholder="volitelný popis"></label>
+    <label>Cesta v pracovní složce <input id="saveAsPath"></label>
+    <div class="row"><button value="cancel">Zrušit</button><button id="saveAsOk" value="ok" class="primary">Uložit</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgAddPanel">
+  <form method="dialog">
+    <h3>Přidat panel do projektu</h3>
+    <div class="grid2">
+      <label>Název panelu <input id="apName" value="Zadní panel"></label>
+      <label>Umístění / role
+        <select id="apRole">
+          <option value="front">Čelní (front)</option>
+          <option value="side">Boční (side)</option>
+          <option value="rear">Zadní (rear – jen linka)</option>
+          <option value="interior" selected>Vnitřní (interior)</option>
+          <option value="custom">Vlastní</option>
+        </select>
+      </label>
+    </div>
+    <div class="grid2">
+      <label>Formát
+        <select id="apFormat">
+          <option value="gbuse0">gBUSE0 (vnější DOT-LED)</option>
+          <option value="gbuse1">gBUSE1 (vnitřní LED 8 ř.)</option>
+        </select>
+      </label>
+      <label>IBIS adresa <input id="apAddr" type="number" min="0" max="15" value="10"></label>
+    </div>
+    <div id="apOpt0" class="grid2">
+      <label>Rozložení
+        <select id="apPreset0">
+          <option value="front">Přední (140×19)</option>
+          <option value="side_via">Boční + nácestné (112×19)</option>
+          <option value="side">Boční (112×19)</option>
+          <option value="rear">Zadní (28×19)</option>
+          <option value="custom">Vlastní</option>
+        </select>
+      </label>
+      <label>Firmware
+        <select id="apFw0"><option value="3.08">3.08</option><option value="3.18">3.18</option><option value="2.15">2.15</option><option value="1.6">1.6</option></select>
+      </label>
+    </div>
+    <div id="apOpt1" class="grid2" hidden>
+      <label>Typ panelu
+        <select id="apKind1"><option value="1">typ 1 (BS120)</option><option value="2" selected>typ 2 (cykly + DOP)</option><option value="0">typ 0</option></select>
+      </label>
+      <label>Sloupců <input id="apCols1" type="number" value="135" min="16" max="240"></label>
+    </div>
+    <p class="muted small">Pokud je otevřen jednopanelový projekt, automaticky se převede na vícepanelový projekt se dvěma panely.</p>
+    <div class="row"><button value="cancel">Zrušit</button><button id="apOk" value="ok" class="primary">Přidat panel</button></div>
   </form>
 </dialog>
 

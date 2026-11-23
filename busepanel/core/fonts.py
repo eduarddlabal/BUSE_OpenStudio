@@ -1,8 +1,11 @@
 """Panel fonts and the code table.
 
 Binary font block:  [E0+id] [length BE16] { [code] [nbytes] [height] [column bytes…] }… [tail, usually FF 00]
-Column byte: MSB = top dot, bit 0 = bottom dot (height 8).
-Code table (160 B): panel code 0x21+i -> Windows-1250 byte (0 = undefined); upper half is Kamenický order.
+Column bytes: ceil(height/8) bytes per column, MSB of first byte = top dot (row 0).
+Code table (160 B, verified in GBUSE0.EXE & GBUSE1.EXE):
+  - bytes 0..142   (143 B): panel codes 0x21..0xAF -> Windows-1250 byte (0 = undefined)
+  - bytes 143..158 (16 B):  panel codes 0xF0..0xFF -> Windows-1250 byte (0 = undefined)
+  - byte 159       (1 B):   0xFF terminator
 
 Human-readable form (YAML):
   codetable: {undefined: [0x40], map: {0x80: Č, …}}     # 0x21–0x7F are ASCII unless listed
@@ -12,13 +15,31 @@ Human-readable form (YAML):
         A: |
           ......
           ..##..
-          …                                           # 8 rows, '#' = dot on
+          …                                           # `height` rows (8 for gBUSE1, 1–28 for gBUSE0), '#' = dot on
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
 ON, OFF = "#", "."
+
+CODETABLE_LEN = 160
+
+
+def _ct_index(code: int) -> int | None:
+    if 0x21 <= code <= 0xAF:
+        return code - 0x21
+    if 0xF0 <= code <= 0xFF:
+        return 143 + (code - 0xF0)
+    return None
+
+
+def _ct_code(idx: int) -> int | None:
+    if 0 <= idx < 143:
+        return 0x21 + idx
+    if 143 <= idx < 159:
+        return 0xF0 + (idx - 143)
+    return None
 
 
 @dataclass
@@ -28,25 +49,61 @@ class Glyph:
     data: bytes                     # column bytes as stored
 
     @property
+    def nbytes_col(self) -> int:
+        return max(1, (self.height + 7) // 8)
+
+    @property
     def width(self) -> int:
-        return len(self.data) if self.height <= 8 else len(self.data) // ((self.height + 7) // 8)
+        nb = self.nbytes_col
+        return len(self.data) // nb
 
     def columns(self) -> list[int]:
         """Column bitmasks, bit 7 = top (only for height <= 8)."""
         return list(self.data)
 
+    def column_ints(self) -> list[int]:
+        """Column bitmasks as ints where bit `y` = row `y` from the top (0 = top)."""
+        nb = self.nbytes_col
+        out = []
+        for x in range(self.width):
+            v = int.from_bytes(self.data[x * nb:(x + 1) * nb], "big")
+            col = 0
+            for y in range(self.height):
+                if (v >> (nb * 8 - 1 - y)) & 1:
+                    col |= 1 << y
+            out.append(col)
+        return out
+
     def rows(self) -> list[str]:
-        return ["".join(ON if c >> (7 - y) & 1 else OFF for c in self.data) for y in range(8)]
+        h = max(1, self.height)
+        nb = self.nbytes_col
+        w = self.width
+        out = []
+        for y in range(h):
+            shift = nb * 8 - 1 - y
+            line = []
+            for x in range(w):
+                v = int.from_bytes(self.data[x * nb:(x + 1) * nb], "big")
+                line.append(ON if (v >> shift) & 1 else OFF)
+            out.append("".join(line))
+        return out
 
     @staticmethod
-    def from_rows(code: int, rows: list[str], height: int = 8) -> "Glyph":
-        rows = (rows + [""] * 8)[:8]
-        w = max(len(r) for r in rows)
-        cols = bytearray(w)
+    def from_rows(code: int, rows: list[str], height: int | None = None) -> "Glyph":
+        if height is None:
+            height = len(rows) or 8
+        height = max(1, min(28, int(height)))
+        rows = (list(rows) + [""] * height)[:height]
+        w = max((len(r) for r in rows), default=0)
+        nb = max(1, (height + 7) // 8)
+        cols = bytearray(w * nb)
         for y, r in enumerate(rows):
+            bit_pos = nb * 8 - 1 - y
+            byte_off = nb - 1 - (bit_pos // 8)
+            bit_in_byte = bit_pos % 8
             for x, ch in enumerate(r.ljust(w, OFF)):
                 if ch not in (OFF, " ", "-"):
-                    cols[x] |= 1 << (7 - y)
+                    cols[x * nb + byte_off] |= 1 << bit_in_byte
         return Glyph(code, height, bytes(cols))
 
 
@@ -80,11 +137,16 @@ class CodeTable:
     """Panel code <-> Unicode character."""
 
     def __init__(self, raw: bytes):
-        self.raw = bytes(raw)
+        raw = bytes(raw)
+        if len(raw) < CODETABLE_LEN:
+            raw = raw + b"\x00" * (CODETABLE_LEN - 1 - len(raw)) + b"\xff"
+        self.raw = raw[:CODETABLE_LEN]
         self.to_char = {0x20: " "}
-        for i, w in enumerate(self.raw):
-            if w:
-                self.to_char[0x21 + i] = bytes([w]).decode("cp1250", "replace")
+        for i in range(159):
+            w = self.raw[i]
+            code = _ct_code(i)
+            if w and code is not None:
+                self.to_char[code] = bytes([w]).decode("cp1250", "replace")
         self.to_code = {}
         for code, ch in self.to_char.items():
             self.to_code.setdefault(ch, code)
@@ -95,30 +157,66 @@ class CodeTable:
     def decode_code(self, code: int):
         return self.to_char.get(code)
 
+    def decode(self, codes: bytes) -> str | None:
+        out = []
+        for c in codes:
+            ch = self.to_char.get(c)
+            if ch is None:
+                return None
+            out.append(ch)
+        return "".join(out)
+
     # ---- YAML -------------------------------------------------------
     def to_yaml(self) -> dict:
         undefined, mapping = [], {}
-        for i, w in enumerate(self.raw):
-            code = 0x21 + i
+        for i in range(159):
+            code = _ct_code(i)
+            w = self.raw[i]
             if w == 0:
                 undefined.append(code)
             elif not (code < 0x80 and w == code):
                 mapping[code] = bytes([w]).decode("cp1250", "replace")
-        return {"undefined": " ".join(f"{c:02X}" for c in undefined),
-                "map": {f"{c:02X}": ch for c, ch in mapping.items()}}
+        out = {"undefined": " ".join(f"{c:02X}" for c in undefined),
+               "map": {f"{c:02X}": ch for c, ch in mapping.items()}}
+        if self.raw[159] != 0xFF:
+            out["tail"] = f"{self.raw[159]:02X}"
+        return out
 
     @staticmethod
     def from_yaml(d: dict) -> "CodeTable":
-        raw = bytearray(code if code < 0x80 else 0 for code in range(0x21, 0x21 + 160))
+        raw = bytearray(CODETABLE_LEN)
+        for code in range(0x21, 0x80):
+            raw[code - 0x21] = code
+        raw[159] = 0xFF
         und = d.get("undefined", [])
         if isinstance(und, str):
             und = [int(x, 16) for x in und.split()]
         for code in und:
-            raw[int(code) - 0x21] = 0
+            c = int(code)
+            idx = _ct_index(c)
+            if idx is None and 0xB0 <= c <= 0xBF:     # legacy YAML offset
+                idx = 143 + (c - 0xB0)
+            if idx is not None:
+                raw[idx] = 0
         for code, ch in (d.get("map") or {}).items():
-            code = int(code, 16) if isinstance(code, str) else int(code)
-            raw[code - 0x21] = ch.encode("cp1250")[0]
+            c = int(code, 16) if isinstance(code, str) else int(code)
+            bval = ch.encode("cp1250")[0] if ch else 0
+            idx = _ct_index(c)
+            if idx is not None:
+                raw[idx] = bval
+            elif 0xB0 <= c <= 0xBF:                   # legacy YAML offset
+                raw[143 + (c - 0xB0)] = bval
+            elif c == 0xC0:                           # legacy YAML terminator slot
+                raw[159] = bval
+        if "tail" in d:
+            raw[159] = int(str(d["tail"]), 16)
         return CodeTable(bytes(raw))
+
+
+def default_codetable() -> CodeTable:
+    """Standard Kamenický + ASCII code table as used by gBUSE."""
+    from .gbuse_font import gbuse_fontset
+    return gbuse_fontset().codetable
 
 
 class FontSet:
@@ -132,6 +230,14 @@ class FontSet:
             if f.id == fid:
                 return f
         return None
+
+    def ensure_font(self, fid: int) -> Font:
+        f = self.font(fid)
+        if f is None:
+            f = Font(fid)
+            self.fonts.append(f)
+            self.fonts.sort(key=lambda x: x.id)
+        return f
 
     def encode(self, text: str, fid: int | None = None) -> tuple[bytes, list[str]]:
         """Text -> panel codes; returns (codes, list of problems)."""
@@ -176,7 +282,40 @@ class FontSet:
     def width(self, fid: int, codes: bytes, spacing: int) -> int:
         return len(self.text_columns(fid, codes, spacing))
 
-    # ---- binary -----------------------------------------------------
+    # ---- Font Manager operations ------------------------------------
+    def copy_glyph(self, src: "FontSet", src_font: int, src_code: int, dst_font: int, dst_code: int) -> bool:
+        sf = src.font(src_font)
+        if sf is None or src_code not in sf.glyphs:
+            return False
+        g = sf.glyphs[src_code]
+        df = self.ensure_font(dst_font)
+        glyphs = dict(df.glyphs)
+        glyphs[dst_code] = Glyph(dst_code, g.height, g.data)
+        df.glyphs = dict(sorted(glyphs.items()))
+        return True
+
+    def copy_font(self, src: "FontSet", src_font: int, dst_font: int, overwrite: bool = True) -> int:
+        sf = src.font(src_font)
+        if sf is None:
+            return 0
+        df = self.ensure_font(dst_font)
+        glyphs = dict(df.glyphs)
+        n = 0
+        for code, g in sf.glyphs.items():
+            if overwrite or code not in glyphs:
+                glyphs[code] = Glyph(code, g.height, g.data)
+                n += 1
+        df.glyphs = dict(sorted(glyphs.items()))
+        return n
+
+    def delete_font(self, fid: int):
+        self.fonts = [f for f in self.fonts if f.id != fid]
+
+    def delete_code_all(self, code: int):
+        for f in self.fonts:
+            f.glyphs.pop(code, None)
+
+    # ---- binary & .fnt ----------------------------------------------
     @staticmethod
     def from_image(im) -> "FontSet":
         return FontSet([Font.from_bytes(b) for b in im.fonts], CodeTable(im.codetable), im.fonts_tail)
@@ -185,6 +324,20 @@ class FontSet:
         im.fonts = [f.to_bytes() for f in self.fonts]
         im.codetable = self.codetable.raw
         im.fonts_tail = self.tail
+
+    def to_fnt_bytes(self) -> bytes:
+        return b"".join(f.to_bytes() for f in self.fonts) + self.tail + self.codetable.raw
+
+    @staticmethod
+    def from_fnt_bytes(b: bytes) -> "FontSet":
+        fonts, q = [], 0
+        while q < len(b) and 0xE0 <= b[q] <= 0xEF:
+            f = Font.from_bytes(b[q:])
+            fonts.append(f)
+            q += 3 + (b[q + 1] << 8 | b[q + 2])
+        tail = bytes(b[q:q + 2]) if q + 2 <= len(b) else b"\xff\x00"
+        ct = bytes(b[q + 2:q + 2 + CODETABLE_LEN]) if q + 2 + CODETABLE_LEN <= len(b) else default_codetable().raw
+        return FontSet(fonts, CodeTable(ct), tail)
 
     # ---- YAML -------------------------------------------------------
     def glyph_key(self, code: int, used: set) -> str:
@@ -200,8 +353,11 @@ class FontSet:
             for code, g in f.glyphs.items():
                 key = self.glyph_key(code, used)
                 used.add(key)
-                if g.height == 8:
-                    glyphs[key] = LiteralRows(g.rows()) if g.data else ""
+                nb = g.nbytes_col
+                if g.data and len(g.data) % nb == 0:
+                    glyphs[key] = LiteralRows(g.rows())
+                elif g.height == 8 and not g.data:
+                    glyphs[key] = ""
                 else:
                     glyphs[key] = {"height": g.height, "hex": g.data.hex(" ")}
             entry = {"id": f.id, "glyphs": glyphs}
@@ -229,7 +385,8 @@ class FontSet:
                 elif not v:
                     g = Glyph(code, 8, b"")
                 else:
-                    g = Glyph.from_rows(code, str(v).splitlines())
+                    lines = str(v).splitlines()
+                    g = Glyph.from_rows(code, lines, height=len(lines) or 8)
                 f.glyphs[code] = g
             if "tail" in fd:
                 f.tail = bytes.fromhex(fd["tail"])

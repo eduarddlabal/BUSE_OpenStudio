@@ -4,14 +4,14 @@ Otevřená náhrada programů **gBUSE** a **BSLoader** pro informační panely B
 Ověřeno na vnitřním panelu **BS 120**. Běží na Windows, Linuxu i macOS.
 
 > Projekt nijak nesouvisí s firmou BUSE ani s jejími nástupci. Protokol a formát dat byly zjištěny
-> analýzou kvůli interoperabilitě. Popis je v [docs/PROTOKOL.md](docs/PROTOKOL.md).
+> analýzou kvůli interoperabilitě. Popis protokolu je v [docs/PROTOKOL.md](docs/PROTOKOL.md), fungování modulu gBUSE v [docs/gbuse.md](docs/gbuse.md).
 > Repozitář neobsahuje žádná data dopravců ani původní software. Obsahuje originální font gBUSE (fonty 0–3 a 15), výchozí pro univerzální databázi, a originální fonty gBUSE0 (0–12) pro vnější panely; volitelně vestavěný font (`--font builtin`).
 
 ## Co umí
 
 | Modul | Náhrada za | Popis |
 |---|---|---|
-| **gBUSE** | gBUSE1 | Editor dat panelu: linky, cíle, zastávky, konfigurace, fonty a ikony, import z CSV/Excelu. Data jsou v čitelném YAML a převádějí se z/do HEX beze ztráty. |
+| **gBUSE** | gBUSE0 + gBUSE1 | Kompletní editor dat vnějších i vnitřních panelů: linky, cíle, nácestné zastávky (`DRU`/`ZST`), mimořádné (`MIM`), doplňkové texty (`DOP`), cykly (`CYK`), jazyk MNEMO, 1řádková/2řádková/střídaná skladba, automatické formátování (`AFC`/`AFD`), variabilní fonty 1–28 bodů, ikony, `.lin/.cil/.dru/.cyk/.fnt/.bbd/.bin` a bezztrátový převod YAML ↔ HEX/BIN. |
 | **Loader** | BSLoader | Vyhledání panelu, nahrání dat s kontrolou, záloha, konzole IBIS povelů. |
 | **Živě** | – | Panel jako displej: volný text, hodiny, odjezdová tabule. |
 | **Simulace** | – | Linka se směry a kurzy, vozidlo s libovolným počtem periferií (vnitřní BS120 a dvouřádek, vnější DOT-LED v1–v4, LCD), systémy zobrazení (PID autobusy, PID tramvaje, DPMP), překlápění stránek (příští zastávka, směr, zóna, čas), mimořádnosti, API pro externí řízení a WebSocket pro ESP brány. |
@@ -29,7 +29,7 @@ Webové rozhraní (`busepanel serve`, http://127.0.0.1:8090) má v postranním p
 
 ## Instalace
 
-Potřebuješ Python 3.10+ a USB převodník na sběrnici IBIS (ověřeno s Prolific PL2303).
+Potřebujete Python 3.10+ a USB převodník na sběrnici IBIS (ověřeno s Prolific PL2303).
 
 ```bash
 git clone <url> buse-studio
@@ -75,6 +75,8 @@ Port lze zadat přes `-p`, například `-p /dev/ttyUSB0` nebo `-p COM5`, přípa
 | `busepanel scan` | najde panely (povel `aV`) |
 | `busepanel send l010 z001` | pošle IBIS povely |
 | `busepanel query aV:` | dotaz s odpovědí |
+| `busepanel new projekt.yaml --format gbuse0` | založí nový jednopanelový projekt (`gbuse1` nebo `gbuse0`) |
+| `busepanel new-bundle projekty/demo --template demo_bus` | založí vícepanelový projekt (sadu gBUSE0 + gBUSE1) |
 | `busepanel import-hex data.hex projekt.yaml` | HEX z gBUSE → čitelný projekt |
 | `busepanel export-hex projekt.yaml data.hex` | projekt → HEX |
 | `busepanel check projekt.yaml` | kontrola (chybějící znaky, přetečení) |
@@ -114,8 +116,7 @@ Ověřený panel odpovídá modelu **BS 120.0A** (dříve BS 120.A / BS 120.08 1
 
 ## Další typy panelů
 
-Profily jsou v [`busepanel/panels/profiles.yaml`](busepanel/panels/profiles.yaml). gBUSE1 1.12 s cykly zatím
-podporovaný není. Bez fyzického panelu se simulují (odhad, viz docs/PROTOKOL.md kap. 11):
+Profily jsou v [`busepanel/panels/profiles.yaml`](busepanel/panels/profiles.yaml). Bez fyzického panelu se simulují (viz docs/PROTOKOL.md kap. 11):
 
 - **jednořádek jiné délky** (8×120 v autobusech, minimum PID 8×128) – u panelu ve vozidle `columns: 120`,
 - **dvouřádek 16×128** (`type: BS220`, v BSLoaderu „Panel vnitřní dvojřádek“, minimum PID) – nahoře číslo
@@ -124,10 +125,7 @@ podporovaný není. Bez fyzického panelu se simulují (odhad, viz docs/PROTOKOL
 - **tramvajový jednořádek** je stejný BS 120 8×135; obsah podle standardu PID pro tramvaje = systém
   **PID – tramvaje**.
 
-**Vnější panely (BS 210, gBUSE0)** se v simulaci emulují: čtení databáze gBUSE0 (`.hex`) a interpret záznamů
-([`busepanel/gbuse0/`](busepanel/gbuse0)). Bez databáze se použije varianta podle modelu: v1 = BS 210.0C čelní
-140×19, v2 = BS 210.0B boční 112×19, v4 = BS 210.0A zadní 28×19, s originálními fonty gBUSE0. Jako `type` jde zadat
-i přesný model (`BS 210.0B`, starší `BS 210.B`, zářivkový `BS 110.19-112-1`) – varianta se pak vybere sama. Zápis databáze gBUSE0 zatím není.
+**Vnější panely (BS 210, gBUSE0)** se v editoru i v simulaci plně podporují: čtení a bezeztrátový zápis databáze gBUSE0 (`.hex`/`.bin`/`.yaml`), jazyk MNEMO, automatické formátování `AFC`/`AFD` i interpret záznamů ([`busepanel/gbuse0/`](busepanel/gbuse0), podrobně v [docs/gbuse.md](docs/gbuse.md)). Bez databáze se v simulaci použije varianta podle modelu: v1 = BS 210.0C čelní 140×19, v2 = BS 210.0B boční 112×19, v4 = BS 210.0A zadní 28×19, s originálními fonty gBUSE0. Jako `type` jde zadat i přesný model (`BS 210.0B`, starší `BS 210.B`, zářivkový `BS 110.19-112-1`) – varianta se pak vybere sama.
 Co je ověřené a co odhad, popisuje [docs/PROTOKOL.md](docs/PROTOKOL.md), kap. 4.6 a 10.
 
 ## Simulace: vozidlo, linka a systém zobrazení

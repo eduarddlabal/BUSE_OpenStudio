@@ -6,28 +6,28 @@
 # Columns / rows are 0-based here, y = row from the TOP. A database (gBUSE0 HEX) given to the panel
 # overrides these fields; without one the panel uses the original gBUSE0 fonts (gbuse0_font.yaml).
 #
-#   v1 – BS 210.0C front panel          140 x 19   line + destination
-#   v2 – BS 210.0B side panel           112 x 19   line + destination
-#   v4 – BS 210.0A rear panel            28 x 19   line only
+#   BS 210.0C front panel          140 x 19   line + destination
+#   BS 210.0B side panel           112 x 19   line + destination
+#   BS 210.0A rear panel            28 x 19   line only
 # stop_field: top | bottom splits the destination field: a via-stop line (zD / zN) above or below the
 # destination; stop_rows: its height (default 10 on top, 9 at the bottom).
 # PID (bus annex 2024): line field 29 columns, then 2 free columns before the destination / via field.
 v1:
-  title: v1 – BS 210.0C čelní 140×19
+  title: BS 210.0C čelní 140×19
   model: BS 210.0C
   columns: 140
   rows: 19
   line: [0, 27]
   dest: [30, 139]
 v2:
-  title: v2 – BS 210.0B boční 112×19
+  title: BS 210.0B boční 112×19
   model: BS 210.0B
   columns: 112
   rows: 19
   line: [0, 27]
   dest: [30, 111]
 v4:
-  title: v4 – BS 210.0A zadní 28×19
+  title: BS 210.0A zadní 28×19
   model: BS 210.0A
   columns: 28
   rows: 19

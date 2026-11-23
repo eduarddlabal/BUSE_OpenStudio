@@ -183,18 +183,20 @@ Existují dvě rodiny formátů:
 
 | Začátek souboru | Editor | Soubory | Fonty |
 |---|---|---|---|
-| `AB 00 …` | **gBUSE1** | `DISPA.hex`, `pce_trolejbusy.hex`, `ADledA/B` | výška 8 bodů, 1 B na sloupec – jednořádkové panely BS120 apod. |
-| `57 00 …` | **gBUSE0** | `OSTRAVA`, `TRAM_PRAHA`, `IDS_BRNO_Adcel`, `ANTI_001`, `KOSICE PANEL1-3`, `BRNO AD*` | výška 10 bodů, 2 B na sloupec – vnější panely |
+| `AB 00` / `AA 00` … | **gBUSE1** | `DISPA.hex`, `pce_trolejbusy.hex`, `ADledA/B` | výška 8 bodů, 1 B na sloupec – jednořádkové panely BS120 apod. (`AA` = FW 1.xx, `AB` = FW 2.x) |
+| `57 00` / `55 00` … | **gBUSE0** | `OSTRAVA`, `TRAM_PRAHA`, `IDS_BRNO_Adcel`, `ANTI_001`, `KOSICE PANEL1-3`, `BRNO AD*` | výška 1–28 bodů, `ceil(výška/8)` B na sloupec – vnější panely BS110/210/310 (`55` = FW 1.6, `57` = FW 2.11–3.18) |
 | `cT0D…` | **gBUSE2b** | `PerlaD/E` | jiný formát (Perla) |
 
-Kapitoly 4.1–4.5 vycházejí z disassembly `GBUSE1.EXE` (funkce `0x491230`, která skládá obraz a zapisuje HEX) a jsou ověřené zpětným sestavením. Modul `busepanel.core.image` (dříve skript `gbuse1.py`) rozebere HEX soubor a znovu ho sestaví. U všech 4 souborů gBUSE1 (`pce_trolejbusy`, oba `DISPA`, `KOSICE/DISPA`) je výsledek **znak po znaku shodný s originálem** **[OVĚŘENO]**.
+Kapitoly 4.1–4.5 vycházejí z disassembly `GBUSE1.EXE` (v1.00 i v1.14, funkce `0x491230` aj.) a jsou ověřené zpětným sestavením. Modul `busepanel.core.image` (dříve skript `gbuse1.py`) rozebere HEX soubor a znovu ho sestaví. U všech 5 dostupných souborů gBUSE1 (`pce_trolejbusy`, oba `DISPA`, `ADledA`, `ADledB`) je výsledný binární obraz **bajt po bajtu shodný s originálem** **[OVĚŘENO na souborech]**.
 
 ### 4.1 Hlavička gBUSE1 (0x00–0x3F)
-gBUSE1 má dvě varianty podle volby „FW“ v Konfiguraci panelu: FW 1.xx má magic `0xAA` a jiné rozložení, FW 2.00/2.06 má magic `0xAB`. Popsaná je varianta `0xAB`.
+gBUSE1 má dvě varianty podle volby „FW“ v Konfiguraci panelu **[KÓD + OVĚŘENO na souborech]**:
+- **FW 1.xx** (`magic = 0xAA`): povely v bajtech `03..04`, výchozí `font/mezera/interval` na offsetech `05..07`, ukazatele `FNT/LIN/CIL/CIL4/ZST/MIM/CYK/DOP/KOD/STR` od `08..1B`, zpoždění cyklu (v pětinách/dvojnásobcích) na `1D`, `panel_kind` na `1E`, verze dat na `1F..2E`, konec `0xFF` na `3F`.
+- **FW 2.00–2.12** (`magic = 0xAB`, popsaná níže):
 
 | Offset | Příklad (pce) | Význam (pole v Konfiguraci panelu) |
 |---|---|---|
-| 00 | `AB` | magic FW 2.x |
+| 00 | `AB` | magic FW 2.x (`AA` u FW 1.xx) |
 | 01 | `00` | – |
 | 02 | `86` | **Délka** panelu − 1 (134 → 135 sloupců) |
 | 03 | `07` | povolené povely, bity 0–7: `l, z, x, xA, xB, zC, zD, v` |
@@ -204,22 +206,23 @@ gBUSE1 má dvě varianty podle volby „FW“ v Konfiguraci panelu: FW 1.xx má 
 | 07 | `01` | předvolba **Mezera** |
 | 08 | `0A` | předvolba **Interval** v desetinách s (1,0 s) |
 | 09/0B/0D/0F/11 | | ukazatele BE: **FNT, LIN, CIL (3místné), CIL (4místné, s povelem zC), ZST** |
-| 13/15/17/19/1B | | ukazatele BE: **MIM, CYK, DOP, kódová tabulka, formátovací řetězce** |
+| 13/15/17/19/1B | | ukazatele BE: **MIM, CYK, DOP, kódová tabulka, formátovací řetězce STR** |
 | 1D | `01` | zobrazování tarifního pásma (1–3 čísla) |
 | 1E | `0A` | zpoždění cyklu |
-| 1F | `01` | typ panelu (ComboBoxPanel) |
+| 1F | `01` | typ panelu (`0` klasický, `1` standard BS120, `2` cykly + DOP) |
 | 2A–39 | `NOVá` + CR | **verze dat**: 16 znaků doplněných CR, převedených kódovou tabulkou (vrací ji povel `aV`) |
 | 3F | `FF` | – |
 
-Prázdná sekce má ukazatel `00 3F`. Ten míří na bajt 0x3F = `FF`, tedy na prázdný seznam.
-Panel tedy podle bajtů 03–05 ví, které IBIS povely má přijímat. U `pce_trolejbusy` jsou to `l, z, x, u, a, aV`.
+Prázdná sekce má ukazatel `00 3F` (na bajt 0x3F = `FF`), případně `00 00` pro prázdný `KOD`/`DOP` v některých verzích gBUSE1 1.12 (`ADledA`/`DISPA`) **[OVĚŘENO na souborech]**.
 
 ### 4.2 Rozložení souboru
-- Bloky se zapisují v pořadí **CYK, DOP, FNT, MIM, LIN, CIL, ZST**. Každý začíná na adrese zarovnané na 0x20.
-- Každá sekce má titulek `"XXX: gBUSE1 - 1.00"` (18 B, bez doplnění), data začínají na další hranici 0x20 a ukazatel v hlavičce míří na data.
+- Bloky se zapisují v pořadí **STR, KOD, CYK, DOP, FNT, MIM, LIN, CIL, CIL4, ZST** **[KÓD + OVĚŘENO na souborech]**. Každý začíná na adrese zarovnané na 0x20.
+- Každá sekce má titulek `"XXX: gBUSE1 - 1.00"` (u gBUSE1 1.12 `"1.12"` aj., celkem 18 B bez doplnění), data začínají na další hranici 0x20 a ukazatel v hlavičce míří na data.
+- **CYK** **[KÓD + OVĚŘENO na souborech]**: záznamy `[id_cyklu 1 B][delka_LE16 2 B][kroky…]`, kde každý krok je `[levé_okno][pravé_okno]`: prázdné okno = `0x00` (1 B), aktivní okno = 5 B (`šířka`, `zdroj 0..14`, `dop`, `trvání`, `(vstup << 4) | výstup`), po `0xFF` následují pascalovské řetězce `[len 1 B][ID]` pro levé i pravé okno každého kroku; celý blok končí `0xFF`.
+- **DOP** **[KÓD + OVĚŘENO na souborech]**: záznamy `[index 1 B][delka_LE16 2 B][text s CR]`, konec `0xFF`.
+- **STR** **[KÓD]**: formátovací řetězce číslic `0..9` (`[ASCII číslice][délka][bajtová data]`).
 - Intel HEX: záznamy max. 0x20 B, CRLF, velká písmena. Mezery mezi bloky se nezapisují a po nahrání obsahují `FF`.
 - Pro obraz nad 64 KB se používá záznam `:02000002…` (segment), konec je `:00000001FF`.
-- Sekce dat: `FNT` (fonty), `LIN` (linky, povel `l`), `CIL` (cíle, `z` / `zC`), `ZST` (zastávky), `MIM` (mimořádné informace), `CYK` (cykly), `DOP` (doplňkové texty). Titulky s verzí 1.12 jsou v souborech Brno ADled.
 
 ### 4.3 Sekce FNT – fonty a kódová tabulka
 ```
@@ -227,9 +230,8 @@ Panel tedy podle bajtů 03–05 ví, které IBIS povely má přijímat. U `pce_t
 FF 00
 [kódová tabulka 160 B]
 ```
-- Sloupec je 1 bajt, **MSB = horní bod**, bit 0 = dolní.
-- V `pce_trolejbusy` jsou fonty E0–E3 a EF (EF je jeden symbol, šipka 28 sloupců).
-- **Kódová tabulka**: pro kódy panelu 0x20–0xBF udává odpovídající znak Windows‑1250 (0 = nepoužito). Od 0x80 je pořadí Kamenických (Č ü é ď ä Ď Ť č ě Ě …). gBUSE podle ní převádí text z Windows do kódů panelu.
+- Sloupec má `ceil(výška / 8)` bajtů, **MSB prvního bajtu = horní bod**.
+- **Kódová tabulka (160 B)** **[KÓD]**: bajty `0..142` (143 B) mapují kódy panelu `0x21..0xAF`, bajty `143..158` (16 B) mapují kódy `0xF0..0xFF` na znaky Windows‑1250 (`0` = nepoužito), bajt `159` je ukončovač `0xFF`. Od `0x80` je pořadí Kamenických (Č ü é ď ä Ď Ť č ě Ě …). gBUSE podle ní převádí text z Windows do kódů panelu.
 
 ### 4.4 Záznam textu (LIN/CIL/ZST/…)
 ```
@@ -237,24 +239,25 @@ KLÍČ(ASCII číslice)  DÉLKA(16 bit LE)  OBSAH(DÉLKA bajtů)   …   FF
 ```
 - Klíč má 3 číslice. Ve 4 číslicích je u ZST a u cílů s povelem `zC`.
 - Číslo odpovídá IBIS povelu: `l010` → záznam LIN `010`, `z001` → CIL `001` **[OVĚŘENO na panelu]**.
-- Seznam končí záznamem `999` / `0999` a za ním následuje `FF`.
+- Seznam končí bajtem `FF`.
 
 Obsah skládá editor cílů (`GBUSE1.EXE` 0x44BB44) takto:
 ```
-E0+font  B0+mezera  [ESC t 11h]  [ESC i]  [ESC s (10h+sloupec)]  TEXT  [ESC i]  [VT]  CR
+E0+font  B0+mezera  [ESC t (10h+efekt)]  [ESC b]  [ESC i]  [ESC s (10h+sloupec)]  TEXT  [ESC i]  [VT]  CR
 ```
 
-| Bajty | Význam | Tlačítko v editoru |
+| Bajty | Význam | Tlačítko / MNEMO |
 |---|---|---|
-| `E0–EF` | font 0–15 | SpinEdit Font |
-| `B0–BF` | **mezera mezi znaky** 0–15 bodů (v MNEMO `m<n>`) | M−/M+ |
-| `1B 74 n` | ESC t – **běžící text** (editor vkládá n = 0x11) | BĚŽÍ |
-| `0B` (VT) | konec běžícího úseku | BĚŽÍ |
-| `1B 69` | ESC i – **inverze** zap/vyp | INV |
-| `1B 73 n` | ESC s – **počáteční sloupec** n−0x10 (zarovnání vlevo/vpravo počítá editor) | L / P / LD / PD |
+| `E0–EF` | font 0–15 | `f0..f15` |
+| `B0–BF` | **mezera mezi znaky** 0–15 bodů | `m0..m15` |
+| `1B 74 n` | ESC t – efekt (`n = 0x10` statický, `0x11` běžící, `0x12` posuv zprava, `0x13` nahrnutí zleva) **[KÓD]** | `t0..t3` |
+| `0B` (VT) | konec běžícího úseku | `VT` |
+| `1B 62` | ESC b – **blikání** textu **[KÓD]** | `b` |
+| `1B 69` | ESC i – **inverze** zap/vyp | `i` |
+| `1B 73 n` | ESC s – **počáteční sloupec** n−0x0F (v souboru `0x10 + x`) | `s<n>` |
+| `1B 6C/70/7A n` | ESC l / p / z – levý/pravý okraj okna, interval stránky (0,1 s) **[KÓD]** | `l/p/z<n>` |
 | bez ESC s | panel text **vycentruje** | C („I“) |
-| `1B 61/6C/70/7A n`, `1B 62` | ESC a / l / p / z s parametrem, ESC b – editor je umí zobrazit, význam neznámý (používají je cykly) | – |
-| `0D` | konec textu | |
+| `0D` | konec textu | `CR` |
 | text | kódy panelu podle kódové tabulky (Kamenických) | |
 
 Příklad z panelu:
@@ -264,64 +267,66 @@ CIL 010: <F3><B1><ESC t 11h>LÁZNĚ BOHDANEČ - jede …<VT><CR>   font 3, mezer
 ```
 
 ### 4.5 Konfigurace a soubory editoru gBUSE1
-gBUSE si drží data v textových souborech a HEX skládá až při uložení:
+gBUSE si drží data v textových a sekčních souborech a HEX skládá při uložení:
 
 | Soubor | Obsah |
 |---|---|
 | `*.lin` | linky |
-| `*.cil` | cíle |
-| `*.zst` | zastávky |
+| `*.cil`, `*.ci4` | cíle (3místné / 4místné) |
+| `*.zst`, `*.dru` | zastávky (gBUSE1) / nácestné zastávky (gBUSE0) |
 | `*.mim` | mimořádné informace |
 | `*.dop` | doplňkové texty |
 | `*.cyk` | cykly |
-| `*.fnt` | fonty |
-| `*.kod` | kódová tabulka (tlačítka „vlastní“ / „BS100“ / „žádná“) |
-| `*.aL`, `*.LA` | formátovací řetězce |
+| `*.fnt` | fonty + kódová tabulka |
+| `*.kod` | kódovací tabulka `KOD` (128 B) |
+| `*.aL`, `*.LA` | formátovací řetězce `STR` |
+| `*.afm`, `*.afc`, `*.afd` | tabulky automatického formátování (gBUSE0) |
+| `*.txt` | tabulátorový import/export (vč. `$` šablon a DOS `@` Kamenických) |
+| `*.bbd`, `*.bbf` | ekvivalenty cílů pro BS100 / BS230 |
 
-Do `*.lin`, `*.mim`, `*.dop` a `*.cyk` umí gBUSE i exportovat HEX.
-Cykly (CYK) popisují střídání informací. Volby efektů pro začátek zobrazení jsou: okamžité rozsvícení, přiběhnutí zprava, nasunutí zdola, nasunutí zhora, trvale běžící text. Pro konec: zhasnutí, vyběhnutí doleva, vysunutí nahoru, vysunutí dolů, ponechání.
+Cykly (CYK) popisují střídání informací (`ZDROJ 0..14`: vypnuto, linka, cíl, zastávka, mimořádné, …, čas `u`, pásmo `e`). Volby efektů pro začátek zobrazení jsou: okamžité rozsvícení, přiběhnutí zprava, nasunutí zdola, nasunutí shora, trvale běžící text (`0..4`); pro konec: zhasnutí, vyběhnutí doleva, vysunutí nahoru, vysunutí dolů, ponechání (`0..4`).
 
-### 4.6 Formát gBUSE0 (vnější panely, `57 00`) **[KÓD + OVĚŘENO na souborech]**
-Funkce `GBUSE0.EXE` 0x48E400, manuál `PRG/gBUSE0/CZ/gBUSE0.doc` (ekselcom-pixel-master.zip). Stará varianta má
-magic `0x55`. Implementace: [`busepanel/gbuse0/`](../busepanel/gbuse0) (čtení databáze + interpret záznamu).
-Ověřeno vykreslením záznamů z BRNO ADcel0/ADbok4/ADzad7, OSTRAVA, TRAM_PRAHA a KOSICE PANEL1–3.
+### 4.6 Formát gBUSE0 (vnější panely, `57 00` / `55 00`) **[KÓD + OVĚŘENO na souborech]**
+Funkce `GBUSE0.EXE` (v1.00 i v1.21, `0x48E400` / `0x492BE9`), manuál `gBUSE0.doc`. Implementace: [`busepanel/gbuse0/`](../busepanel/gbuse0) (úplný parser, builder, MNEMO překladač, automatické formátování, pomocné formáty i vykreslení programu).
+Ověřeno **bajt po bajtu bezeztrátovým round-tripem** na všech 10 dostupných souborech gBUSE0: Brno `ADcel0`, `ADbok4`, `ADzad7`, `IDS_BRNO_Adcel`, `ANTI_001`, `OSTRAVA`, `TRAM_PRAHA`, `KOSICE/PANEL1..3` **[OVĚŘENO na souborech]**.
 
-Hlavička má 0x50 B (vícebajtová čísla jsou big-endian):
+Hlavička má `0x50 B` pro `0x57` (FW 2.11–3.18) a `0x40 B` pro `0x55` (FW 1.6); vícebajtová čísla ukazatelů jsou big-endian:
 
 | Offset | Význam |
 |---|---|
-| 00 | `57` |
-| 01–04 | pole **linky**: řádek od, řádek do (počítáno **zdola**), sloupec od, sloupec do |
-| 05–08 | pole **cíle** (stejně) |
-| 09–0C | bitové masky povolených povelů (přiřazení bitů neznámé) |
+| 00 | `57` (FW 2.11–3.18) nebo `55` (FW 1.6) |
+| 01–04 | pole **linky**: `r0, r1` (0-based odspodu), `c0, c1` (sloupce) |
+| 05–08 | pole **cíle**: `r0, r1, c0, c1` |
+| 09–0A | bitové masky povolených IBIS povelů: `0x09` = `l, lA, z, zA, zI, zD, aV, aA`; `0x0A` = `aL, aSL, aSZ, aSD, aSC, zC, zN, kA` **[KÓD]** |
+| 0B | vlastnosti panelu: bity 0–2 nízké bity konfigurace, bity 3–7 = `P1` (`flip_all`), `P2` (`flip_on_current_err`), `P3` (`report_current_err_7`), `P4` (`check_voltage`), `P5` (`report_voltage_err_8`) **[KÓD]** |
+| 0C | rezervováno (`00`; `80` u `0x55`) |
 | 0D–10 | předvolby linky: font (`E0`+n), mezera (`B0`+n), posun (`C0`+n), interval v 0,1 s |
 | 11–14 | předvolby cíle |
-| 15 / 17 / 19 / 1B | ukazatele **FNT, LIN, CIL, CIL4** (prázdný = `00 4F`) |
-| 1F–2E | verze dat (text) |
-| 2F–32 / 33–36 | pole **nácestných zastávek** (DRU) a jeho předvolby – jen u panelů, které ho mají (Brno boční) |
-| 37 | ukazatel **DRU** |
-| 4F | `FF` |
+| 15 / 17 / 19 / 1B / 1D | BE16 ukazatele **FNT, LIN, CIL, nepoužito, KOD** (prázdný `00 4F` resp. `00 00`) |
+| 1F–2E | verze dat (16 znaků doplněných CR) |
+| 2F–32 / 33–36 | *(jen `0x57`)* pole **nácestných zastávek (DRU)** a jeho předvolby |
+| 37 / 39 / 3B / 3D / 3F | *(jen `0x57`)* BE16 ukazatele **DRU, AFC, AFD, STR, CIL4** (prázdný = `00 4F`) |
+| 42–44 | *(FW ≥ 3.08)* 24bitový ukazatel `DRU` (`addr_hi, addr_lo, bank`; prázdný `00 4F 00`) **[KÓD + OVĚŘENO na souborech]** |
+| 4D / 4E | *(jen `0x57`)* **jas** (`0..255`) a **číslo panelu** |
+| 4F | `FF` (`0x3F` u `0x55`) |
 
-- Klíče záznamů: LIN a CIL třímístné (`l123`, `z123`), CIL4 a DRU čtyřmístné (`zC1234`, `zD1234…`).
-- Fonty mají stejný blokový formát jako gBUSE1 (4.3). Znak je vysoký až 28 bodů, sloupec má ceil(výška/8) bajtů,
-  nejvyšší bit prvního bajtu je horní bod. (OSTRAVA má 10bodové fonty – odtud dřívější „2 B na sloupec“.)
-- Počet sloupců panelu = nejvyšší sloupec ze **všech** polí + 1 (zadní panel ADzad7 má jen pole linky, 28 sloupců).
+- Oddělovač v titulku `FNT: gBUSE0...` může být `:`, mezera ` ` nebo tečka `.` (využívají původní data dopravců).
+- Klíče záznamů: `LIN` a `CIL` třímístné (`l123`, `z123`), `CIL4` a `DRU` čtyřmístné (`zC1234`, `zD1234…`). Je-li povolen povel `zC` a zároveň existuje 4místný cíl `CIL4`, sdílí ukazatele `0x19` i `0x3F` **[OVĚŘENO na souborech]**.
+- Fonty: blokový formát jako gBUSE1 (u `0x55` plochý formát FW 1.6); výška znaku `1–28` bodů, `ceil(výška/8)` bajtů na sloupec, MSB prvního bajtu = horní bod.
+- Počet sloupců panelu = nejvyšší sloupec ze všech definovaných polí + 1; zadní panel `ADzad7` má jen pole linky (28 sloupců).
 
-**Řídicí kódy v záznamu** (FW úrovně podle manuálu: 1.6, 2.11, 2.13, 2.15, 3.08, 3.18):
+**Řídicí kódy a jazyk MNEMO v záznamu gBUSE0** (FW úrovně 1.6, 2.11, 2.13, 2.15, 3.08, 3.18):
 
-| Kód | Význam |
-|---|---|
-| `E0`+n / `B0`+n / `C0`+n | font / mezera mezi znaky / posun dolů o n řádků |
-| `ESC l n`, `ESC p n`, `ESC h n`, `ESC d n` | okno: levý, pravý sloupec, horní, dolní řádek; hodnota n−0x0F, číslováno od 1, sloupce zleva, řádky **zdola** |
-| `ESC s n` | počáteční sloupec textu (jinak se text centruje v okně) |
-| `ESC c` / `ESC i` / `ESC o` / `ESC x` | okno zpět na celé pole / invertovat okno / smazat / překrýt bez mazání (3.08) |
-| `ESC b` | dokud záznam běží, ostatní telegramy se ignorují |
-| `ESC w` | potlačí zobrazení nácestných zastávek (2.15) |
-| `ESC z n` | interval stránky **[ODHAD]** |
-| `FF` | formátování od začátku |
-| `LF` | první LF jen formátuje (víc řádků v jednom snímku), každé další LF **zobrazí snímek** |
-| `VT` | zobrazí snímek a cyklí od snímku po prvním LF **[OVĚŘENO na Košicích – 3 snímky]** |
-| `CR` | zobrazí snímek a skončí |
+| Kód | MNEMO | Význam |
+|---|---|---|
+| `E0`+n / `B0`+n / `C0`+n | `f0..15` / `m0..15` / `y0..31` | font / mezera mezi znaky / svislý posun dolů o n řádků |
+| `1B 6C/70/68/64 (n+0Fh)` | `l1..224`, `p1..224`, `h1..28`, `d1..28` | okno: levý, pravý sloupec, horní, dolní řádek (zdola, od 1) |
+| `1B 73 (n+0Fh)` | `s1..224` | počáteční sloupec textu (jinak se text centruje v okně) |
+| `1B 63/69/6F/78` | `c`, `i`, `o`, `x` | reset okna / invertovat okno / smazat / překrýt bez mazání |
+| `1B 6E` / `1B 72` | `n`, `r` | rotovat okno nahoru / rotovat okno doleva **[KÓD]** |
+| `1B 62` / `1B 77` | `b`, `w` | blokovat ostatní telegramy / potlačit zobrazení zastávek `zD` |
+| `1B 7A (n+0Fh)` | `z0..239` | interval stránky v desetinách s (`n * 0,1 s`) **[KÓD]** |
+| `0C` / `0A` / `0B` / `0D` | `FF`, `LF`, `VT`, `CR` | formát / konec řádku či snímek / snímek + smyčka po 1. `LF` / konec |
 
 Formátování maže jen pás řádků, který text zabírá (ne celé pole). Povely panelu: `l`, `z`, `zC`, `zD` (až 10
 nácestných, 2.13), `zN` (nácestné textem), `zI` / `zA` / `aA` (volný text s automatickým formátováním, 3.08;
@@ -365,11 +370,8 @@ Spuštění: `python nastroje/buse.py COM5` provede sken adres povelem `aV`.
 Ověřené IBIS povely na panelu: `l010` + `z001` → panel zobrazí „1 LÁZNĚ BOHDANEČ“ **[OVĚŘENO]**.
 
 ## 8. Otevřené otázky
-- Význam `ESC a/l/p/z/b` a parametru `n` u `ESC t`. Řešení: rozbor editoru cyklů nebo firmwaru 8051.
-- gBUSE0: přiřazení bitů masek povelů (09–0C), parametr `ESC z`, oddělovač v `zN`; builder (zápis HEX) zatím není.
-- gBUSE1 FW 1.xx (magic `0xAA`) a soubory 1.12 se sekcemi CYK/DOP (Brno ADled) – kód je zmapovaný, round-trip zatím nebyl zkoušen.
-- Ověřit na panelu přepínače `x99xx` a volný text (kap. 9.3).
-- Proč se nezobrazilo `zC` (hledání záznamu, rutina 0x0C23).
+- Ověřit na fyzickém panelu přepínače `x9998` a chování povelu `zC` na firmwaru BS120 v2.06 (hledání záznamu v rutině `0x0C23`, kap. 9).
+- Ověřit přesný oddělovač v telegramu `zN` na fyzickém vnějším panelu gBUSE0.
 
 ## 9. Rozbor firmwaru BS120 (8051) – IBIS povely **[KÓD, firmware]**
 Disassembler: `analyza/nastroje/d8051.py`.

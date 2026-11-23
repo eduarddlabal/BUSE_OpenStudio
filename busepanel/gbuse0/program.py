@@ -14,7 +14,9 @@ Byte codes (decoded from gBUSE0 HEX files, meaning from the gBUSE0 manual "MNEMO
   1B 78    x  overlay with the previous content until the next FF/LF/VT/CR (FW 3.08+)
   1B 62    b  block all other IBIS telegrams while this record is shown
   1B 77    w  suppress the stops of zD (stop field)
-  1B 7A n  z  display time of the following frames, n − 0x0F tenths of a second [ODHAD: code + offset]
+  1B 6E    n  rotate active window up by 1 row
+  1B 72    r  rotate active window left by 1 column
+  1B 7A n  z  display time of the following frames, n − 0x0F tenths of a second (0/1 = 0.1 s)
   0C FF  format the text so far into the window
   0A LF  format; the FIRST LF only formats, every further LF shows a frame for the interval
   0B VT  format, show a frame, then repeat from the frame after the first LF
@@ -27,6 +29,8 @@ alternating lower lines ("top LF a LF b LF c VT") replace each other (checked on
 """
 from __future__ import annotations
 
+import struct
+import zlib
 from dataclasses import dataclass, field
 
 ESC, LF, VT, FF, CR = 0x1B, 0x0A, 0x0B, 0x0C, 0x0D
@@ -59,6 +63,34 @@ class Layer:
         for x in range(max(0, x0), min(self.columns - 1, x1) + 1):
             self.bits[x] ^= m
             self.mask[x] |= m
+
+    def rotate_up(self, x0, x1, y0, y1):
+        """Rotate window (x0..x1, y0..y1) up by 1 row (top row wraps to bottom row)."""
+        y0, y1 = max(0, y0), min(self.rows - 1, y1)
+        if y1 <= y0:
+            return
+        m = _rows(y0, y1)
+        for x in range(max(0, x0), min(self.columns - 1, x1) + 1):
+            w = self.bits[x] & m
+            top_bit = (w >> y0) & 1
+            shifted = ((w & ~m) | ((w >> 1) & m)) & ~(1 << y1)
+            if top_bit:
+                shifted |= 1 << y1
+            self.bits[x] = (self.bits[x] & ~m) | (shifted & m)
+            self.mask[x] |= m
+
+    def rotate_left(self, x0, x1, y0, y1):
+        """Rotate window (x0..x1, y0..y1) left by 1 column (leftmost wraps to rightmost)."""
+        x0, x1 = max(0, x0), min(self.columns - 1, x1)
+        if x1 <= x0:
+            return
+        m = _rows(y0, y1)
+        first = self.bits[x0] & m
+        for x in range(x0, x1):
+            self.bits[x] = (self.bits[x] & ~m) | (self.bits[x + 1] & m)
+            self.mask[x] |= m
+        self.bits[x1] = (self.bits[x1] & ~m) | first
+        self.mask[x1] |= m
 
     def dot(self, x, y, on=True):
         if 0 <= x < self.columns and 0 <= y < self.rows:
@@ -217,6 +249,12 @@ def run(rec: bytes, db, fld, base: "Layer | None" = None, clear_field: bool = Tr
             elif k == ord("o"):
                 fmt()
                 layer.clear(*win)
+            elif k == ord("n"):
+                fmt()
+                layer.rotate_up(*win)
+            elif k == ord("r"):
+                fmt()
+                layer.rotate_left(*win)
             elif k == ord("x"):
                 flush()
                 overlay = True
@@ -260,3 +298,137 @@ def run(rec: bytes, db, fld, base: "Layer | None" = None, clear_field: bool = Tr
     show(None)
     prog.loop = None
     return prog
+
+
+def _combine_programs(db, progs: dict[str, Program]) -> dict:
+    """Combine line/dest/stop programs into a timeline of frames for UI and CLI rendering."""
+    order = [k for k in ("line", "dest", "stop") if k in progs]
+    if not order:
+        return {"columns": db.columns, "rows": db.rows, "frames": [{"bits": [0] * db.columns, "seconds": None}],
+                "loop": None, "overflow": {"line": False, "dest": False, "stop": False},
+                "block": False, "suppress_stops": False}
+
+    # Check if dest blocks line/stop or suppresses stops
+    dest_prog = progs.get("dest")
+    block = any(p.block for p in progs.values())
+    suppress_stops = bool(dest_prog and dest_prog.suppress_stops)
+
+    active = [k for k in order if not (suppress_stops and k == "stop")
+              and not (dest_prog and dest_prog.block and k != "dest")]
+    if not active:
+        active = [order[0]]
+
+    # Collect distinct time points over one combined period (capped at 60 s)
+    times = {0.0}
+    max_t = 0.0
+    for k in active:
+        p = progs[k]
+        acc = 0.0
+        for _lay, d in p.frames:
+            if d is None:
+                break
+            acc += d
+            times.add(round(acc, 4))
+        max_t = max(max_t, acc)
+        if p.loop is not None:
+            cyc = p.frames[p.loop:]
+            per = sum(d or 0 for _l, d in cyc)
+            if per > 0:
+                t = acc
+                while t < max(max_t, per) + per and t < 60.0:
+                    for _l, d in cyc:
+                        t += d or 0
+                        if t <= 60.0:
+                            times.add(round(t, 4))
+
+    sorted_t = sorted(t for t in times if t <= max(max_t, 0.0) + 1e-6 or not max_t)
+    # Check if any active program loops
+    looping = any(progs[k].loop is not None for k in active)
+    if looping and len(sorted_t) == 1:
+        # Single static frame in loop -> keep 1 frame
+        looping = False
+
+    def composite_at(t: float) -> list[int]:
+        bits = [0] * db.columns
+        for k in active:
+            lay = progs[k].at(t)
+            if lay is None:
+                continue
+            for x in range(min(db.columns, lay.columns)):
+                m = lay.mask[x]
+                bits[x] = (bits[x] & ~m) | (lay.bits[x] & m)
+        return bits
+
+    frames = []
+    if len(sorted_t) <= 1:
+        frames.append({"bits": composite_at(0.0), "seconds": None})
+        loop_idx = None
+    else:
+        for i in range(len(sorted_t) - 1):
+            t0, t1 = sorted_t[i], sorted_t[i + 1]
+            dur = round(t1 - t0, 3)
+            if dur > 0:
+                frames.append({"bits": composite_at(t0 + 1e-4), "seconds": dur})
+        if not looping:
+            frames.append({"bits": composite_at(sorted_t[-1] + 1e-4), "seconds": None})
+            loop_idx = None
+        else:
+            loop_idx = 0
+
+    return {
+        "columns": db.columns,
+        "rows": db.rows,
+        "frames": frames or [{"bits": composite_at(0.0), "seconds": None}],
+        "loop": loop_idx,
+        "overflow": {k: bool(progs[k].overflow) for k in ("line", "dest", "stop") if k in progs},
+        "block": block,
+        "suppress_stops": suppress_stops,
+    }
+
+
+def render_combined(db, line_key: str | None = None, dest_key: str | None = None, stop_key: str | None = None,
+                    line_rec: bytes | None = None, dest_rec: bytes | None = None, stop_rec: bytes | None = None) -> dict:
+    """Render combined line + dest + stop records on a gBUSE0 Database0."""
+    progs = {}
+    items = [
+        ("line", "LIN", line_key, line_rec),
+        ("dest", "CIL4" if "CIL4" in db.records else "CIL", dest_key, dest_rec),
+        ("stop", "DRU", stop_key, stop_rec),
+    ]
+    for fname, sec, key, rec in items:
+        fld = db.fields.get(fname)
+        if fld is None:
+            continue
+        if rec is None and key is not None:
+            rec = (db.records.get(sec) or {}).get(key)
+            if rec is None and sec == "CIL4":
+                rec = (db.records.get("CIL") or {}).get(key)
+        if rec is not None:
+            progs[fname] = run(rec, db, fld)
+    return _combine_programs(db, progs)
+
+
+def frame_to_ascii(bits: list[int], rows: int, on: str = "█", off: str = "·") -> str:
+    return "\n".join("".join(on if (b >> y) & 1 else off for b in bits) for y in range(rows))
+
+
+def frame_to_png(bits: list[int], rows: int, scale: int = 6,
+                 on=(255, 176, 46), off=(42, 33, 24), bg=(11, 9, 7)) -> bytes:
+    cols = len(bits)
+    w, h = cols * scale, rows * scale
+    raw = bytearray()
+    for y in range(h):
+        raw.append(0)
+        row, inner_y = y // scale, y % scale
+        for x in range(w):
+            col, inner_x = x // scale, x % scale
+            lit = (bits[col] >> row) & 1
+            edge = inner_x == scale - 1 or inner_y == scale - 1
+            raw += bytes(bg if edge else (on if lit else off))
+
+    def chunk(t, d):
+        c = struct.pack(">I", len(d)) + t + d
+        return c + struct.pack(">I", zlib.crc32(t + d) & 0xFFFFFFFF)
+
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(bytes(raw), 9)) + chunk(b"IEND", b""))

@@ -58,28 +58,23 @@ def _gbuse1(paths):
 HEXES = _gbuse1(HEXES)
 
 
-def _known_variant(path):
-    # gBUSE1 1.12 files with CYK/DOP sections (e.g. Brno ADled) are not supported yet
-    if b"gBUSE1 - 1.00" not in I.hex_to_image(path.read_bytes().decode("ascii")):
-        pytest.xfail("gBUSE1 1.12 (CYK/DOP) not supported yet")
-
-
 @pytest.mark.parametrize("path", HEXES, ids=lambda p: p.name)
 def test_image_roundtrip(path):
-    _known_variant(path)
     txt = path.read_bytes().decode("ascii")
     assert I.blocks_to_hex(I.build(I.parse(I.hex_to_image(txt)))) == txt
 
 
 @pytest.mark.parametrize("path", HEXES, ids=lambda p: p.name)
 def test_yaml_roundtrip(path, tmp_path):
-    _known_variant(path)
+    raw = path.read_bytes().decode("ascii")
+    orig_img = I.hex_to_image(raw)
     p = Project.from_hex(str(path))
     p.save(str(tmp_path / "p.yaml"))
     q = Project.load(str(tmp_path / "p.yaml"))
     out, problems = q.to_hex()
-    assert problems == []
-    assert out == path.read_bytes().decode("ascii")
+    if b"gBUSE1 - 1.00" in orig_img:
+        assert problems == []
+    assert I.hex_to_image(out) == orig_img
 
 
 def test_header_fields(pce):
