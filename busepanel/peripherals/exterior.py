@@ -355,10 +355,17 @@ class ExteriorPanel:
             rec = recs.get("CIL", {}).get(key)
             if rec is not None:
                 self._show("dest", rec, "z", f"cíl {key}")
+            else:
+                self.log = (self.log + [f"⚠ cíl {key} není v databázi"])[-40:]
         elif cmd == "zC" and arg[:4].isdigit():
-            rec = recs.get("CIL4", {}).get(arg[:4].decode())
+            key = arg[:4].decode()
+            rec = recs.get("CIL4", {}).get(key)
+            if rec is None and key.startswith("0"):
+                rec = recs.get("CIL", {}).get(key[1:])
             if rec is not None:
-                self._show("dest", rec, "z", f"cíl {arg[:4].decode()}")
+                self._show("dest", rec, "z", f"cíl {key}")
+            else:
+                self.log = (self.log + [f"⚠ cíl {key} není v databázi"])[-40:]
         elif cmd in ("zI", "zA", "aA"):
             self.values["zI"] = arg
             self._dest_text()
@@ -460,11 +467,19 @@ def _plain(text: str) -> str:
     return " ".join(_ICON.sub("", text or "").split())
 
 
+def _parse_code_int(raw) -> tuple[int, str] | None:
+    s = str(raw or "").strip()
+    if not s or not s.isdigit():
+        return None
+    return int(s), s
+
+
 class ExteriorSlot(Peripheral):
     """Exterior panel driven by the simulation (later: by the BS100).
 
-    control: "text" – l + zI<destination> (+ zN<via stops>) – works with any database (default)
-             "code" – l + z<dest_code> (+ zD<stop codes>) – needs a gBUSE0 database with these records
+    control: "auto" – use code when present in DB, else free text (default)
+             "text" – l + zI<destination> (+ zN<via stops>) – works with any database
+             "code" – l + z<dest_code> (+ zD<stop codes>) – forces code telegrams
     """
     kind = "exterior"
 
@@ -474,7 +489,7 @@ class ExteriorSlot(Peripheral):
                                  line_in_text=params.get("line_in_text"))
         super().__init__(name, role, bus, emulator, params)
         self.db = db
-        self.control = params.get("control", "text")
+        self.control = params.get("control") or "auto"
         self.sent_by_cmd: dict = {}
 
     def resend(self):
@@ -496,10 +511,21 @@ class ExteriorSlot(Peripheral):
             if key is not None:
                 tel.append(f"l{key}")
         if "dest" in fields:
-            code = getattr(route, "dest_code", "") or ""
-            if self.control == "code" and code:
-                tel.append(f"zC{int(code):04d}" if len(str(code)) == 4 else f"z{int(code):03d}")
-            else:
+            parsed = _parse_code_int(getattr(route, "dest_code", ""))
+            cil = self.db.records.get("CIL") or {}
+            cil4 = self.db.records.get("CIL4") or {}
+            if parsed is not None:
+                n, digits = parsed
+                k3, k4 = f"{n:03d}", f"{n:04d}"
+                in_db = (k4 in cil4) or (k3 in cil)
+                if self.control == "code" or (self.control == "auto" and in_db):
+                    if k4 in cil4 or (len(digits) == 4 and k3 not in cil):
+                        tel.append(f"zC{k4}")
+                    else:
+                        tel.append(f"z{k3}")
+                else:
+                    parsed = None
+            if parsed is None:
                 text = _plain(spec.get("text") or route.destination)
                 short = _plain(spec.get("short") or "") if spec.get("text") else route.dest_short
                 if not self.emulator.line_in_text:        # (else the line number is part of the text)
@@ -509,8 +535,14 @@ class ExteriorSlot(Peripheral):
             pages = eng.via_pages(self.role, now)[:MAX_STOPS]
             if pages:
                 self.emulator.stop_seconds = pages[0]["seconds"]
-            if self.control == "code":
-                tel.append("zD" + "".join(f"{int(p['code']):04d}" for p in pages if p.get("code")))
+            dru = self.db.records.get("DRU") or {}
+            raw_codes = [_parse_code_int(p.get("code")) for p in pages]
+            if not any(raw_codes):
+                st_idx = eng.pos + (1 if eng.phase in ("at_stop", "idle") else 0)
+                raw_codes = [_parse_code_int(s.code) for s in route.stops[st_idx:-1] if s.code][:MAX_STOPS]
+            codes = [f"{n:04d}" for n, _ in (c for c in raw_codes if c is not None)][:MAX_STOPS]
+            if codes and (self.control == "code" or (self.control == "auto" and any(c in dru for c in codes))):
+                tel.append("zD" + "".join(codes))
             else:
                 fld = fields["stop"]
                 tel.append(b"zN" + STOP_SEPARATOR.encode().join(

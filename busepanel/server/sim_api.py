@@ -191,13 +191,105 @@ def _list(folder, exts=(".yaml", ".yml")):
     return sorted(out)
 
 
+def _plain_g1(val) -> str:
+    if isinstance(val, dict):
+        return str(val.get("text") or "").strip()
+    return re.sub(r"\{[^{}]*\}", "", str(val or "")).strip()
+
+
+def _route_sort_key(item: dict) -> tuple:
+    ln = str(item.get("line") or "").strip()
+    m = re.match(r"^(\d+)(.*)$", ln)
+    if m:
+        return (0, int(m.group(1)), m.group(2), item.get("group") or "", item["path"])
+    return (1, 0, ln.lower(), item.get("group") or "", item["path"])
+
+
+def _scan_route_entries() -> list[dict]:
+    """Structured metadata for every line/route YAML in `trasy/`, sorted naturally by line number."""
+    items: list[dict] = []
+    for rel in _list("trasy"):
+        parts = rel.split("/")
+        group = "/".join(parts[1:-1]) if len(parts) > 2 else ""
+        try:
+            ln = Line.load(SIM.path(rel))
+            sm = ln.summary()
+            dirs = sm.get("directions") or []
+            courses = sm.get("courses") or {}
+            d0 = dirs[0] if dirs else {}
+            if len(dirs) >= 2 and dirs[0].get("destination") != dirs[1].get("destination"):
+                summary = f"{dirs[0].get('first') or dirs[0].get('destination', '')} ↔ {dirs[0].get('destination', '')}"
+                if not dirs[0].get("first"):
+                    summary = f"{dirs[0].get('destination', '')} ↔ {dirs[1].get('destination', '')}"
+            else:
+                first, dest = d0.get("first") or "", d0.get("destination") or ""
+                summary = dest if (not first or first == dest) else f"{first} → {dest}"
+            items.append({
+                "path": rel,
+                "group": group,
+                "line": ln.line,
+                "directions": len(dirs),
+                "courses": len(courses),
+                "trips": sum(len(v) for v in courses.values()),
+                "stops": max((d.get("stops", 0) for d in dirs), default=0),
+                "summary": summary,
+            })
+        except Exception:      # noqa: BLE001
+            items.append({"path": rel, "group": group, "line": "", "directions": 0, "courses": 0,
+                          "trips": 0, "stops": 0, "summary": os.path.basename(rel)})
+    items.sort(key=_route_sort_key)
+    return items
+
+
+def _collect_db_codes() -> dict[str, list[dict]]:
+    """Collect destination & stop codes from active SIM.db and exterior panel databases for UI hints."""
+    dests: dict[str, str] = {}
+    stops: dict[str, str] = {}
+    lines: dict[str, str] = {}
+
+    if SIM.db is not None:
+        for k, v in (SIM.db.data.get("lines") or {}).items():
+            t = _plain_g1(v)
+            if t:
+                lines.setdefault(str(k), t)
+        for sec in ("destinations", "destinations4"):
+            for k, v in (SIM.db.data.get(sec) or {}).items():
+                t = _plain_g1(v)
+                if t:
+                    dests.setdefault(str(k), t)
+        for k, v in (SIM.db.data.get("stops") or {}).items():
+            t = _plain_g1(v)
+            if t:
+                stops.setdefault(str(k), t)
+
+    if SIM.vehicle is not None:
+        from ..core.fonts import CodeTable, default_codetable
+        from ..gbuse0 import mnemo as M0
+        for slot in SIM.vehicle.panels:
+            db0 = getattr(slot, "db", None)
+            if db0 is None or not hasattr(db0, "records"):
+                continue
+            ct = CodeTable(db0.codetable) if getattr(db0, "codetable", None) else default_codetable()
+            for sec, target in (("LIN", lines), ("CIL", dests), ("CIL4", dests), ("DRU", stops)):
+                for k, raw in (db0.records.get(sec) or {}).items():
+                    t = " ".join(re.findall(r"'([^']*)'", M0.to_mnemo(raw, ct))).strip()
+                    if t:
+                        target.setdefault(str(k), t)
+
+    to_list = lambda m: [{"code": k, "text": v} for k, v in sorted(m.items())]
+    return {"destinations": to_list(dests), "stops": to_list(stops), "lines": to_list(lines)}
+
+
 # ------------------------------------------------------------------ files
 @router.get("/api/sim/files")
 def files():
     projects = _scan_project_entries()
-    return {"routes": _list("trasy"), "vehicles": _list("vozidla"),
+    route_items = _scan_route_entries()
+    return {"routes": [r["path"] for r in route_items], "route_items": route_items,
+            "vehicles": _list("vozidla"),
             "databases": [p["path"] for p in projects],
             "projects": projects,
+            "db_codes": _collect_db_codes(),
             "route_path": SIM.route_path, "vehicle_path": SIM.vehicle_path, "db_path": SIM.db_path}
 
 
@@ -314,6 +406,30 @@ def line_get():
 def line_update(r: LineReq):
     _put_line(r)
     _rebuild()
+    return {**_route_info(), "state": state()}
+
+
+class NewLineReq(BaseModel):
+    line: str = "1"
+    destination: str = "Cíl A"
+    back_destination: str = "Cíl B"
+
+
+@router.post("/api/sim/line/new")
+def line_new(r: NewLineReq):
+    ln = Line.from_dict({
+        "line": r.line.strip() or "1",
+        "directions": {
+            "A": {"destination": r.destination, "stops": [{"name": r.back_destination}, {"name": r.destination}]},
+            "B": {"destination": r.back_destination, "stops": [{"name": r.destination}, {"name": r.back_destination}]},
+        },
+        "courses": {"1": [{"direction": "A"}, {"direction": "B"}]},
+    })
+    SIM.line = ln
+    SIM.sel = {"course": "1", "index": 0}
+    SIM.route = ln.route(**SIM.sel)
+    SIM.route_path = None
+    _rebuild(keep_state=False)
     return {**_route_info(), "state": state()}
 
 
@@ -706,6 +822,8 @@ def _rebuild(keep_state: bool = True):
     _sync_lcd()
     if running:
         SIM.vehicle.start()
+    else:
+        SIM.vehicle.tick(virtual_only=True)
 
 
 def _sync_lcd():

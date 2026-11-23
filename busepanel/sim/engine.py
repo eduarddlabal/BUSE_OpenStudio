@@ -231,9 +231,11 @@ class SimEngine:
         st = self.route.stops
         cur = st[self.pos] if st else None
         return {"phase": self.phase, "pos": self.pos, "stop": cur.name if cur else None,
+                "stop_code": cur.code if cur else "",
                 "next": st[self.pos].name if self.phase == "driving" and st else None,
                 "message": self.message, "message_key": self.message_key,
-                "line": self.route.line, "destination": self.route.destination, "events": self.events[-10:],
+                "line": self.route.line, "destination": self.route.destination,
+                "dest_code": self.route.dest_code, "events": self.events[-10:],
                 "direction": getattr(self.route, "direction", ""), "course": getattr(self.route, "course", ""),
                 "trip": getattr(self.route, "trip", None), "departure": getattr(self.route, "departure", "")}
 

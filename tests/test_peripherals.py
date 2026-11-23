@@ -430,3 +430,92 @@ def test_route_short_names_round_trip():
     e = SimEngine(r, {"exterior": {"sequences": {"via": [{"text": "{via_stop}"}]}}}, clock=lambda: 0.0)
     p = e.via_pages("side", 0.0)
     assert p[0]["text"] == "Rohovládova Bělá, BUS terminál" and p[0]["short"] == "Rohov. Bělá"
+
+
+def test_dest_and_stop_codes_exterior_and_interior(univ):
+    from busepanel.gbuse0.mnemo import from_mnemo
+
+    # Exterior gBUSE0: "auto" picks code when in DB and falls back to zI/zN when missing
+    db_side = variant_database("v2", stop_field="bottom")
+    ct0 = univ.fonts.codetable
+    db_side.records.setdefault("CIL", {})["005"] = from_mnemo("f3 m1 'CENTRUM' CR", ct0)[0]
+    db_side.records.setdefault("DRU", {})["0012"] = from_mnemo("f11 m1 'Náměstí' CR", ct0)[0]
+
+    r = Route.from_dict({
+        "line": "7", "destination": "Nádraží", "dest_code": "5",
+        "stops": [{"name": "Start", "code": "10"}, {"name": "Náměstí", "code": "12"}, {"name": "Nádraží"}],
+    })
+    e = SimEngine(r, clock=lambda: 0.0)
+    e.event("start")
+
+    bus_auto = Bus("ext_auto")
+    slot_auto = ExteriorSlot("boční", "side", db_side, bus_auto)
+    v_auto = Vehicle(e, univ.fonts, [slot_auto])
+    tel_auto = slot_auto.telegrams(v_auto, 0.0)
+    assert "z005" in tel_auto and "zD0012" in tel_auto
+
+    # When DB doesn't contain code 099, auto falls back to text zI / zN
+    r_missing = Route.from_dict({"line": "7", "destination": "Dukla", "dest_code": "099", "stops": [{"name": "A"}, {"name": "Dukla"}]})
+    e_miss = SimEngine(r_missing, clock=lambda: 0.0)
+    e_miss.event("start")
+    v_miss = Vehicle(e_miss, univ.fonts, [slot_auto])
+    assert any(isinstance(t, bytes) and t.startswith(b"zI") for t in slot_auto.telegrams(v_miss, 0.0))
+
+    # Interior BS120: uses z005/x9999 at stop and x0012 while driving when records exist
+    p_int = univ.copy()
+    p_int.data["destinations"]["005"] = {"text": "CENTRUM", "font": 3, "spacing": 1}
+    p_int.data["stops"] = {"0012": {"text": "Náměstí", "font": 3, "spacing": 1}}
+    spy = Spy()
+    bus_int = Bus("int_bus", spy)
+    shadow = VirtualPanel("v", p_int, profile("BS120"))
+    pslot = PanelSlot("vnitřní", "interior", profile("BS120"), shadow=shadow, bus=bus_int, params={"control": "auto"})
+    v_int = Vehicle(e, p_int.fonts, [pslot])
+    v_int.tick(0.0)
+    assert spy.sent == ["l007", "z005", "x9999"]
+    assert shadow.mode == "normal" and shadow.values["z"] == "005"
+
+    spy.sent.clear()
+    e.event("depart")
+    v_int.tick(1.0)
+    assert spy.sent == ["x0012"]
+    assert shadow.mode == "stop" and shadow.values["x"] == "0012"
+
+    # Switching back to a phase without stop/dest code re-sends x9997 / x9996 properly
+    spy.sent.clear()
+    e.event("arrive"); e.event("depart")  # driving to final "Nádraží" (no stop code)
+    v_int.tick(2.0)
+    assert "x9996" in spy.sent and any(isinstance(t, bytes) and t.startswith(b"v") for t in spy.sent)
+
+
+def test_sim_api_route_items_db_codes_and_new_line(tmp_path):
+    from busepanel.server import sim_api as sim
+    old = (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path, sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel)
+    try:
+        sim.SIM.workdir = str(tmp_path)
+        (tmp_path / "trasy" / "mestske").mkdir(parents=True)
+        Line.from_dict({
+            "line": "12",
+            "directions": {"A": {"destination": "Nádraží", "dest_code": "001", "stops": [{"name": "Start"}, {"name": "Nádraží"}]}},
+        }).save(str(tmp_path / "trasy" / "mestske" / "l12.yaml"))
+        Line.from_dict({
+            "line": "2",
+            "directions": {"1": {"destination": "Centrum", "stops": [{"name": "A"}, {"name": "Centrum"}]}},
+        }).save(str(tmp_path / "trasy" / "l2.yaml"))
+        p = build_universal(None)
+        p.data["destinations"]["001"] = "HLAVNÍ NÁDRAŽÍ"
+        p.data["stops"] = {"0042": "Náměstí"}
+        sim.SIM.db = p
+        sim._rebuild()
+        fl = sim.files()
+        # Natural sort: line 2 comes before line 12
+        assert [it["line"] for it in fl["route_items"]] == ["2", "12"]
+        assert fl["route_items"][1]["group"] == "mestske"
+        assert {"code": "001", "text": "HLAVNÍ NÁDRAŽÍ"} in fl["db_codes"]["destinations"]
+        assert {"code": "0042", "text": "Náměstí"} in fl["db_codes"]["stops"]
+
+        nl = sim.line_new(sim.NewLineReq(line="99", destination="Konečná", back_destination="Výchozí"))
+        assert nl["line"]["line"] == "99" and len(nl["line"]["directions"]) == 2
+    finally:
+        (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+         sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel) = old
+        sim._rebuild()

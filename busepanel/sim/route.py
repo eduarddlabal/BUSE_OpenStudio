@@ -161,6 +161,9 @@ class Route:
                 "name": name, "zone": r.get("pasmo") or r.get("pásmo") or r.get("zone") or "",
                 "icons": r.get("ikony") or r.get("icons") or "",
                 "request": (r.get("na_znameni") or r.get("request") or "").lower() in ("1", "ano", "a", "x", "true", "yes"),
+                "via": (r.get("pres") or r.get("přes") or r.get("via") or "").lower() in ("1", "ano", "a", "x", "true", "yes"),
+                "code": r.get("kod") or r.get("kód") or r.get("code") or "",
+                "short": r.get("zkratka") or r.get("short") or "",
                 "minutes": r.get("minuty") or r.get("minutes") or r.get("min")}))
         rows.sort(key=lambda x: x[0])
         return Route.from_dict({"line": line, "destination": destination, "stops": [r for _, r in rows]})

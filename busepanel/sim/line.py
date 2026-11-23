@@ -216,7 +216,7 @@ class Line:
 
     def summary(self) -> dict:
         """For the UI: directions and the trips of every course."""
-        dirs = [{"id": d, "destination": r.destination, "stops": len(r.stops),
+        dirs = [{"id": d, "destination": r.destination, "dest_code": r.dest_code, "stops": len(r.stops),
                  "first": r.stops[0].name if r.stops else "", "last": r.stops[-1].name if r.stops else ""}
                 for d, r in self.directions.items()]
         courses = {}
@@ -226,7 +226,7 @@ class Line:
                 r = self._trip_route(t)
                 rows.append({"index": i, "direction": t.direction, "departure": t.departure,
                              "from": r.stops[0].name if r.stops else "", "to": r.stops[-1].name if r.stops else "",
-                             "destination": r.destination, "stops": len(r.stops),
+                             "destination": r.destination, "dest_code": r.dest_code, "stops": len(r.stops),
                              "full": self.is_full(c, i)})
             courses[c] = rows
         return {"line": self.line, "flat": self.flat, "directions": dirs, "courses": courses}

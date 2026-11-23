@@ -3,12 +3,12 @@ import { $, $$, api, toast, guard, esc } from "../common/core.js";
 import { LedView } from "../common/led.js";
 import { setProject, loadFiles } from "../gbuse/gbuse.js";
 
-const sim = { route: null, line: null, sel: {}, data: null, dir: null, vehicle: null, views: {}, active: false, polling: null, profiles: [], ptypes: {}, variants: {} };
+const sim = { route: null, line: null, sel: {}, data: null, dir: null, vehicle: null, views: {}, active: false, polling: null,
+              profiles: [], ptypes: {}, variants: {}, routeItems: [], routePath: null, dbCodes: { destinations: [], stops: [], lines: [] } };
 const ROLES = { interior: "vnitřní", front: "čelní", side: "boční", rear: "zadní" };
 const OUTPUTS = { virtual: "virtuální náhled", serial: "fyzický – COM port, adresa", esp: "na síti (ESP)", lcd: "LCD panel – webová stránka (doplněk)" };
 
 // ------------------------------------------------------------------ files
-// files in subfolders of vozidla/ are grouped by the folder name (any folders, nothing predefined)
 function vehOptions(list) {
   const groups = {};
   for (const p of list) { const parts = p.split("/"); const g = parts.length > 2 ? parts.slice(1, -1).join("/") : ""; (groups[g] = groups[g] || []).push(p); }
@@ -17,17 +17,93 @@ function vehOptions(list) {
     return g ? `<optgroup label="${esc(g)}">${o}</optgroup>` : o;
   }).join("");
 }
+
+function lineOptions(items) {
+  const groups = {};
+  for (const it of items || []) (groups[it.group || ""] = groups[it.group || ""] || []).push(it);
+  return Object.keys(groups).sort().map((g) => {
+    const o = groups[g].map((it) => {
+      const meta = [it.directions > 1 ? `${it.directions} směry` : null, it.courses ? `${it.courses} kurzy` : null, `${it.stops} zast.`].filter(Boolean).join(", ");
+      const label = `${it.line ? `Linka ${it.line}` : it.path.split("/").pop()} · ${it.summary || it.path}` + (meta ? ` (${meta})` : "");
+      return `<option value="${esc(it.path)}">${esc(label)}</option>`;
+    }).join("");
+    return g ? `<optgroup label="${esc(g)}">${o}</optgroup>` : o;
+  }).join("");
+}
+
+function renderCodeLists() {
+  const dc = sim.dbCodes || { destinations: [], stops: [] };
+  if ($("#simDestCodes")) {
+    $("#simDestCodes").innerHTML = (dc.destinations || []).map((x) =>
+      `<option value="${esc(x.code)}">${esc(x.code)} – ${esc(x.text)}</option>`).join("");
+  }
+  if ($("#simStopCodes")) {
+    $("#simStopCodes").innerHTML = (dc.stops || []).map((x) =>
+      `<option value="${esc(x.code)}">${esc(x.code)} – ${esc(x.text)}</option>`).join("");
+  }
+}
+
+function updateDestCodeHint() {
+  const el = $("#rDestCodeInfo");
+  if (!el) return;
+  const raw = ($("#rDestCode")?.value || "").trim();
+  if (!raw) { el.textContent = ""; el.className = "muted small"; return; }
+  const dc = (sim.dbCodes?.destinations || []);
+  const norm3 = /^\d+$/.test(raw) ? raw.padStart(3, "0") : raw;
+  const norm4 = /^\d+$/.test(raw) ? raw.padStart(4, "0") : raw;
+  const hit = dc.find((x) => x.code === raw || x.code === norm3 || x.code === norm4);
+  if (hit) {
+    el.textContent = `✓ ${hit.code}: ${hit.text}`;
+    el.className = "small codeok";
+  } else if (dc.length) {
+    el.textContent = "není v načtené databázi (v režimu auto půjde text)";
+    el.className = "small codewarn";
+  } else {
+    el.textContent = "";
+    el.className = "muted small";
+  }
+}
+
+function renderRouteList() {
+  const box = $("#routeList");
+  if (!box) return;
+  const q = ($("#routeSearch")?.value || "").trim().toLowerCase();
+  const items = (sim.routeItems || []).filter((it) => !q || [it.line, it.summary, it.path, it.group].some((x) => (x || "").toLowerCase().includes(q)));
+  if (!items.length) {
+    box.innerHTML = `<div class="muted small" style="padding:8px">Žádné odpovídající linky ve složce <code>trasy/</code>.</div>`;
+    return;
+  }
+  box.innerHTML = items.map((it) => {
+    const sel = sim.routePath && it.path === sim.routePath ? " sel" : "";
+    const meta = [it.directions ? `${it.directions} ${it.directions === 1 ? "směr" : (it.directions < 5 ? "směry" : "směrů")}` : null,
+                  it.courses ? `${it.courses} ${it.courses === 1 ? "kurz" : (it.courses < 5 ? "kurzy" : "kurzů")}` : null,
+                  `${it.stops} zast.`].filter(Boolean).join(" · ");
+    return `<div class="lineitem${sel}" data-path="${esc(it.path)}">
+      <div class="linehead">
+        <span class="linebadge">${it.line ? `Linka ${esc(it.line)}` : "?"}</span>
+        <span class="linemain" title="${esc(it.summary)}">${esc(it.summary || it.path)}</span>
+      </div>
+      <div class="linemeta"><span>${esc(meta)}</span><span><code>${esc(it.path)}</code></span></div>
+    </div>`;
+  }).join("");
+  box.querySelectorAll(".lineitem").forEach((el) => el.onclick = () => loadLine(el.dataset.path));
+}
+
 async function loadSimFiles() {
   const f = await api("/api/sim/files");
   const opt = (list) => list.map((x) => `<option>${esc(x)}</option>`).join("");
-  $("#routeSelect").innerHTML = opt(f.routes) || "<option value=''>(žádné trasy)</option>";
+  sim.routeItems = f.route_items || f.routes.map((p) => ({ path: p, line: "", summary: p, directions: 0, courses: 0, stops: 0, group: "" }));
+  sim.routePath = f.route_path;
+  sim.dbCodes = f.db_codes || { destinations: [], stops: [], lines: [] };
+  renderCodeLists();
+  updateDestCodeHint();
   $("#vehSelect").innerHTML = vehOptions(f.vehicles) || "<option value=''>(žádná vozidla)</option>";
   const pick = (sel, list, cur, html) => { $(sel).innerHTML = (cur && !list.includes(cur) ? `<option value="">(neuloženo)</option>` : "") + html;
     $(sel).value = list.includes(cur) ? cur : ""; };
-  pick("#jLine", f.routes, f.route_path, opt(f.routes) || "<option value=''>(žádné linky)</option>");
+  pick("#jLine", f.routes, f.route_path, lineOptions(sim.routeItems) || "<option value=''>(žádné linky)</option>");
   pick("#jVeh", f.vehicles, f.vehicle_path, vehOptions(f.vehicles) || "<option value=''>(žádná vozidla)</option>");
-  if (f.route_path && f.routes.includes(f.route_path)) $("#routeSelect").value = f.route_path;
   if (f.vehicle_path && f.vehicles.includes(f.vehicle_path)) $("#vehSelect").value = f.vehicle_path;
+  renderRouteList();
   const projects = f.projects || (f.databases || []).map((p) => ({ path: p, kind: "", name: p, panels: 1 }));
   $("#dbSelect").innerHTML = projects.length
     ? projects.map((p) => {
@@ -86,9 +162,9 @@ function renderTrips() {
   let html = "";
   for (const [c, rows] of Object.entries(l.courses || {}))
     html += `<optgroup label="Kurz ${esc(c)}">` + rows.map((t) => `<option value="c:${esc(c)}:${t.index}" ${cur === `c:${c}:${t.index}` ? "selected" : ""}>
-      ${t.index + 1}. ${esc(t.departure || "--:--")} · směr ${esc(t.direction)} · ${esc(t.from)} → ${esc(t.destination)} (${t.stops} zast.${t.full ? "" : ", zkrácený"})</option>`).join("") + "</optgroup>";
+      ${t.index + 1}. ${esc(t.departure || "--:--")} · směr ${esc(t.direction)} · ${esc(t.from)} → ${esc(t.destination)}${t.dest_code ? ` [${esc(t.dest_code)}]` : ""} (${t.stops} zast.${t.full ? "" : ", zkrácený"})</option>`).join("") + "</optgroup>";
   html += `<optgroup label="Celý směr">` + (l.directions || []).map((d) => `<option value="d:${esc(d.id)}" ${cur === `d:${d.id}` || (!cur && l.flat) ? "selected" : ""}>
-      směr ${esc(d.id)} · ${esc(d.first)} → ${esc(d.destination)} (${d.stops} zast.)</option>`).join("") + "</optgroup>";
+      směr ${esc(d.id)} · ${esc(d.first)} → ${esc(d.destination)}${d.dest_code ? ` [${esc(d.dest_code)}]` : ""} (${d.stops} zast.)</option>`).join("") + "</optgroup>";
   $("#rTrip").innerHTML = html;
   const t = sim.sel.course ? (l.courses[sim.sel.course] || [])[sim.sel.index || 0] : null;
   $("#rTripNote").hidden = !(t && !t.full);
@@ -112,7 +188,7 @@ function eachTrip(fn) { for (const trips of Object.values(sim.data.courses || {}
 function renderDirs() {
   const dirs = sim.data.directions || {};
   $("#rDirTabs").innerHTML = Object.entries(dirs).map(([id, d]) =>
-    `<button data-d="${esc(id)}" class="${id === sim.dir ? "active" : ""}">${esc(id)}: ${esc(d.destination || "?")}</button>`).join("") +
+    `<button data-d="${esc(id)}" class="${id === sim.dir ? "active" : ""}">${esc(id)}: ${esc(d.destination || "?")}${d.dest_code ? ` [${esc(d.dest_code)}]` : ""}</button>`).join("") +
     `<button data-d="" title="nový směr">+ Směr</button>`;
   $("#rDirTabs").querySelectorAll("button").forEach((b) => b.onclick = () => {
     if (b.dataset.d) { sim.dir = b.dataset.d; renderDirs(); return; }
@@ -125,6 +201,7 @@ function renderDirs() {
   if (!d) return;
   $("#rDirId").value = sim.dir; $("#rDest").value = d.destination || ""; $("#rDestCode").value = d.dest_code || ""; $("#rDestShort").value = d.dest_short || "";
   $("#rDirDel").disabled = Object.keys(dirs).length < 2;
+  updateDestCodeHint();
   renderStops();
 }
 $("#rDirId").onchange = () => {
@@ -138,7 +215,8 @@ $("#rDirId").onchange = () => {
 };
 $("#rDest").onchange = () => { dirOf().destination = $("#rDest").value; renderDirs(); pushLine({ courses: true }); };
 $("#rDestShort").onchange = () => { const d = dirOf(); if ($("#rDestShort").value) d.dest_short = $("#rDestShort").value; else delete d.dest_short; pushLine(); };
-$("#rDestCode").onchange = () => { const d = dirOf(); if ($("#rDestCode").value) d.dest_code = $("#rDestCode").value; else delete d.dest_code; pushLine(); };
+$("#rDestCode").onchange = () => { const d = dirOf(); const v = $("#rDestCode").value.trim(); if (v) d.dest_code = v; else delete d.dest_code; updateDestCodeHint(); renderDirs(); pushLine({ courses: true }); };
+$("#rDestCode").oninput = updateDestCodeHint;
 $("#rDirDel").onclick = () => {
   const id = sim.dir, used = [];
   eachTrip((t) => { if (String(t.direction) === id) used.push(t); });
@@ -177,6 +255,13 @@ function markSimStops() {
 }
 function renderStops() {
   const r = dirOf();
+  const stopDb = sim.dbCodes?.stops || [];
+  const stopTitle = (code) => {
+    if (!code) return "";
+    const k4 = /^\d+$/.test(code) ? code.padStart(4, "0") : code;
+    const hit = stopDb.find((x) => x.code === code || x.code === k4);
+    return hit ? `${hit.code}: ${hit.text}` : "";
+  };
   $("#rStops").innerHTML = r.stops.map((s, i) => `<tr data-i="${i}">
     <td class="muted">${i + 1}</td>
     <td><input data-f="name" value="${esc(s.name)}"></td>
@@ -186,7 +271,7 @@ function renderStops() {
     <td><input type="checkbox" data-f="request" ${s.request ? "checked" : ""}></td>
     <td><input data-f="minutes" type="number" min="0" step="1" value="${s.minutes ?? ""}" style="width:4em"></td>
     <td><input type="checkbox" data-f="via" ${s.via ? "checked" : ""}></td>
-    <td><input data-f="code" value="${esc(s.code || "")}" style="width:4em"></td>
+    <td><input data-f="code" list="simStopCodes" value="${esc(s.code || "")}" title="${esc(stopTitle(s.code || ""))}" placeholder="0001" style="width:4.8em"></td>
     <td class="nowrap"><button data-a="up" title="nahoru">↑</button><button data-a="go" title="simulace: skočit sem">⤷</button><button data-a="del" class="danger">×</button></td></tr>`).join("");
   $("#rStops").querySelectorAll("input").forEach((inp) => inp.onchange = () => {
     const i = +inp.closest("tr").dataset.i, f = inp.dataset.f, s = r.stops[i];
@@ -239,7 +324,7 @@ function renderCourses() {
     <div class="row"><label>Kurz <input data-cf="id" value="${esc(c)}" style="width:5em"></label>
       <span style="flex:1"></span><button data-ca="add">+ Spoj</button><button data-ca="del" class="danger">Smazat kurz</button></div>
     <div class="stopwrap"><table class="stops"><thead><tr><th>#</th><th>Směr</th><th>Odjezd</th><th>Od</th><th>Do</th>
-      <th title="vlastní cíl zkráceného spoje (prázdné = automaticky)">Cíl</th><th></th></tr></thead><tbody>
+      <th title="vlastní cíl zkráceného spoje (prázdné = automaticky)">Cíl</th><th title="vlastní kód cíle (CIL)">Kód cíle</th><th></th></tr></thead><tbody>
     ${trips.map((t, i) => {
       const d = dirs[t.direction] || { stops: [] }, st = d.stops, s = (sum[c] || [])[i] || {};
       const opts = (ref, empty) => `<option value="">${empty}</option>` + st.map((x, k) =>
@@ -250,6 +335,7 @@ function renderCourses() {
         <td><select data-f="from">${opts(t.from, "(začátek)")}</select></td>
         <td><select data-f="to">${opts(t.to, "(konec)")}</select></td>
         <td><input data-f="destination" value="${esc(t.destination || "")}" placeholder="${esc(s.destination || "")}" title="${esc(s.destination || "")}" style="width:7em"></td>
+        <td><input data-f="dest_code" list="simDestCodes" value="${esc(t.dest_code || "")}" placeholder="${esc(s.dest_code || "")}" style="width:4.8em"></td>
         <td class="nowrap"><button data-a="run" title="simulovat tento spoj">▶</button><button data-a="up" title="nahoru">↑</button><button data-a="del" class="danger">×</button></td></tr>`;
     }).join("")}</tbody></table></div></div>`).join("") || `<p class="muted small">Linka nemá kurzy – simuluje se celý směr.</p>`;
   $("#rCourses").querySelectorAll(".course").forEach((el) => {
@@ -329,10 +415,16 @@ const loadLine = guard(async (p) => {
   loadSimFiles();
 });
 $("#jLine").onchange = () => loadLine($("#jLine").value);
-$("#routeLoad").onclick = guard(async () => {
-  const p = $("#routeSelect").value; if (!p) return;
-  sim.dir = null; setRouteInfo(await api("/api/sim/route/load", { path: p })); $("#routePath").value = p; toast("Linka načtena");
+if ($("#routeSearch")) $("#routeSearch").oninput = renderRouteList;
+if ($("#routeNew")) $("#routeNew").onclick = guard(async () => {
+  sim.dir = null;
+  setRouteInfo(await api("/api/sim/line/new", { line: "1", destination: "Hlavní nádraží", back_destination: "Centrum" }));
+  $("#routePath").value = "trasy/linka1.yaml";
+  sim.routePath = null;
+  renderRouteList();
+  toast("Nová linka připravena – nezapomeňte uložit");
 });
+if ($("#routeToSim")) $("#routeToSim").onclick = () => window.dispatchEvent(new CustomEvent("buse:goto", { detail: { module: "jizda" } }));
 $("#routeSave").onclick = guard(async () => {
   sim.data.line = $("#rLine").value;
   await applyInfo(await api("/api/sim/line/save", { path: $("#routePath").value, line: sim.data, selection: sim.sel }), { courses: true });
@@ -348,7 +440,11 @@ $("#rCsvImport").onclick = guard(async () => {
 });
 
 // ------------------------------------------------------------------ vehicle editor
-const CONTROL = { text: "text (zI, zN) – bez databáze", code: "kódy (z / zC, zD) – podle databáze gBUSE0" };
+const CONTROL = {
+  auto: "automaticky (kódy z databáze, jinak text)",
+  code: "vždy kódy (z / zC, zD / x)",
+  text: "vždy volný text (v / zI, zN)",
+};
 const STOP_FIELD = { "": "ne", top: "nahoře", bottom: "dole" };
 // type of a panel as the server decides it (peripherals/__init__.py: peripheral_type)
 function ptype(p) {
@@ -386,8 +482,8 @@ function renderVehicle() {
       <label>Role <select data-f="role">${opts(ROLES, p.role)}</select></label>
       ${ext ? `<label>Varianta <select data-f="variant">${opts(sim.variants, p.variant || { front: "v1", side: "v2", rear: "v4" }[p.role] || "v1")}</select></label>
         <label>Nácestné zastávky <select data-f="stop_field">${opts(STOP_FIELD, p.stop_field || "")}</select></label>
-        <label>Ovládání <select data-f="control">${opts(CONTROL, p.control || "text")}</select></label>
         <label>Databáze gBUSE0 (.yaml/.hex/.bin, volitelně) <input data-f="database" value="${esc(p.database || "")}" placeholder="bez databáze – originální font gBUSE0"></label>` : ""}
+      ${!lcd ? `<label>Ovládání <select data-f="control">${opts(CONTROL, p.control || "auto")}</select></label>` : ""}
       ${!lcd && !ext ? `<label title="rychlost běžícího textu – změřte na panelu: (šířka textu + šířka pole) sloupců za naměřenou dobu">Posuv [ms/sloupec] <input data-f="scroll_ms" type="number" min="1" max="500" value="${p.scroll_ms ?? ""}" placeholder="podle profilu" style="width:6em"></label>` : ""}
       ${lcd ? "" : `<label>Panel <select data-f="output">${opts(panelOutputs, p.output || "virtual")}</select></label>`}
       ${!lcd && p.output === "serial" ? `<label>Port / adresa <span class="row"><input data-f="port" value="${esc(p.port || "")}" placeholder="auto" style="width:8em"><input data-f="address" type="number" value="${p.address ?? 10}" style="width:4em"></span></label>` : ""}
@@ -525,7 +621,7 @@ const PHASES = { idle: "nezahájeno", at_stop: "v zastávce", driving: "na trase
 function render(s) {
   const e = s.engine;
   $("#simStatus").innerHTML = e ? `<b>${esc(PHASES[e.phase] || e.phase)}</b> · ${e.phase === "driving" ? "příští: " : "zastávka: "}
-    <b>${esc(e.stop || "–")}</b> · linka ${esc(e.line)} → ${esc(e.destination)}
+    <b>${esc(e.stop || "–")}</b>${e.stop_code ? ` <span class="pill">x${esc(e.stop_code)}</span>` : ""} · linka ${esc(e.line)} → ${esc(e.destination)}${e.dest_code ? ` <span class="pill">z${esc(e.dest_code)}</span>` : ""}
     ${e.course ? ` · kurz ${esc(e.course)}, spoj ${e.trip + 1}${e.departure ? " (" + esc(e.departure) + ")" : ""}` : e.direction ? ` · směr ${esc(e.direction)}` : ""}
     ${e.message ? ` · <span class="warn">mimořádnost: ${esc(e.message)}</span>` : ""}
     · odesílání na panely: <b>${s.running ? "běží" : "zastaveno"}</b>`
@@ -539,7 +635,9 @@ function render(s) {
       $("#simPanels").append(el);
       box = sim.views[p.name] = { el, view: new LedView(el.querySelector("canvas")) };
     }
-    const info = [ROLES[p.role] || p.role, p.kind === "lcd" ? null : p.profile, OUTPUTS[p.kind] || p.kind].filter(Boolean);
+    const info = [ROLES[p.role] || p.role, p.kind === "lcd" ? null : p.profile,
+                  p.control && p.control !== "auto" ? p.control : null,
+                  OUTPUTS[p.kind] || p.kind].filter(Boolean);
     if (p.frame) info.push("režim: " + p.frame.mode_title);
     if (p.frame && p.frame.mirror) info.push("náhled podle odeslaných povelů");
     if (!p.frame && p.kind !== "virtual" && p.kind !== "lcd") info.push("zatím nic neodesláno – spusťte ▶ Start");
