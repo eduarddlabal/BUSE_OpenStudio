@@ -34,7 +34,7 @@ import yaml
 
 from .route import Route, Stop
 
-_DIR_KEYS = ("destination", "dest_code")
+_DIR_KEYS = ("destination", "dest_code", "dest_short")
 
 
 @dataclass
@@ -192,6 +192,7 @@ class Line:
             # ends early: own destination (default the last served stop), not the via / code of the full route
             r.destination = r.stops[-1].name
             r.dest_code = ""
+            r.dest_short = r.stops[-1].short
         if a > 0:
             m0 = r.stops[0].minutes
             if m0:

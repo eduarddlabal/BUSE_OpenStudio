@@ -368,10 +368,11 @@
         <div class="grid4">
           <label title="označení směru (např. A, 1, tam)">Směr <input id="rDirId" style="width:5em"></label>
           <label>Cíl <input id="rDest"></label>
+          <label title="zkrácený cíl – použije se tam, kde se plný cíl nevejde (vnější panely)">Zkrácený cíl <input id="rDestShort" style="width:12em"></label>
           <label title="záznam CIL databáze vnějšího panelu (ovládání kódy)">Kód cíle <input id="rDestCode" style="width:5em"></label>
         </div>
         <div class="stopwrap"><table class="stops">
-          <thead><tr><th>#</th><th>Zastávka</th><th>Pásmo</th><th>Ikony</th><th title="na znamení">Zn.</th><th title="minuty od začátku směru (LCD panel)">Min.</th><th title="nácestná – ukazuje se na vnějších panelech">Přes</th><th title="kód zastávky v databázi vnějšího panelu (DRU)">Kód</th><th></th></tr></thead>
+          <thead><tr><th>#</th><th>Zastávka</th><th title="zkrácený název – použije se tam, kde se plný nevejde (vnější panely)">Zkratka</th><th>Pásmo</th><th>Ikony</th><th title="na znamení">Zn.</th><th title="minuty od začátku směru (LCD panel)">Min.</th><th title="nácestná – ukazuje se na vnějších panelech">Přes</th><th title="kód zastávky v databázi vnějšího panelu (DRU)">Kód</th><th></th></tr></thead>
           <tbody id="rStops"></tbody></table></div>
         <div class="row"><button id="rAddStop">+ Zastávka</button>
           <button id="rDirReverse" title="nový směr se zastávkami v opačném pořadí">Obrácený směr</button>

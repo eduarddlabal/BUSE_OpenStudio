@@ -1,6 +1,5 @@
 line: "3"
 destination: HLAVNÍ NÁDRAŽÍ
-via: Rybitví - Semtín
 stops:
 - name: Lázně Bohdaneč, U Mlýnů
   zone: II
@@ -23,16 +22,19 @@ stops:
   zone: II
   zone_name: Lázně Bohdaneč
   note: Lázně Bohdaneč,aut.nádr.
+  short: L. Bohdaneč, AN
 - name: Rybitví, UMA točna
   zone: I
   zone_name: Pardubice
   request: true
   note: Rybitví,UMA točna
+  via: true
 - name: Rybitví, UMA továrna
   zone: I
   zone_name: Pardubice
   request: true
   note: Rybitví,UMA továrna
+  short: Rybitví, UMA
 - name: Rybitví, závod
   zone: I
   zone_name: Pardubice
@@ -42,11 +44,13 @@ stops:
   zone_name: Pardubice
   request: true
   note: Semtín,vlečka
+  via: true
 - name: Semtín, hlavní brána
   zone: I
   zone_name: Pardubice
   request: true
   note: Semtín,hlavní brána
+  short: Semtín, brána
 - name: Semtín, zastávka
   zone: I
   zone_name: Pardubice
@@ -69,6 +73,7 @@ stops:
   zone: I
   zone_name: Pardubice
   note: Terminál Univerzita (st. 2)
+  short: Term. Univerzita
 - name: Stavařov
   zone: I
   zone_name: Pardubice

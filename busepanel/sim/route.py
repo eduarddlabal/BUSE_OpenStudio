@@ -5,10 +5,12 @@ Flat route = one trip. A line with directions and courses (kurzy) is in sim/line
 line: "7"
 destination: Sídliště Dukla
 dest_code: 123                 # optional, gBUSE0 CIL record for exterior panels with control: code
+dest_short: Dukla              # optional shortened destination – used where the full one does not fit
                                # "přes" = the stops marked via: true (old files: via: "A - B" is converted)
 stops:
   - {name: Hlavní nádraží, zone: P, icons: [vlak, bus], request: false}
   - {name: Masarykovo nám., zone: P, minutes: 3, via: true, code: "0042"}
+  - {name: "Lázně Bohdaneč, aut.nádr.", short: "L. Bohdaneč"}   # short: where the name does not fit
 messages:
   odklon: Spoj jede odklonem přes ul. Pražskou
 """
@@ -41,6 +43,7 @@ class Stop:
     minutes: float | None = None   # optional: minutes from the start of the trip (LCD "3 min")
     via: bool = False              # announced on the exterior panels ("nácestná", dBUSE attribute K)
     code: str = ""                 # optional stop code of an exterior database (gBUSE0 DRU, 4 digits)
+    short: str = ""                # optional shortened name – used where the full name does not fit
 
     def to_dict(self) -> dict:
         d = {"name": self.name}
@@ -60,6 +63,8 @@ class Stop:
             d["via"] = True
         if self.code:
             d["code"] = self.code
+        if self.short:
+            d["short"] = self.short
         return d
 
     @staticmethod
@@ -71,7 +76,7 @@ class Stop:
             icons = [i.strip() for i in icons.replace(",", " ").split() if i.strip()]
         return Stop(str(s["name"]), str(s.get("zone", "") or ""), icons, bool(s.get("request")),
                     str(s.get("note", "") or ""), str(s.get("zone_name", "") or ""), _minutes(s.get("minutes")),
-                    bool(s.get("via")), str(s.get("code", "") or ""))
+                    bool(s.get("via")), str(s.get("code", "") or ""), str(s.get("short", "") or ""))
 
 
 def mark_via(stops: list, text: str):
@@ -100,6 +105,7 @@ class Route:
     course: str = ""
     trip: int | None = None        # index of the trip in the course
     departure: str = ""            # "HH:MM"
+    dest_short: str = ""           # optional shortened destination (where the full one does not fit)
 
     @staticmethod
     def from_dict(d: dict) -> "Route":
@@ -111,12 +117,14 @@ class Route:
                      stops, dict(d.get("messages") or {}),
                      str(d.get("dest_code", "") or ""), str(d.get("direction", "") or ""),
                      str(d.get("course", "") or ""), int(trip) if trip is not None else None,
-                     str(d.get("departure", "") or ""))
+                     str(d.get("departure", "") or ""), str(d.get("dest_short", "") or ""))
 
     def to_dict(self) -> dict:
         d = {"line": self.line, "destination": self.destination}
         if self.dest_code:
             d["dest_code"] = self.dest_code
+        if self.dest_short:
+            d["dest_short"] = self.dest_short
         d["stops"] = [s.to_dict() for s in self.stops]
         d["messages"] = dict(self.messages)
         for k in ("direction", "course", "departure"):

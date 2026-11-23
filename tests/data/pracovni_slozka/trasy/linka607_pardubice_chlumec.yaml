@@ -6,6 +6,7 @@ messages:
 directions:
   "1":
     destination: Chlumec nad Cidlinou, žst.
+    dest_short: Chlumec n.C., žst.
     stops:
     - name: Pardubice, Hlavní nádraží
       zone: "600"
@@ -13,6 +14,7 @@ directions:
       icons:
       - vlak
       note: Pardubice,,Hlavní nádraží
+      short: Pardubice, hl.n.
     - name: Pardubice, Masarykovo nám.
       zone: "600"
       zone_name: Pardubice
@@ -23,6 +25,7 @@ directions:
       icons:
       - prestup
       note: Pardubice,,Terminál Univerzita
+      short: Pardubice, Term. Univerzita
     - name: Pardubice, Poděbradská
       zone: "600"
       zone_name: Pardubice
@@ -60,6 +63,7 @@ directions:
       zone_name: Lázně Bohdaneč
       note: Lázně Bohdaneč,,aut.nádr.
       via: true
+      short: L. Bohdaneč, AN
     - name: Lázně Bohdaneč, Na Pískách
       zone: "605"
       zone_name: Lázně Bohdaneč
@@ -78,6 +82,7 @@ directions:
       zone_name: Rohovládova Bělá
       note: Rohovládova Bělá,,BUS terminál
       via: true
+      short: Rohovl. Bělá
     - name: Voleč, Třídeň
       zone: "676"
       zone_name: Voleč
@@ -121,6 +126,7 @@ directions:
       zone_name: Nové Město(HK)
       note: Nové Město,,rybník
       via: true
+      short: N. Město, rybník
     - name: Chlumec n.Cidl., OSEVA
       zone: "170"
       zone_name: Chlumec n. Cidlinou
@@ -141,6 +147,7 @@ directions:
       note: Chlumec n.Cidl.,,žel.st.
   "2":
     destination: Pardubice, Hlavní nádraží
+    dest_short: Pardubice, hl.n.
     stops:
     - name: Chlumec n.Cidl., žel.st.
       zone: "170"
@@ -165,6 +172,7 @@ directions:
       zone_name: Nové Město(HK)
       note: Nové Město,,rybník
       via: true
+      short: N. Město, rybník
     - name: Klamoš, Rtánov
       zone: "174"
       zone_name: Klamoš
@@ -208,6 +216,7 @@ directions:
       zone_name: Rohovládova Bělá
       note: Rohovládova Bělá,,BUS terminál
       via: true
+      short: Rohovl. Bělá
     - name: Rohovládova Bělá, odb.k Vlčí Habřině
       zone: "670"
       zone_name: Rohovládova Bělá
@@ -226,6 +235,7 @@ directions:
       zone_name: Lázně Bohdaneč
       note: Lázně Bohdaneč,,aut.nádr.
       via: true
+      short: L. Bohdaneč, AN
     - name: Rybitví, Uma
       zone: "604"
       zone_name: Rybitví
@@ -264,6 +274,7 @@ directions:
       icons:
       - prestup
       note: Pardubice,,Terminál Univerzita
+      short: Pardubice, Term. Univerzita
     - name: Pardubice, Masarykovo nám.
       zone: "600"
       zone_name: Pardubice
@@ -274,3 +285,4 @@ directions:
       icons:
       - vlak
       note: Pardubice,,Hlavní nádraží
+      short: Pardubice, hl.n.

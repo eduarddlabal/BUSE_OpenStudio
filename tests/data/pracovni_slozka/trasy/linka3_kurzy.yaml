@@ -40,6 +40,7 @@ directions:
       - prestup
       note: Terminál Univerzita (st. 1)
       via: true
+      short: Term. Univerzita
     - name: Poděbradská
       zone: I
       zone_name: Pardubice
@@ -65,6 +66,7 @@ directions:
       request: true
       note: Semtín,hlavní brána
       via: true
+      short: Semtín, brána
     - name: Semtín, vlečka
       zone: I
       zone_name: Pardubice
@@ -81,6 +83,7 @@ directions:
       request: true
       note: Rybitví,UMA továrna
       via: true
+      short: Rybitví, UMA
     - name: Rybitví, UMA točna
       zone: I
       zone_name: Pardubice
@@ -89,6 +92,7 @@ directions:
       zone: II
       zone_name: Lázně Bohdaneč
       note: Lázně Bohdaneč,aut.nádr.
+      short: L. Bohdaneč, AN
     - name: Lázně Bohdaneč, náměstí
       zone: II
       zone_name: Lázně Bohdaneč
@@ -134,6 +138,7 @@ directions:
       zone: II
       zone_name: Lázně Bohdaneč
       note: Lázně Bohdaneč,aut.nádr.
+      short: L. Bohdaneč, AN
     - name: Rybitví, UMA točna
       zone: I
       zone_name: Pardubice
@@ -145,6 +150,7 @@ directions:
       zone_name: Pardubice
       request: true
       note: Rybitví,UMA továrna
+      short: Rybitví, UMA
     - name: Rybitví, závod
       zone: I
       zone_name: Pardubice
@@ -160,6 +166,7 @@ directions:
       zone_name: Pardubice
       request: true
       note: Semtín,hlavní brána
+      short: Semtín, brána
     - name: Semtín, zastávka
       zone: I
       zone_name: Pardubice
@@ -182,6 +189,7 @@ directions:
       zone: I
       zone_name: Pardubice
       note: Terminál Univerzita (st. 2)
+      short: Term. Univerzita
     - name: Stavařov
       zone: I
       zone_name: Pardubice

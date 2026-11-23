@@ -141,6 +141,23 @@ def merge_settings(user: dict | None) -> dict:
     return s
 
 
+
+def _short(stop) -> str:
+    """Shortened stop name (short:), else the full name."""
+    return (stop.short or stop.name) if stop else ""
+
+
+def _fmt_short(page: dict, ctx: dict, via_stop: str) -> str:
+    """The page text with the shortened names – the panel uses it where the full text does not fit."""
+    sh = ctx.get("_short")
+    if not sh:
+        return ""
+    try:
+        return re.sub(r"\{(icon:[^{}]*)\}", r"{{\1}}", str(page.get("text", ""))).format(
+            **{**ctx, **sh, "via_stop": via_stop})
+    except (KeyError, IndexError, ValueError):
+        return ""
+
 class SimEngine:
     def __init__(self, route, settings: dict | None = None, clock=time.time, measure=None):
         self.route = route
@@ -258,6 +275,11 @@ class SimEngine:
             "next_stop": nxt.name if nxt else "", "next_icons": self._icons(nxt) if nxt else "",
             "time": dt.datetime.fromtimestamp(now).strftime(s.get("time_format", "%H:%M")),
             "message": self.message or "",
+            # the same with the shortened names (stop short:, line dest_short:) -> page["short"]
+            "_short": {"name": _short(stop), "next_stop": _short(nxt),
+                       "destination": self.route.dest_short or self.route.destination,
+                       "DESTINATION": (self.route.dest_short or self.route.destination).upper(),
+                       "via": " - ".join(_short(x) for x in self.via_stops())},
         }
 
     @staticmethod
@@ -282,7 +304,7 @@ class SimEngine:
                 text = re.sub(r"\{(icon:[^{}]*)\}", r"{{\1}}", str(p.get("text", ""))).format(**ctx, via_stop="")
             except (KeyError, IndexError, ValueError):
                 text = str(p.get("text", ""))
-            out.append({"text": text,
+            out.append({"text": text, "short": _fmt_short(p, ctx, ""),
                         "font": p.get("font", role_settings.get("font")),
                         "spacing": appsettings.spacing(p.get("spacing", role_settings.get("spacing"))),
                         "seconds": float(p.get("seconds") or role_settings.get("seconds") or 3),
@@ -351,7 +373,8 @@ class SimEngine:
     def _spec(self, page: dict | None, line) -> dict:
         if page is None:
             return {"line": line, "text": ""}
-        return {"line": line, "text": page["text"], "font": page["font"], "spacing": page["spacing"],
+        return {"line": line, "text": page["text"], "short": page.get("short", ""),
+                "font": page["font"], "spacing": page["spacing"],
                 "run": page.get("run", False), "heading": page.get("heading"), "heading_font": page.get("heading_font")}
 
     # ---- displays -----------------------------------------------------------
@@ -422,6 +445,7 @@ class SimEngine:
                      if "{via_stop}" in str(p.get("text", "")) else [None])
             for stop in stops:
                 c = {**ctx, "via_stop": stop.name if stop else ""}
+                short = _fmt_short(p, ctx, _short(stop) if stop else "")
                 if not self._ok(p, c):
                     continue
                 try:
@@ -429,7 +453,8 @@ class SimEngine:
                 except (KeyError, IndexError, ValueError):
                     text = str(p.get("text", ""))
                 if text.strip():
-                    out.append({"text": text, "font": p.get("font"), "spacing": appsettings.spacing(p.get("spacing")),
+                    out.append({"text": text, "short": short if short != text else "",
+                                "font": p.get("font"), "spacing": appsettings.spacing(p.get("spacing")),
                                 "seconds": float(p.get("seconds") or 3), "code": stop.code if stop else ""})
         return out
 

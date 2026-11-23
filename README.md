@@ -92,7 +92,8 @@ Port lze zadat přes `-p`, například `-p /dev/ttyUSB0` nebo `-p COM5`, přípa
 Ověřený panel odpovídá modelu **BS 120.0A** (dříve BS 120.A / BS 120.08 135): 8×135 bodů, červené LED.
 
 **Sběrnice a nahrávání:**
-- IBIS: 1200 Bd, 7E2, **DTR musí být 0**.
+- IBIS: 1200 Bd, 7E2, **DTR musí být 0**. Převodník IBIS (~24 V) pro vlastní hardware (Arduino, ESP) a
+  nezávislý odposlech BSLoaderu popisuje [pavlik.space/ibis-bs120](https://pavlik.space/ibis-bs120).
 - Servisní režim (`ESC S <adr>`) běží na 9600 Bd, s binárními rámci; mazání `07`, zápis `05`, čtení `06`.
 
 **Volný text:**
@@ -151,10 +152,15 @@ Linka (`trasy/*.yaml`) může mít **směry** a **kurzy**, podobně jako je zná
 jet jen část trasy. Stará „plochá“ trasa se načte jako jeden směr. „Přes“ jsou zastávky označené `via: true`
 (starý textový údaj `via: "A - B"` se při načtení převede na označení zastávek).
 
+**Zkrácené názvy:** zastávka může mít `short:` a směr `dest_short:` (v editoru Linky sloupec „Zkratka“ a pole
+„Zkrácený cíl“). Vnější panel použije zkratku jen tam, kde se plný název nevejde ani v menším fontu; názvy se
+nikdy nedělí ani neslepují (mezera 0 jen se zapnutým těsným písmem v Nastavení). Bez zkratky se nevejdoucí
+název zobrazí, jak je (ořízne se).
+
 ```yaml
 line: "3"
 directions:
-  A: {destination: LÁZNĚ BOHDANEČ, stops: [{name: Hlavní nádraží}, {name: "Semtín, zastávka", via: true}, ...]}
+  A: {destination: LÁZNĚ BOHDANEČ, stops: [{name: Hlavní nádraží}, {name: "Semtín, hlavní brána", short: "Semtín, brána", via: true}, ...]}
   B: {destination: HLAVNÍ NÁDRAŽÍ, stops: [...]}
 courses:
   "1":

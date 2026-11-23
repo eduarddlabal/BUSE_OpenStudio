@@ -409,3 +409,24 @@ def test_pid_two_line_and_bus_width(tmp_path, univ):
     one = A.format_preview(A.PreviewReq(interior=d["interior"], panel={"type": "BS120", "columns": 120}, phase="driving", pos=1))
     g = one["pages"][0]["frame"]
     assert g["geometry"]["columns"] == 120 and g["geometry"]["dest_right"] == 119 and not g.get("heading")
+
+
+def test_short_names_where_full_does_not_fit():
+    from busepanel.peripherals.exterior import fit_text
+    db = variant_database("v2", stop_field="bottom")
+    fld = db.fields["stop"]
+    full = "Rohovládova Bělá, BUS terminál"
+    assert fit_text(db, fld, bytes([0xEB]), full, "Rohov. Bělá") == "Rohov. Bělá"       # never split / glued
+    assert fit_text(db, fld, bytes([0xEB]), full) == full                                 # no short -> as it is
+    assert fit_text(db, fld, bytes([0xEB]), "Vápno", "V.") == "Vápno"                     # fits -> full name
+
+
+def test_route_short_names_round_trip():
+    from busepanel.sim.engine import SimEngine
+    r = Route.from_dict({"line": "1", "destination": "Chlumec nad Cidlinou, žst.", "dest_short": "Chlumec n.C.",
+                         "stops": [{"name": "A"}, {"name": "Rohovládova Bělá, BUS terminál", "short": "Rohov. Bělá",
+                                                   "via": True}, {"name": "B"}]})
+    assert Route.from_dict(r.to_dict()).stops[1].short == "Rohov. Bělá" and r.to_dict()["dest_short"] == "Chlumec n.C."
+    e = SimEngine(r, {"exterior": {"sequences": {"via": [{"text": "{via_stop}"}]}}}, clock=lambda: 0.0)
+    p = e.via_pages("side", 0.0)
+    assert p[0]["text"] == "Rohovládova Bělá, BUS terminál" and p[0]["short"] == "Rohov. Bělá"

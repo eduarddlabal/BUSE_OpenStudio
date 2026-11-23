@@ -251,6 +251,23 @@ def autoformat(db, fld: Field, codes: bytes) -> bytes:
     return bytes([0xE0 + f, 0xB0, 0xC0]) + top + b"\n" + bytes([0xE0 + f, 0xB0, 0xC0 + half + 1]) + bottom + b"\r"
 
 
+def fits(db, fld: Field, codes: bytes) -> bool:
+    """Does the text fit the field on one line (as autoformat would format it)?"""
+    rec = autoformat(db, fld, codes)
+    if not (0xE0 <= rec[0] <= 0xEF and 0xB0 <= rec[1] <= 0xBF) or 0x0A in rec:
+        return False
+    body = rec[3:].rstrip(b"\r")
+    return text_width(db, rec[0] - 0xE0, body, rec[1] - 0xB0) <= fld.width
+
+
+def fit_text(db, fld: Field, prefix: bytes, text: str, short: str = "") -> str:
+    """The full text, or its shortened version (stop short:, line dest_short:) when only that one fits.
+    Texts are never split or glued – an unfitting text without a short version stays as it is."""
+    if not short or short == text or fits(db, fld, prefix + encode_text(text)):
+        return text
+    return short
+
+
 def preset_record(fld: Field, codes: bytes) -> bytes:
     return bytes([0xE0 + fld.font, 0xB0 + fld.spacing, 0xC0 + fld.shift]) + codes + b"\r"
 
@@ -484,6 +501,9 @@ class ExteriorSlot(Peripheral):
                 tel.append(f"zC{int(code):04d}" if len(str(code)) == 4 else f"z{int(code):03d}")
             else:
                 text = _plain(spec.get("text") or route.destination)
+                short = _plain(spec.get("short") or "") if spec.get("text") else route.dest_short
+                if not self.emulator.line_in_text:        # (else the line number is part of the text)
+                    text = fit_text(self.db, fields["dest"], _font_prefix(spec), text, short)
                 tel.append(b"zI" + _font_prefix(spec) + encode_text(text))
         if "stop" in fields:
             pages = eng.via_pages(self.role, now)[:MAX_STOPS]
@@ -492,8 +512,11 @@ class ExteriorSlot(Peripheral):
             if self.control == "code":
                 tel.append("zD" + "".join(f"{int(p['code']):04d}" for p in pages if p.get("code")))
             else:
+                fld = fields["stop"]
                 tel.append(b"zN" + STOP_SEPARATOR.encode().join(
-                    _font_prefix(p) + encode_text(_plain(p["text"])) for p in pages))
+                    _font_prefix(p) + encode_text(fit_text(self.db, fld, _font_prefix(p), _plain(p["text"]),
+                                                           _plain(p.get("short") or "")))
+                    for p in pages))
         return tel
 
     def update(self, vehicle, now, virtual_only):

@@ -33,6 +33,14 @@ Značení spolehlivosti:
 | Servisní režim | **9600 Bd 8N1** pro BS120 **[OVĚŘENO]**. Jiné typy mohou používat 19200 (BSLoader bere hodnotu z tabulky zařízení.) |
 | BS100 (palubní počítač) | 115200 Bd 8N1, binární rámce **[KÓD]** |
 
+**Nezávislý zdroj:** [pavlik.space/ibis-bs120](https://pavlik.space/ibis-bs120) – odposlech BSLoaderu 4.02 a řízení
+BS120 z Arduina. Potvrzuje 1200 Bd 7E2 i kontrolní znak (`0x7F XOR` všech znaků včetně CR, kap. 2), uvádí
+příklady `xC0` = `78 43 30 0D 79`, `xC1` = `78 43 31 0D 78` a `u2019` = `75 32 30 31 39 0D 0D` (čas 20:19).
+K hardwaru: IBIS je jednosměrná RS232-like linka na ~24 V, mikrokontrolér potřebuje převodník úrovní; odkazuje
+schéma převodníku IBIS–COM (jachyhm.cz, zenerova dioda D4 BZX85 má být 12 V) a výklad fyzické vrstvy IBIS
+(jakub-svec.eu). Podle autora panel na běžné povely neodpovídá – stačí směr počítač → panel (odpovídá jen
+v servisním režimu, kap. 3).
+
 BSLoader otevírá port s DCB `Flags = 1` (jen fBinary), takže DTR i RTS zůstávají neaktivní. pyserial je ve výchozím stavu zapíná, proto je nutné nastavit `s.dtr = False` **před** `open()`.
 
 ## 2. Vrstva IBIS (normální provoz)

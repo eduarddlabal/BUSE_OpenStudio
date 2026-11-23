@@ -111,7 +111,7 @@ function renderDirs() {
   const d = dirOf();
   $("#rDirEdit").hidden = !d;
   if (!d) return;
-  $("#rDirId").value = sim.dir; $("#rDest").value = d.destination || ""; $("#rDestCode").value = d.dest_code || "";
+  $("#rDirId").value = sim.dir; $("#rDest").value = d.destination || ""; $("#rDestCode").value = d.dest_code || ""; $("#rDestShort").value = d.dest_short || "";
   $("#rDirDel").disabled = Object.keys(dirs).length < 2;
   renderStops();
 }
@@ -125,6 +125,7 @@ $("#rDirId").onchange = () => {
   sim.dir = id; renderDirs(); pushLine({ courses: true });
 };
 $("#rDest").onchange = () => { dirOf().destination = $("#rDest").value; renderDirs(); pushLine({ courses: true }); };
+$("#rDestShort").onchange = () => { const d = dirOf(); if ($("#rDestShort").value) d.dest_short = $("#rDestShort").value; else delete d.dest_short; pushLine(); };
 $("#rDestCode").onchange = () => { const d = dirOf(); if ($("#rDestCode").value) d.dest_code = $("#rDestCode").value; else delete d.dest_code; pushLine(); };
 $("#rDirDel").onclick = () => {
   const id = sim.dir, used = [];
@@ -167,6 +168,7 @@ function renderStops() {
   $("#rStops").innerHTML = r.stops.map((s, i) => `<tr data-i="${i}">
     <td class="muted">${i + 1}</td>
     <td><input data-f="name" value="${esc(s.name)}"></td>
+    <td><input data-f="short" value="${esc(s.short || "")}" style="width:9em" placeholder="–"></td>
     <td><input data-f="zone" value="${esc(s.zone || "")}" style="width:3.5em"></td>
     <td><input data-f="icons" value="${esc((s.icons || []).join(" "))}" style="width:8em"></td>
     <td><input type="checkbox" data-f="request" ${s.request ? "checked" : ""}></td>
@@ -178,7 +180,7 @@ function renderStops() {
     const i = +inp.closest("tr").dataset.i, f = inp.dataset.f, s = r.stops[i];
     let courses = false;
     if (f === "request" || f === "via") { if (inp.checked) s[f] = true; else delete s[f]; }
-    else if (f === "code") { if (inp.value === "") delete s.code; else s.code = inp.value; }
+    else if (f === "code" || f === "short") { if (inp.value === "") delete s[f]; else s[f] = inp.value; }
     else if (f === "icons") s.icons = inp.value.split(/[\s,]+/).filter(Boolean);
     else if (f === "minutes") { if (inp.value === "") delete s.minutes; else s.minutes = +inp.value; }
     else if (f === "name") {
