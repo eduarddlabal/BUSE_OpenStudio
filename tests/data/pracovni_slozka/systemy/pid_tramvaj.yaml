@@ -30,8 +30,8 @@ interior:
 exterior:
   seconds: 4
   sequences:
-    exterior: [{text: "{DESTINATION}"}]
+    exterior: [{text: "{DESTINATION}{ext_dest_icons}"}]
     via:
       - {text: "Přes zastávky:", font: 1, seconds: 2}
-      - {text: "{next_stop}", font: 1, seconds: 2}
-      - {text: "{via_stop}", font: 1, seconds: 2}
+      - {text: "{next_stop}{ext_next_icons}", font: 1, seconds: 2}
+      - {text: "{via_stop}{ext_via_icons}", font: 1, seconds: 2}

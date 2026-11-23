@@ -42,12 +42,14 @@ _FONTS = None
 
 
 def gbuse0_fonts() -> dict:
-    """Original gBUSE0 fonts 0–12 (gbuse0_font.yaml) – id -> Font."""
+    """Original gBUSE0 fonts 0–12 (gbuse0_font.yaml) with PID exterior icons – id -> Font."""
     global _FONTS
     if _FONTS is None:
         from ..core.fonts import FontSet
+        from ..core.icons import add_exterior_icons
         with open(os.path.join(os.path.dirname(__file__), "gbuse0_font.yaml"), encoding="utf-8") as f:
             _FONTS = {x.id: x for x in FontSet.from_yaml(yaml.safe_load(f)).fonts}
+        add_exterior_icons(_FONTS)
     return _FONTS
 
 
@@ -96,21 +98,35 @@ def _codetable():
 _CT = None
 
 
-def encode_text(text: str) -> bytes:
-    """Unicode -> panel codes (Kamenický order of the gBUSE code table); unknown characters are dropped."""
-    global _CT
-    if _CT is None:
-        _CT = _codetable()
+def _encode_plain(ct, text: str) -> bytes:
     out = bytearray()
     for ch in text:
         if ch == "\n":
             out.append(0x0A)
             continue
-        c = _CT.encode_char(ch)
+        c = ct.encode_char(ch)
         if c is None:
-            c = _CT.encode_char(ch.upper())
+            c = ct.encode_char(ch.upper())
         if c is not None:
             out.append(c)
+    return bytes(out)
+
+
+def encode_text(text: str) -> bytes:
+    """Unicode + {icon:name} -> panel codes (Kamenický order of gBUSE + ICON_CODES); unknown chars dropped."""
+    global _CT
+    if _CT is None:
+        _CT = _codetable()
+    from ..core.icons import ICON_CODES
+    out = bytearray()
+    pos = 0
+    for m in _re.finditer(r"\{icon:([a-z0-9_]+)\}", text or ""):
+        out += _encode_plain(_CT, text[pos:m.start()])
+        code = ICON_CODES.get(m.group(1))
+        if code is not None:
+            out.append(code)
+        pos = m.end()
+    out += _encode_plain(_CT, (text or "")[pos:])
     return bytes(out)
 
 
@@ -159,7 +175,8 @@ def _baseline(g) -> int | None:
 def covers(db, fid: int, codes: bytes) -> bool:
     """The font has a glyph for every printable character (a symbol font must not 'fit' with width 0)
     and all letters / digits of the text sit on one baseline (a font with small superscript lower-case
-    letters is only for capitals)."""
+    letters is only for capitals). Pictograms (CODE_ICONS) skip the letter-baseline constraint."""
+    from ..core.icons import CODE_ICONS
     base = set()
     for c in codes:
         if c <= 0x20:
@@ -167,7 +184,7 @@ def covers(db, fid: int, codes: bytes) -> bool:
         g = db.glyph(fid, c)
         if g is None:
             return False
-        if c not in _DESC and (0x30 <= c <= 0x39 or 0x41 <= c <= 0x5A or 0x61 <= c <= 0x7A or c >= 0x80):
+        if c not in _DESC and c not in CODE_ICONS and (0x30 <= c <= 0x39 or 0x41 <= c <= 0x5A or 0x61 <= c <= 0x7A or c >= 0x80):
             b = _baseline(g)
             if b is not None:
                 base.add(b)
@@ -460,11 +477,11 @@ import re as _re
 
 from .base import Bus, Peripheral
 
-_ICON = _re.compile(r"\{icon:[^{}]*\}|\{/?run\}|\{[fm]\d+\}")
+_STRIP = _re.compile(r"\{/?run\}|\{[fm]\d+\}")
 
 
 def _plain(text: str) -> str:
-    return " ".join(_ICON.sub("", text or "").split())
+    return " ".join(_STRIP.sub("", text or "").split())
 
 
 def _parse_code_int(raw) -> tuple[int, str] | None:
@@ -491,6 +508,7 @@ class ExteriorSlot(Peripheral):
         self.db = db
         self.control = params.get("control") or "auto"
         self.sent_by_cmd: dict = {}
+        self.note: str | None = None
 
     def resend(self):
         super().resend()
@@ -503,6 +521,7 @@ class ExteriorSlot(Peripheral):
                            measure=None)          # the gBUSE0 panel formats (shrinks) texts itself, no running text
         route = eng.route
         tel = []
+        notes: list[str] = []
         fields = self.db.fields
         if route.line and ("line" in fields or self.emulator.line_in_text):
             key = line_key(route.line, vehicle.line_map)
@@ -518,6 +537,12 @@ class ExteriorSlot(Peripheral):
                 n, digits = parsed
                 k3, k4 = f"{n:03d}", f"{n:04d}"
                 in_db = (k4 in cil4) or (k3 in cil)
+                if self.control != "text" and not in_db:
+                    code_label = k4 if len(digits) == 4 else k3
+                    if self.control == "code":
+                        notes.append(f"⚠ cíl {code_label} není v databázi panelu")
+                    else:
+                        notes.append(f"cíl {code_label} není v databázi → posílá se text")
                 if self.control == "code" or (self.control == "auto" and in_db):
                     if k4 in cil4 or (len(digits) == 4 and k3 not in cil):
                         tel.append(f"zC{k4}")
@@ -541,6 +566,12 @@ class ExteriorSlot(Peripheral):
                 st_idx = eng.pos + (1 if eng.phase in ("at_stop", "idle") else 0)
                 raw_codes = [_parse_code_int(s.code) for s in route.stops[st_idx:-1] if s.code][:MAX_STOPS]
             codes = [f"{n:04d}" for n, _ in (c for c in raw_codes if c is not None)][:MAX_STOPS]
+            if codes and self.control != "text":
+                missing = [c for c in codes if c not in dru]
+                if self.control == "code" and missing:
+                    notes.append(f"⚠ zastávka {','.join(missing[:3])} není v databázi panelu")
+                elif self.control == "auto" and not any(c in dru for c in codes):
+                    notes.append(f"zastávka {','.join(codes[:3])} není v databázi → posílá se text")
             if codes and (self.control == "code" or (self.control == "auto" and any(c in dru for c in codes))):
                 tel.append("zD" + "".join(codes))
             else:
@@ -549,6 +580,7 @@ class ExteriorSlot(Peripheral):
                     _font_prefix(p) + encode_text(fit_text(self.db, fld, _font_prefix(p), _plain(p["text"]),
                                                            _plain(p.get("short") or "")))
                     for p in pages))
+        self.note = " · ".join(notes) if notes else None
         return tel
 
     def update(self, vehicle, now, virtual_only):
@@ -574,6 +606,8 @@ class ExteriorSlot(Peripheral):
         st = super().status()
         st["profile"] = self.params.get("variant") or self.db.source
         st["control"] = self.control
+        if self.note:
+            st["note"] = self.note
         return st
 
 

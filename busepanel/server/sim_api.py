@@ -103,9 +103,27 @@ def _is_sim_project_yaml(full: str) -> bool:
 
 
 def _scan_project_entries() -> list[dict]:
-    """Scan `projekty/` and legacy `databaze/` for bundles and standalone databases."""
+    """Scan `projekty/`, legacy `databaze/`, and root-level project YAMLs."""
     seen: set[str] = set()
     entries: list[dict] = []
+
+    def add_yaml(full: str, rel: str):
+        seen.add(rel)
+        if ProjectBundle.is_bundle_yaml(full):
+            try:
+                b = ProjectBundle.load(full)
+                entries.append({
+                    "path": rel,
+                    "kind": "bundle",
+                    "name": str(b.meta.get("name") or rel),
+                    "panels": len(b.panels),
+                    "formats": sorted({pe.format for pe in b.panels}),
+                })
+            except Exception:      # noqa: BLE001
+                entries.append({"path": rel, "kind": "bundle", "name": rel, "panels": 0, "formats": []})
+        else:
+            entries.append({"path": rel, "kind": "yaml", "name": rel, "panels": 1, "formats": []})
+
     for folder in ("projekty", "databaze"):
         base = SIM.path(folder)
         if not os.path.isdir(base):
@@ -122,26 +140,24 @@ def _scan_project_entries() -> list[dict]:
                 if rel in seen:
                     continue
                 if low.endswith((".yaml", ".yml")):
-                    if f in ("fonts.yaml", "zive.yaml", "vozidlo.yaml") or not _is_sim_project_yaml(full):
+                    if f in ("fonts.yaml", "zive.yaml", "vozidlo.yaml", "nastaveni.yaml") or not _is_sim_project_yaml(full):
                         continue
-                    seen.add(rel)
-                    if ProjectBundle.is_bundle_yaml(full):
-                        try:
-                            b = ProjectBundle.load(full)
-                            entries.append({
-                                "path": rel,
-                                "kind": "bundle",
-                                "name": str(b.meta.get("name") or rel),
-                                "panels": len(b.panels),
-                                "formats": sorted({pe.format for pe in b.panels}),
-                            })
-                        except Exception:      # noqa: BLE001
-                            entries.append({"path": rel, "kind": "bundle", "name": rel, "panels": 0, "formats": []})
-                    else:
-                        entries.append({"path": rel, "kind": "yaml", "name": rel, "panels": 1, "formats": []})
+                    add_yaml(full, rel)
                 elif low.endswith((".hex", ".bin")):
                     seen.add(rel)
                     entries.append({"path": rel, "kind": low.rsplit(".", 1)[-1], "name": rel, "panels": 1, "formats": []})
+
+    if os.path.isdir(SIM.workdir):
+        for f in sorted(os.listdir(SIM.workdir)):
+            full = os.path.join(SIM.workdir, f)
+            low = f.lower()
+            if not os.path.isfile(full) or not low.endswith((".yaml", ".yml")):
+                continue
+            if f in ("fonts.yaml", "zive.yaml", "vozidlo.yaml", "nastaveni.yaml") or f in seen:
+                continue
+            if _is_sim_project_yaml(full):
+                add_yaml(full, f)
+
     entries.sort(key=lambda e: (0 if e["kind"] == "bundle" else 1, e["path"]))
     return entries
 
@@ -159,6 +175,37 @@ def _find_default_db() -> str | None:
 def init(workdir: str):
     SIM.workdir = os.path.abspath(workdir)
     appsettings.load(SIM.workdir)
+    if SIM.vehicle:
+        SIM.vehicle.stop()
+    SIM.db, SIM.db_path = None, None
+    SIM.engine, SIM.vehicle = None, None
+    SIM.line = Line.from_dict(EXAMPLE_ROUTE)
+    SIM.sel = {}
+    SIM.route = SIM.line.route()
+    SIM.route_path = None
+    SIM.vehicle_cfg = json.loads(json.dumps(EXAMPLE_VEHICLE))
+    SIM.vehicle_path = None
+
+    route_items = _scan_route_entries()
+    if route_items:
+        first_route = route_items[0]["path"]
+        try:
+            line = Line.load(SIM.path(first_route))
+            SIM.line = line
+            _select(_default_sel(line))
+            SIM.route_path = first_route
+        except Exception as e:      # noqa: BLE001
+            SIM._log(f"linku {first_route} nelze načíst: {e}")
+
+    vehs = _list("vozidla")
+    if vehs:
+        first_veh = vehs[0]
+        try:
+            SIM.vehicle_cfg = _clean_vehicle(load_yaml(SIM.path(first_veh)))
+            SIM.vehicle_path = first_veh
+        except Exception as e:      # noqa: BLE001
+            SIM._log(f"vozidlo {first_veh} nelze načíst: {e}")
+
     cand = _find_default_db()
     if cand and os.path.exists(SIM.path(cand)):
         try:
@@ -168,7 +215,7 @@ def init(workdir: str):
                 vcfg = bundle.resolved_vehicle_config(SIM.workdir)
                 if vcfg:
                     SIM.vehicle_cfg = _clean_vehicle(vcfg)
-            _rebuild()
+            _rebuild(keep_state=False)
         except Exception as e:      # noqa: BLE001
             SIM._log(f"univerzální databázi nelze načíst: {e}")
 

@@ -519,3 +519,138 @@ def test_sim_api_route_items_db_codes_and_new_line(tmp_path):
         (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
          sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel) = old
         sim._rebuild()
+
+
+def test_sim_init_autoloads_route_vehicle_and_root_project(tmp_path):
+    from busepanel.core.project import dump_yaml
+    from busepanel.server import sim_api as sim
+    old = (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+           sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle)
+    try:
+        (tmp_path / "trasy").mkdir()
+        (tmp_path / "vozidla").mkdir()
+        (tmp_path / "databaze" / "univerzalni").mkdir(parents=True)
+        Line.from_dict({
+            "line": "7",
+            "directions": {"1": {"destination": "Dukla", "dest_code": "001", "stops": [{"name": "A"}, {"name": "Dukla"}]}},
+        }).save(str(tmp_path / "trasy" / "linka7.yaml"))
+        dump_yaml({"name": "Autobus", "panels": [
+            {"name": "Čelní BS210", "type": "BS210", "variant": "v1", "role": "front", "output": "virtual"},
+            {"name": "Vnitřní BS120", "type": "BS120", "profile": "BS120", "role": "interior", "output": "virtual"},
+        ]}, str(tmp_path / "vozidla" / "autobus.yaml"))
+        build_universal(None).save(str(tmp_path / "databaze" / "univerzalni" / "projekt.yaml"))
+        build_universal(None).save(str(tmp_path / "TESTprojekt.yaml"))
+
+        sim.init(str(tmp_path))
+        assert sim.SIM.route_path == "trasy/linka7.yaml"
+        assert sim.SIM.vehicle_path == "vozidla/autobus.yaml"
+        assert sim.SIM.db_path == "databaze/univerzalni/projekt.yaml"
+        assert sim.SIM.route.dest_code == "001"
+        fl = sim.files()
+        assert "TESTprojekt.yaml" in fl["databases"]
+        assert fl["route_path"] == "trasy/linka7.yaml"
+        assert fl["vehicle_path"] == "vozidla/autobus.yaml"
+    finally:
+        (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+         sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle) = old
+        sim._rebuild()
+
+
+def test_slot_note_on_missing_db_code(univ):
+    r = Route.from_dict({
+        "line": "7", "destination": "Dukla", "dest_code": "001",
+        "stops": [{"name": "A", "code": "0010"}, {"name": "Dukla"}],
+    })
+    e = SimEngine(r, clock=lambda: 0.0)
+    e.event("start")
+
+    ext_auto = ExteriorSlot("čelní", "front", variant_database("v1"), Bus("ea"), {"control": "auto"})
+    v_ea = Vehicle(e, univ.fonts, [ext_auto])
+    v_ea.tick(0.0)
+    assert "001" in (ext_auto.status().get("note") or "") and "posílá se text" in ext_auto.status()["note"]
+
+    ext_code = ExteriorSlot("čelní", "front", variant_database("v1"), Bus("ec"), {"control": "code"})
+    v_ec = Vehicle(e, univ.fonts, [ext_code])
+    v_ec.tick(0.0)
+    assert "není v databázi panelu" in (ext_code.status().get("note") or "")
+
+    ext_text = ExteriorSlot("čelní", "front", variant_database("v1"), Bus("et"), {"control": "text"})
+    v_et = Vehicle(e, univ.fonts, [ext_text])
+    v_et.tick(0.0)
+    assert "note" not in ext_text.status()
+
+    p_empty = univ.copy()
+    p_empty.data["destinations"] = {}
+    p_empty.data["stops"] = {}
+    ps_auto = PanelSlot("vnitřní", "interior", profile("BS120"), shadow=VirtualPanel("v", p_empty, profile("BS120")),
+                        bus=Bus("ia"), params={"control": "auto"})
+    v_ia = Vehicle(e, p_empty.fonts, [ps_auto])
+    v_ia.tick(0.0)
+    assert "001" in (ps_auto.status().get("note") or "") and "posílá se text" in ps_auto.status()["note"]
+
+    ps_code = PanelSlot("vnitřní", "interior", profile("BS120"), shadow=VirtualPanel("v2", p_empty, profile("BS120")),
+                        bus=Bus("ic"), params={"control": "code"})
+    v_ic = Vehicle(e, p_empty.fonts, [ps_code])
+    v_ic.tick(0.0)
+    assert "není v databázi panelu" in (ps_code.status().get("note") or "")
+
+
+def test_exterior_pid_icons_fonts_and_rendering(univ):
+    from busepanel.core.bundle import load_builtin_fonts
+    from busepanel.core.icons import CODE_ICONS, ICON_CODES
+    from busepanel.gbuse0.mnemo import from_mnemo
+    from busepanel.peripherals.exterior import ExteriorPanel, fit_text, gbuse0_fonts
+    from busepanel.sim.engine import load_formats, system_settings
+
+    # 1. Both gbuse0_fonts() and load_builtin_fonts("gbuse0") carry all exterior icon glyphs in every text font
+    fs0 = gbuse0_fonts()
+    fs_bundle = load_builtin_fonts("gbuse0")
+    for fid in range(0, 12):
+        assert all(code in fs0[fid].glyphs for code in CODE_ICONS), f"missing icon in gbuse0_fonts[{fid}]"
+        f_b = fs_bundle.font(fid)
+        assert all(code in f_b.glyphs for code in CODE_ICONS), f"missing icon in bundle font[{fid}]"
+    assert fs0[3].glyphs[ICON_CODES["metro_l"]].height == fs0[3].glyphs[0x41].height
+    assert fs0[7].glyphs[ICON_CODES["vlak"]].height == fs0[7].glyphs[0x41].height
+    # Original gBUSE pictograms kept intact
+    assert 0xAF in fs0[3].glyphs and all(c in fs0[7].glyphs for c in (0xAF, 0xF1, 0xF2, 0xF3, 0xF4))
+
+    # 2. encode_text & MNEMO compile {icon:...} cleanly
+    raw = encode_text("Želivského {icon:metro_l}A{icon:metro_r}")
+    assert bytes([ICON_CODES["metro_l"], ord("A"), ICON_CODES["metro_r"]]) in raw
+    ct = fs_bundle.codetable
+    m_bytes, probs = from_mnemo("f7 m1 'ŽELIVSKÉHO ' {icon:metro_l} 'A' {icon:metro_r} CR", ct)
+    assert probs == [] and bytes([ICON_CODES["metro_l"], ord("A"), ICON_CODES["metro_r"]]) in m_bytes
+
+    # 3. PID exterior sequence omits bus/tram/prestup and keeps metro/ferry/plane/train in PID order
+    r = Route.from_dict({
+        "line": "188",
+        "destination": "KAVČÍ HORY",
+        "stops": [
+            {"name": "Pankrác", "icons": ["bus", "metro-C"]},
+            {"name": "Nádraží Holešovice", "icons": ["bus", "tramvaj", "S9", "metro-C"], "via": True},
+            {"name": "Letiště", "icons": ["trolejbus", "letadlo", "privoz", "metro-A"]},
+        ],
+    })
+    assert SimEngine._icons(r.stops[1], exterior=True) == " {icon:metro_l}C{icon:metro_r} {icon:vlak}"
+    assert SimEngine._icons(r.stops[2], exterior=True) == " {icon:metro_l}A{icon:metro_r} {icon:privoz} {icon:letadlo}"
+    assert "bus" not in SimEngine._icons(r.stops[0], exterior=True)
+
+    fm = load_formats(str(DATA / "systemy"))
+    e = SimEngine(r, system_settings("pid_autobus", fm), clock=lambda: 0.0)
+    e.event("start")
+    ext_v1 = ExteriorSlot("čelní", "front", variant_database("v1"), Bus("p1"))
+    ext_v2 = ExteriorSlot("boční", "side", variant_database("v2", stop_field="bottom"), Bus("p2"))
+    v = Vehicle(e, univ.fonts, [ext_v1, ext_v2])
+    v.tick(0.0)
+    zi = next(t for t in ext_v1.last if isinstance(t, bytes) and t.startswith(b"zI"))
+    zn = next(t for t in ext_v2.last if isinstance(t, bytes) and t.startswith(b"zN"))
+    assert bytes([ICON_CODES["metro_l"], ord("A"), ICON_CODES["metro_r"]]) in zi
+    assert bytes([ICON_CODES["privoz"]]) in zi and bytes([ICON_CODES["letadlo"]]) in zi
+    assert bytes([ICON_CODES["metro_l"], ord("C"), ICON_CODES["metro_r"]]) in zn
+    assert bytes([ICON_CODES["vlak"]]) in zn
+    assert lit(ext_v1.emulator, "dest") > 0 and lit(ext_v2.emulator, "stop") > 0
+
+    # fit_text works smoothly with icons without breaking covers()
+    db_v1 = variant_database("v1")
+    fitted = fit_text(db_v1, db_v1.fields["dest"], b"", "Letiště {icon:letadlo}", "Letiště")
+    assert "{icon:letadlo}" in fitted

@@ -1,7 +1,8 @@
 Sequences (sim settings)
 ========================
 A sequence is a list of pages shown one after another (page flip). Page fields:
-  text     template: {name} {icons} {zone} {zone_name} {destination} {via} {line} {time} {message}
+  text     template: {name} {icons} {zone} {zone_name} {destination} {dest_icons} {ext_dest_icons}
+           {next_stop} {next_icons} {ext_next_icons} {via} {via_stop} {via_icons} {ext_via_icons} {line} {time} {message}
   font     font id (e.g. 0 thin, 3 normal) – optional
   spacing  letter spacing – optional
   seconds  how long the page stays (default: settings "seconds"); running texts get at least

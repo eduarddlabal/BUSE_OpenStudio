@@ -701,13 +701,14 @@
       <div class="row dirtabs" id="rDirTabs"></div>
       <div id="rDirEdit">
         <div class="grid4">
-          <label title="označení směru (např. A, 1, tam)">Směr <input id="rDirId" style="width:5em"></label>
+          <label title="označení směru (např. A, 1, tam)">Směr <input id="rDirId"></label>
           <label>Cíl <input id="rDest"></label>
-          <label title="zkrácený cíl – použije se tam, kde se plný cíl nevejde (vnější panely)">Zkrácený cíl <input id="rDestShort" style="width:12em"></label>
+          <label title="zkrácený cíl – použije se tam, kde se plný cíl nevejde (vnější panely)">Zkrácený cíl <input id="rDestShort"></label>
           <label title="záznam CIL / CIL4 databáze (vnější gBUSE0 i vnitřní BS120 při režimu ovládání auto/kódy)">Kód cíle
-            <span class="row" style="gap:6px"><input id="rDestCode" list="simDestCodes" placeholder="např. 001" style="width:6.5em"><span id="rDestCodeInfo" class="muted small"></span></span>
+            <span class="row" style="gap:6px"><input id="rDestCode" list="simDestCodes" placeholder="např. 001" style="width:6.2em"><span id="rDestCodeInfo" class="muted small"></span></span>
           </label>
         </div>
+        <div id="rCodesDbNote" class="small codewarn" hidden></div>
         <div class="stopwrap"><table class="stops">
           <thead><tr><th>#</th><th>Zastávka</th><th title="zkrácený název – použije se tam, kde se plný nevejde (vnější panely)">Zkratka</th><th>Pásmo</th><th>Ikony</th><th title="na znamení">Zn.</th><th title="minuty od začátku směru (LCD panel)">Min.</th><th title="nácestná – ukazuje se na vnějších panelech">Přes</th><th title="kód zastávky v databázi (DRU / ZST – používá se v režimu auto/kódy)">Kód</th><th></th></tr></thead>
           <tbody id="rStops"></tbody></table></div>

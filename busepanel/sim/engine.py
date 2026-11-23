@@ -147,14 +147,14 @@ def _short(stop) -> str:
     return (stop.short or stop.name) if stop else ""
 
 
-def _fmt_short(page: dict, ctx: dict, via_stop: str) -> str:
+def _fmt_short(page: dict, ctx: dict, via_stop: str, via_icons: str = "", ext_via_icons: str = "") -> str:
     """The page text with the shortened names – the panel uses it where the full text does not fit."""
     sh = ctx.get("_short")
     if not sh:
         return ""
     try:
         return re.sub(r"\{(icon:[^{}]*)\}", r"{{\1}}", str(page.get("text", ""))).format(
-            **{**ctx, **sh, "via_stop": via_stop})
+            **{**ctx, **sh, "via_stop": via_stop, "via_icons": via_icons, "ext_via_icons": ext_via_icons})
     except (KeyError, IndexError, ValueError):
         return ""
 
@@ -241,10 +241,12 @@ class SimEngine:
 
     # ---- page composition -----------------------------------------------------
     @staticmethod
-    def _icons(stop) -> str:
+    def _icons(stop, exterior: bool = False) -> str:
         """LED icons of a stop. metro-A … metro-D become the stylised letter(s) [AB],
-        S lines / vlak-S9 the train pictogram; names without an LED pictogram are left out."""
-        from ..core.icons import ICONS
+        S lines / vlak-S9 the train pictogram; names without an LED pictogram are left out.
+        With exterior=True (PID exterior standard), bus/trolejbus/tramvaj/prestup/znameni
+        are omitted and remaining pictograms follow PID order."""
+        from ..core.icons import EXTERIOR_PID_ICONS, ICONS
         letters, out = "", []
         for i in stop.icons:
             base, _, sub = str(i).partition("-")
@@ -254,8 +256,22 @@ class SimEngine:
                 continue
             if b == "s" or (base[:1] == "S" and base[1:].isdigit()):
                 b = "vlak"
+            if exterior and b not in EXTERIOR_PID_ICONS and b != "metro":
+                continue
             if b in ICONS and b not in out:
                 out.append(b)
+        if exterior:
+            if letters:
+                out = [x for x in out if x != "metro"]
+                text = " {icon:metro_l}%s{icon:metro_r}" % letters
+            elif "metro" in out:
+                out = [x for x in out if x != "metro"]
+                text = " {icon:metro}"
+            else:
+                text = ""
+            order = {n: idx for idx, n in enumerate(EXTERIOR_PID_ICONS)}
+            out.sort(key=lambda n: order.get(n, len(order)))
+            return text + "".join(" {icon:%s}" % i for i in out)
         text = " {icon:metro_l}%s{icon:metro_r}" % letters if letters else ""
         return text + "".join(" {icon:%s}" % i for i in out)
 
@@ -272,9 +288,12 @@ class SimEngine:
             "zone": stop.zone if stop else "", "zone_name": stop.zone_name if stop else "",
             "request": " – na znamení" if stop and stop.request else "", "is_request": bool(stop and stop.request),
             "destination": self.route.destination, "DESTINATION": self.route.destination.upper(),
-            "dest_icons": self._icons(last) if last else "", "via": " - ".join(x.name for x in self.via_stops()),
+            "dest_icons": self._icons(last) if last else "",
+            "ext_dest_icons": self._icons(last, exterior=True) if last else "",
+            "via": " - ".join(x.name for x in self.via_stops()),
             "line": self.route.line,
             "next_stop": nxt.name if nxt else "", "next_icons": self._icons(nxt) if nxt else "",
+            "ext_next_icons": self._icons(nxt, exterior=True) if nxt else "",
             "time": dt.datetime.fromtimestamp(now).strftime(s.get("time_format", "%H:%M")),
             "message": self.message or "",
             # the same with the shortened names (stop short:, line dest_short:) -> page["short"]
@@ -299,11 +318,12 @@ class SimEngine:
     def _pages(self, seq_name: str, ctx: dict, role_settings: dict) -> list[dict]:
         out = []
         for p in self._seq(seq_name, role_settings):
-            if not self._ok(p, {**ctx, "via_stop": ""}):
+            if not self._ok(p, {**ctx, "via_stop": "", "via_icons": "", "ext_via_icons": ""}):
                 continue
             try:
                 # {icon:name} is panel markup, not a format field -> escape it before format()
-                text = re.sub(r"\{(icon:[^{}]*)\}", r"{{\1}}", str(p.get("text", ""))).format(**ctx, via_stop="")
+                text = re.sub(r"\{(icon:[^{}]*)\}", r"{{\1}}", str(p.get("text", ""))).format(
+                    **ctx, via_stop="", via_icons="", ext_via_icons="")
             except (KeyError, IndexError, ValueError):
                 text = str(p.get("text", ""))
             out.append({"text": text, "short": _fmt_short(p, ctx, ""),
@@ -446,8 +466,11 @@ class SimEngine:
             stops = ([x for x in self.via_stops() if x.name != shown]
                      if "{via_stop}" in str(p.get("text", "")) else [None])
             for stop in stops:
-                c = {**ctx, "via_stop": stop.name if stop else ""}
-                short = _fmt_short(p, ctx, _short(stop) if stop else "")
+                via_ic = self._icons(stop) if stop else ""
+                ext_via_ic = self._icons(stop, exterior=True) if stop else ""
+                c = {**ctx, "via_stop": stop.name if stop else "",
+                     "via_icons": via_ic, "ext_via_icons": ext_via_ic}
+                short = _fmt_short(p, ctx, _short(stop) if stop else "", via_ic, ext_via_ic)
                 if not self._ok(p, c):
                     continue
                 try:

@@ -139,6 +139,17 @@ def from_mnemo(text: str, ct: CodeTable) -> tuple[bytes, list[str]]:
                 else:
                     out.append(c)
             continue
+        if s[pos] == "{":
+            m = re.match(r"\{icon:([a-z0-9_]+)\}", s[pos:])
+            if m:
+                from ..core.icons import ICON_CODES
+                code = ICON_CODES.get(m.group(1))
+                if code is None:
+                    problems.append(f"neznámá ikona {m.group(1)!r}")
+                else:
+                    out.append(code)
+                pos += m.end()
+                continue
         if s[pos] == "#":
             m = re.match(r"#(\d+)", s[pos:])
             if not m:

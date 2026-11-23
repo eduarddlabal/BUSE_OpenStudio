@@ -29,10 +29,12 @@ def load_builtin_fonts(source: str = "gbuse1") -> FontSet:
     """Load built-in FontSet: 'gbuse0', 'gbuse1'/'gbuse', or 'builtin'."""
     src = (source or "gbuse1").strip()
     if src == "gbuse0":
+        from .icons import add_exterior_icons
         yml = os.path.join(os.path.dirname(os.path.dirname(__file__)), "peripherals", "gbuse0_font.yaml")
         with open(yml, encoding="utf-8") as fh:
             fs = FontSet.from_yaml(yaml.safe_load(fh))
         fs.codetable = default_codetable()
+        add_exterior_icons(fs)
         return fs
     from .gbuse_font import fontset
     return fontset("builtin" if src == "builtin" else "gbuse")

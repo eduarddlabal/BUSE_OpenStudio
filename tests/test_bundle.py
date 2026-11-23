@@ -193,7 +193,8 @@ def test_universal_bundle_and_exterior_formats(tmp_path):
 
 def test_sim_api_bundle_discovery_and_quickstart(tmp_path):
     from busepanel.server import sim_api as sim
-    old = (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path)
+    old = (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+           sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle)
     try:
         wd = tmp_path / "qs"
         cli.main(["quickstart", "--workdir", str(wd), "-p", "/dev/null", "-a", "11"])
@@ -207,20 +208,23 @@ def test_sim_api_bundle_discovery_and_quickstart(tmp_path):
         cli.main(["quickstart", "--workdir", str(wd2), "-p", "/dev/null", "--single"])
         assert not ProjectBundle.is_bundle_yaml(str(wd2 / "projekty" / "univerzalni" / "projekt.yaml"))
 
-        # sim_api.init auto-discovers projekty/univerzalni/projekt.yaml
+        # sim_api.init auto-discovers projekty/univerzalni/projekt.yaml, vozidla/autobus.yaml and trasy/
         sim.SIM.vehicle_path = None
         sim.init(str(wd))
         assert sim.SIM.db_path == "projekty/univerzalni/projekt.yaml"
+        assert sim.SIM.vehicle_path == "vozidla/autobus.yaml"
+        assert sim.SIM.route_path is not None
         fl = sim.files()
         assert "projekty/univerzalni/projekt.yaml" in fl["databases"]
         assert any(p["kind"] == "bundle" and p["panels"] == 3 for p in fl["projects"])
 
         # sim_api.db_build with bundle=True + db_open with apply_vehicle=True
         res = sim.db_build(sim.BuildReq(base="gbuse", out="projekty/custom/projekt.yaml", name="Moje sada", bundle=True))
-        assert res["kind"] == "bundle" and len(res["panels"]) == 3
+        assert res["kind"] == "bundle" and len(res["panels"]) == len(sim.SIM.vehicle_cfg["panels"])
         opened = sim.db_open(sim.OpenDbReq(path="projekty/univerzalni/projekt.yaml", apply_vehicle=True))
         assert opened["kind"] == "bundle" and len(opened["panels"]) == 3
         assert any("database" in p for p in sim.SIM.vehicle_cfg["panels"])
     finally:
-        sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path = old
+        (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+         sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle) = old
         sim._rebuild()

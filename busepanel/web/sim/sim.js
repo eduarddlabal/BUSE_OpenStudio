@@ -43,24 +43,65 @@ function renderCodeLists() {
   }
 }
 
+function matchCode(list, raw, pad = 4) {
+  const s = String(raw || "").trim();
+  if (!s) return null;
+  const k = /^\d+$/.test(s) ? s.padStart(pad, "0") : s;
+  const k3 = pad === 3 || !/^\d+$/.test(s) ? k : s.padStart(3, "0");
+  return (list || []).find((x) => x.code === s || x.code === k || x.code === k3) || null;
+}
+
+function updateCodesDbBanner() {
+  const el = $("#rCodesDbNote");
+  if (!el) return;
+  const d = sim.data && sim.dir ? dirOf() : null;
+  if (!d) { el.hidden = true; return; }
+  const dc = sim.dbCodes?.destinations || [];
+  const sc = sim.dbCodes?.stops || [];
+  const missing = [];
+  if (String(d.dest_code || "").trim() && !dc.length) missing.push("aktivní databáze neobsahuje žádné cíle (CIL)");
+  if ((d.stops || []).some((s) => String(s.code || "").trim()) && !sc.length) missing.push("aktivní databáze neobsahuje žádné zastávky (stops/DRU)");
+  el.hidden = !missing.length;
+  el.textContent = missing.length
+    ? `⚠ ${missing.join(" a ")} – v režimu „auto“ se místo kódů posílá text. Doplňte záznamy v Databázi, nebo v záložce Vozidlo přiřaďte panelu databázi s kódy.`
+    : "";
+}
+
 function updateDestCodeHint() {
   const el = $("#rDestCodeInfo");
   if (!el) return;
   const raw = ($("#rDestCode")?.value || "").trim();
-  if (!raw) { el.textContent = ""; el.className = "muted small"; return; }
-  const dc = (sim.dbCodes?.destinations || []);
-  const norm3 = /^\d+$/.test(raw) ? raw.padStart(3, "0") : raw;
-  const norm4 = /^\d+$/.test(raw) ? raw.padStart(4, "0") : raw;
-  const hit = dc.find((x) => x.code === raw || x.code === norm3 || x.code === norm4);
+  if (!raw) { el.textContent = ""; el.className = "muted small"; updateCodesDbBanner(); return; }
+  const dc = sim.dbCodes?.destinations || [];
+  const hit = matchCode(dc, raw, 3);
   if (hit) {
     el.textContent = `✓ ${hit.code}: ${hit.text}`;
     el.className = "small codeok";
-  } else if (dc.length) {
-    el.textContent = "není v načtené databázi (v režimu auto půjde text)";
+  } else if (!dc.length) {
+    el.textContent = "⚠ aktivní databáze nemá žádné cíle (CIL) – v režimu auto půjde text";
     el.className = "small codewarn";
   } else {
-    el.textContent = "";
-    el.className = "muted small";
+    el.textContent = `⚠ kód ${raw} není v aktivní databázi (v režimu auto půjde text)`;
+    el.className = "small codewarn";
+  }
+  updateCodesDbBanner();
+}
+
+function applyStopCodeHint(inp) {
+  const raw = inp.value.trim();
+  inp.classList.remove("codeok", "codewarn");
+  if (!raw) { inp.title = ""; return; }
+  const sc = sim.dbCodes?.stops || [];
+  const hit = matchCode(sc, raw, 4);
+  if (hit) {
+    inp.classList.add("codeok");
+    inp.title = `✓ ${hit.code}: ${hit.text}`;
+  } else if (!sc.length) {
+    inp.classList.add("codewarn");
+    inp.title = "⚠ aktivní databáze nemá žádné zastávky (stops/DRU) – v režimu auto půjde text";
+  } else {
+    inp.classList.add("codewarn");
+    inp.title = `⚠ kód ${raw} není v aktivní databázi (v režimu auto půjde text)`;
   }
 }
 
@@ -97,9 +138,14 @@ async function loadSimFiles() {
   sim.dbCodes = f.db_codes || { destinations: [], stops: [], lines: [] };
   renderCodeLists();
   updateDestCodeHint();
+  $$("#rStops input[data-f=code]").forEach(applyStopCodeHint);
   $("#vehSelect").innerHTML = vehOptions(f.vehicles) || "<option value=''>(žádná vozidla)</option>";
-  const pick = (sel, list, cur, html) => { $(sel).innerHTML = (cur && !list.includes(cur) ? `<option value="">(neuloženo)</option>` : "") + html;
-    $(sel).value = list.includes(cur) ? cur : ""; };
+  const pick = (sel, list, cur, html) => {
+    const missing = cur && !list.includes(cur);
+    const head = !cur ? `<option value="">— vyberte —</option>` : (missing ? `<option value="${esc(cur)}">${esc(cur)} (neuloženo)</option>` : "");
+    $(sel).innerHTML = head + html;
+    $(sel).value = cur || "";
+  };
   pick("#jLine", f.routes, f.route_path, lineOptions(sim.routeItems) || "<option value=''>(žádné linky)</option>");
   pick("#jVeh", f.vehicles, f.vehicle_path, vehOptions(f.vehicles) || "<option value=''>(žádná vozidla)</option>");
   if (f.vehicle_path && f.vehicles.includes(f.vehicle_path)) $("#vehSelect").value = f.vehicle_path;
@@ -255,29 +301,29 @@ function markSimStops() {
 }
 function renderStops() {
   const r = dirOf();
-  const stopDb = sim.dbCodes?.stops || [];
-  const stopTitle = (code) => {
-    if (!code) return "";
-    const k4 = /^\d+$/.test(code) ? code.padStart(4, "0") : code;
-    const hit = stopDb.find((x) => x.code === code || x.code === k4);
-    return hit ? `${hit.code}: ${hit.text}` : "";
-  };
   $("#rStops").innerHTML = r.stops.map((s, i) => `<tr data-i="${i}">
     <td class="muted">${i + 1}</td>
     <td><input data-f="name" value="${esc(s.name)}"></td>
-    <td><input data-f="short" value="${esc(s.short || "")}" style="width:9em" placeholder="–"></td>
-    <td><input data-f="zone" value="${esc(s.zone || "")}" style="width:3.5em"></td>
-    <td><input data-f="icons" value="${esc((s.icons || []).join(" "))}" style="width:8em"></td>
+    <td><input data-f="short" value="${esc(s.short || "")}" placeholder="–"></td>
+    <td><input data-f="zone" value="${esc(s.zone || "")}"></td>
+    <td><input data-f="icons" value="${esc((s.icons || []).join(" "))}"></td>
     <td><input type="checkbox" data-f="request" ${s.request ? "checked" : ""}></td>
-    <td><input data-f="minutes" type="number" min="0" step="1" value="${s.minutes ?? ""}" style="width:4em"></td>
+    <td><input data-f="minutes" type="number" min="0" step="1" value="${s.minutes ?? ""}"></td>
     <td><input type="checkbox" data-f="via" ${s.via ? "checked" : ""}></td>
-    <td><input data-f="code" list="simStopCodes" value="${esc(s.code || "")}" title="${esc(stopTitle(s.code || ""))}" placeholder="0001" style="width:4.8em"></td>
+    <td><input data-f="code" list="simStopCodes" value="${esc(s.code || "")}" placeholder="0001"></td>
     <td class="nowrap"><button data-a="up" title="nahoru">↑</button><button data-a="go" title="simulace: skočit sem">⤷</button><button data-a="del" class="danger">×</button></td></tr>`).join("");
+  $("#rStops").querySelectorAll('input[data-f="code"]').forEach((inp) => {
+    applyStopCodeHint(inp);
+    inp.oninput = () => applyStopCodeHint(inp);
+  });
   $("#rStops").querySelectorAll("input").forEach((inp) => inp.onchange = () => {
     const i = +inp.closest("tr").dataset.i, f = inp.dataset.f, s = r.stops[i];
     let courses = false;
     if (f === "request" || f === "via") { if (inp.checked) s[f] = true; else delete s[f]; }
-    else if (f === "code" || f === "short") { if (inp.value === "") delete s[f]; else s[f] = inp.value; }
+    else if (f === "code" || f === "short") {
+      if (inp.value.trim() === "") delete s[f]; else s[f] = inp.value.trim();
+      if (f === "code") { applyStopCodeHint(inp); updateCodesDbBanner(); }
+    }
     else if (f === "icons") s.icons = inp.value.split(/[\s,]+/).filter(Boolean);
     else if (f === "minutes") { if (inp.value === "") delete s.minutes; else s.minutes = +inp.value; }
     else if (f === "name") {
@@ -297,6 +343,7 @@ function renderStops() {
     if (b.dataset.a === "up" && i > 0) [r.stops[i - 1], r.stops[i]] = [r.stops[i], r.stops[i - 1]];
     renderStops(); pushLine({ courses: true });
   }));
+  updateCodesDbBanner();
   markSimStops();
 }
 $("#rAddStop").onclick = () => { dirOf().stops.push({ name: "Nová zastávka" }); renderStops(); pushLine({ courses: true }); };
@@ -647,6 +694,7 @@ function render(s) {
       if (!a) { a = document.createElement("a"); a.className = "lcdlink"; a.target = "_blank"; box.el.append(a); }
       a.href = p.url; a.textContent = "Otevřít LCD panel: " + p.url;
     }
+    if (p.note) info.push(p.note);
     if (p.error) info.push("⚠ " + p.error);
     box.el.querySelector(".muted").textContent = info.join(" · ");
     const cv = box.el.querySelector("canvas");
