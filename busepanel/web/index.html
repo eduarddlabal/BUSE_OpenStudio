@@ -35,6 +35,8 @@
   <button data-module="linky"><b>Linky</b><small>směry, kurzy, spoje</small></button>
   <button data-module="vozidla"><b>Vozidla</b><small>panely ve vozidle</small></button>
   <button data-module="formaty"><b>Systémy zobrazení</b><small>co ukazují displeje, náhled</small></button>
+  <div class="navgroup">Program</div>
+  <button data-module="nastaveni"><b>Nastavení</b><small>platí v celém programu</small></button>
 </nav>
 <div class="content">
 <section class="ledwrap" data-module="gbuse">
@@ -479,6 +481,16 @@
       </div>
     </div>
   </div>
+</div>
+
+<div class="tab" data-module="nastaveni" id="tab-nastaveni" hidden>
+  <section class="card">
+    <h2>Nastavení programu</h2>
+    <p class="muted small">Platí pro všechny moduly, ukládá se do <code>nastaveni.yaml</code> v pracovní složce.</p>
+    <label><input type="checkbox" id="setTight"> Povolit těsné písmo (mezera mezi znaky 0)</label>
+    <p class="muted small">Vypnuto: text, který se nevejde, dostane menší font místo slepení písmen. Platí pro
+      vnější panely (automatické formátování) i pro mezery ve formátech vnitřních panelů.</p>
+  </section>
 </div>
 
 <div class="tab" data-module="vozidla" id="tab-vozidla" hidden>

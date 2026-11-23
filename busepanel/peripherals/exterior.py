@@ -63,7 +63,7 @@ def _stop_position(stop_field) -> str | None:
 def variant_database(variant: str = "v1", stop_field=False, columns: int | None = None,
                      rows: int | None = None, stop_rows: int | None = None) -> Database0:
     """stop_field: False | "top" (True) | "bottom" – a via-stop line above or below the destination;
-    stop_rows: its height (default 10 on top, 8 at the bottom)."""
+    stop_rows: its height (default 10 on top, 9 at the bottom – gBUSE0 fonts 0–3 are 9 rows with accents)."""
     v = VARIANTS.get(variant) or VARIANTS["v1"]
     cols, rws = int(columns or v["columns"]), int(rows or v["rows"])
     db = Database0(cols, rws, fonts=gbuse0_fonts(), version="SIM " + variant, source=f"varianta {variant}")
@@ -79,7 +79,7 @@ def variant_database(variant: str = "v1", stop_field=False, columns: int | None 
             db.fields["stop"] = Field(x0, x1, 0, h - 1, font=0, spacing=1, interval=3.0)
             db.fields["dest"] = Field(x0, x1, h, rws - 1, font=3, spacing=1)
         elif pos == "bottom":
-            h = int(stop_rows or 8)
+            h = int(stop_rows or 9)
             db.fields["dest"] = Field(x0, x1, 0, rws - h - 1, font=3, spacing=1)
             db.fields["stop"] = Field(x0, x1, rws - h, rws - 1, font=11, spacing=1, interval=3.0)
         else:
@@ -200,8 +200,10 @@ def autoformat(db, fld: Field, codes: bytes) -> bytes:
     """Open text -> record (FW 3.08 autoformat): the biggest font that fits (normal spacing first); two
     lines if the text has LF (FW 3.18) or does not fit on one line. Vertically centred. Leading font /
     spacing codes fix the font / spacing."""
+    from ..core import appsettings
     font, spacing, codes = split_codes(codes)
-    sps = (spacing,) if spacing is not None else SPACINGS
+    lo = appsettings.min_spacing()
+    sps = (max(spacing, lo),) if spacing is not None else tuple(s for s in SPACINGS if s >= lo)
 
     def cands(max_h, text):
         if font is not None:

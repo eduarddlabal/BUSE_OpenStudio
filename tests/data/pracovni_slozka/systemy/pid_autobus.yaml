@@ -2,8 +2,8 @@
 # vozidlech PID“ (1. 12. 2024) a její Přílohy 2 „Požadavky na vizuální a akustické informace ve vozidle“.
 #   interior_2 – vnitřní dvouřádkový LED panel (min. 16×128, červený): číslo linky vlevo v horním řádku, vedle
 #                uvozující text, v dolním řádku zastávka; Obrazy 1–7 s předepsanými dobami.
-#   interior   – jednořádkový panel PID v autobusech nepovoluje; pro jednořádek se použije stejný obsah jako
-#                v tramvajích (příští zastávka / šipka + cíl / konečná).
+#   interior   – jednořádkový panel PID v autobusech nepovoluje; pro starší vozy s jednořádkem se střídají
+#                stránky jako na dvouřádku: uvozující text (tenký font, 2 s) a pak zastávka / cíl / nácestné.
 #   exterior   – přední: linka + cíl; boční: cíl nahoře, dole přeblikávají po 2 s „Přes zastávky:“ – příští
 #                zastávka – nácestné (tenký font 1); zadní: jen linka.
 title: PID – autobusy
@@ -11,7 +11,7 @@ interior:
   items: [next]
   seconds: 4
   time_format: "%H:%M"
-  at_stop: line_dest
+  at_stop: stop_name
   run_time: once
   message_mode: override
   line: always
@@ -19,14 +19,29 @@ interior:
   spacing: 1
   sequences:
     next:
-      - {text: "{name}{icons}", when: not_request}
-      - {text: "{name}{icons} - na znamení / request stop {icon:znameni}", when: request, run: true}
-    destination: [{text: "{icon:sipka} {DESTINATION}{dest_icons}"}]
-    stop: [{text: "{name}{icons}"}]
+      - {text: "příští zastávka/next:", font: 0, role: heading, seconds: 2}
+      - {text: "{name}{icons}", seconds: 4, when: not_request}
+      - {text: "{name}{icons} ({icon:znameni})", seconds: 4, when: request}
+      - {text: "směr/direction:", font: 0, role: heading, seconds: 2}
+      - {text: "{destination}{dest_icons}", seconds: 4}
+      - {text: "přes zastávky/via:", font: 0, role: heading, seconds: 2, when: via}
+      - {text: "{via}", run: true, seconds: 15, when: via}
+    stop:
+      - {text: "zastávka/this stop:", font: 0, role: heading, seconds: 2}
+      - {text: "{name}{icons}", seconds: 4}
+      - {text: "směr/direction:", font: 0, role: heading, seconds: 2}
+      - {text: "{destination}{dest_icons}", seconds: 2}
+    destination:
+      - {text: "směr/direction:", font: 0, role: heading, seconds: 2}
+      - {text: "{destination}{dest_icons}"}
     zone: [{text: "{zone} {zone_name}"}]
     time: [{text: "{time}"}]
-    message: [{text: "{message}", run: true}]
-    final: [{text: "Konečná zastávka, prosíme vystupte / Final stop, please leave the bus.", run: true}]
+    message:
+      - {text: "Informace/information:", font: 0, role: heading, seconds: 2}
+      - {text: "{message}", run: true}
+    final:
+      - {text: "Konečná zastávka, prosíme vystupte.", run: true}
+      - {text: "Final stop. Please leave the bus.", run: true}
 interior_2:
   items: [next]
   seconds: 4

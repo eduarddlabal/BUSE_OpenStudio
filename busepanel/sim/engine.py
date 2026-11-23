@@ -10,6 +10,7 @@ vehicle.py turns it into telegrams for the panel profile (free text v + x9996/x9
 """
 from __future__ import annotations
 
+from ..core import appsettings
 import copy
 import datetime as dt
 import re
@@ -283,7 +284,7 @@ class SimEngine:
                 text = str(p.get("text", ""))
             out.append({"text": text,
                         "font": p.get("font", role_settings.get("font")),
-                        "spacing": p.get("spacing", role_settings.get("spacing")),
+                        "spacing": appsettings.spacing(p.get("spacing", role_settings.get("spacing"))),
                         "seconds": float(p.get("seconds") or role_settings.get("seconds") or 3),
                         "role": p.get("role", "text"), "run": bool(p.get("run")),
                         "run_time": role_settings.get("run_time", "once")})
@@ -428,7 +429,7 @@ class SimEngine:
                 except (KeyError, IndexError, ValueError):
                     text = str(p.get("text", ""))
                 if text.strip():
-                    out.append({"text": text, "font": p.get("font"), "spacing": p.get("spacing"),
+                    out.append({"text": text, "font": p.get("font"), "spacing": appsettings.spacing(p.get("spacing")),
                                 "seconds": float(p.get("seconds") or 3), "code": stop.code if stop else ""})
         return out
 

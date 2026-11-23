@@ -10,6 +10,7 @@ import time
 from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
+from ..core import appsettings
 from ..core.project import Project, load_yaml, dump_yaml
 from ..sim.engine import (DEFAULT_SETTINGS, DEFAULT_SEQUENCES, LEGACY_DIRS, SECTION_TITLES, SECTIONS, SYSTEMS_DIR,
                           SimEngine, load_formats, merge_settings, resolve_settings, system_settings, vehicle_system)
@@ -70,6 +71,7 @@ DEFAULT_DB = "databaze/univerzalni/projekt.yaml"
 
 def init(workdir: str):
     SIM.workdir = os.path.abspath(workdir)
+    appsettings.load(SIM.workdir)
     if os.path.exists(SIM.path(DEFAULT_DB)):
         try:
             SIM.db, SIM.db_path = Project.load(SIM.path(DEFAULT_DB)), DEFAULT_DB
@@ -344,6 +346,18 @@ def _format_path(name: str) -> str:
     if f and f.get("path"):
         return f["path"]                                   # existing file (also in the older folder)
     return SIM.path(os.path.join(SYSTEMS_DIR, *name.split("/")) + ".yaml")
+
+
+@router.get("/api/settings")
+def settings_get():
+    return appsettings.get()
+
+
+@router.post("/api/settings")
+def settings_set(values: dict):
+    out = appsettings.update(SIM.workdir, values)
+    _rebuild()                     # panels show the texts again with the new setting
+    return out
 
 
 @router.get("/api/sim/formats")

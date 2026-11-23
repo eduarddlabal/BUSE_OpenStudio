@@ -64,7 +64,8 @@ def test_stop_field_position():
     assert s.y1 < d.y0 and s.x0 == d.x0 and s.x1 == d.x1
     db = variant_database("v2", stop_field="bottom")
     s, d = db.fields["stop"], db.fields["dest"]
-    assert d.y1 < s.y0 and s.height == 8 and d.y0 == 0
+    assert d.y1 < s.y0 and s.height == 9 and d.y0 == 0      # fonts 0–3 with accents
+    assert variant_database("v2").fields["dest"].x0 == 30                 # PID: 2 free columns after the line
 
 
 def test_original_font_and_baseline():
@@ -78,8 +79,17 @@ def test_original_font_and_baseline():
 
 def test_forced_font():
     db = variant_database("v2", stop_field="bottom")
+    from busepanel.core import appsettings
     rec = autoformat(db, db.fields["dest"], bytes([0xE0 + 2, 0xB0]) + encode_text("Dukla"))
-    assert rec[:2] == bytes([0xE2, 0xB0])
+    assert rec[:2] == bytes([0xE2, 0xB1])            # spacing 0 is not allowed by default (unreadable)
+    appsettings.update(None, {"tight_spacing": True})
+    try:
+        rec = autoformat(db, db.fields["dest"], bytes([0xE0 + 2, 0xB0]) + encode_text("Dukla"))
+        assert rec[:2] == bytes([0xE2, 0xB0])
+        long = autoformat(db, db.fields["dest"], encode_text("Pardubice, Hlavní nádraží"))
+    finally:
+        appsettings.update(None, {"tight_spacing": False})
+    assert long[1] == 0xB0 and autoformat(db, db.fields["dest"], encode_text("Pardubice, Hlavní nádraží"))[1] == 0xB1
 
 
 def test_exterior_renders_line_and_text():

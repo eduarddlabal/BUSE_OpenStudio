@@ -7,7 +7,7 @@ import { activateSim } from "./sim/sim.js";
 import { activateFormats, openFormat } from "./formats/formats.js";
 
 const TABS = { jizda: ["jizda"], linky: ["linky"], vozidla: ["vozidla"], formaty: ["formaty"],
-  gbuse: ["texts", "config", "fonts", "import"], loader: ["panel"], live: ["live"] };
+  gbuse: ["texts", "config", "fonts", "import"], loader: ["panel"], live: ["live"], nastaveni: ["nastaveni"] };
 const SIM_PAGES = ["jizda", "linky", "vozidla"];
 const DEFAULT_TAB = Object.fromEntries(Object.entries(TABS).map(([m, t]) => [m, t[0]]));
 const ui = { module: "jizda", tab: { ...DEFAULT_TAB } };
@@ -35,6 +35,7 @@ function show() {
   if (ui.module === "loader") guard(loadPorts)();
   guard(() => activateSim(SIM_PAGES.includes(ui.module), ui.module))();
   guard(() => activateFormats(ui.module === "formaty"))();
+  if (ui.module === "nastaveni") guard(async () => { $("#setTight").checked = !!(await api("/api/settings")).tight_spacing; })();
   try { localStorage.setItem("buse.ui", JSON.stringify(ui)); } catch { /* storage blocked */ }
 }
 
@@ -48,6 +49,11 @@ $$("nav.tabs button").forEach((b) => b.onclick = () => {
 window.addEventListener("buse:goto", (e) => {
   if (e.detail.format) openFormat(e.detail.format);
   ui.module = e.detail.module; show();
+});
+
+$("#setTight").onchange = guard(async () => {
+  await api("/api/settings", { tight_spacing: $("#setTight").checked });
+  window.dispatchEvent(new CustomEvent("buse:formats-changed"));
 });
 
 window.addEventListener("beforeunload", (e) => { if (st.dirty) { e.preventDefault(); e.returnValue = ""; } });
