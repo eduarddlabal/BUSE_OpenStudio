@@ -1,10 +1,14 @@
 """Route of a line for the simulation – human-readable YAML (or CSV import).
 
+Flat route = one trip. A line with directions and courses (kurzy) is in sim/line.py.
+
 line: "7"
 destination: Sídliště Dukla
+dest_code: 123                 # optional, gBUSE0 CIL record for exterior panels with control: code
+                               # "přes" = the stops marked via: true (old files: via: "A - B" is converted)
 stops:
   - {name: Hlavní nádraží, zone: P, icons: [vlak, bus], request: false}
-  - {name: Masarykovo nám., zone: P, minutes: 3}
+  - {name: Masarykovo nám., zone: P, minutes: 3, via: true, code: "0042"}
 messages:
   odklon: Spoj jede odklonem přes ul. Pražskou
 """
@@ -35,6 +39,8 @@ class Stop:
     note: str = ""
     zone_name: str = ""            # e.g. "Pardubice" for IREDO zone 600
     minutes: float | None = None   # optional: minutes from the start of the trip (LCD "3 min")
+    via: bool = False              # announced on the exterior panels ("nácestná", dBUSE attribute K)
+    code: str = ""                 # optional stop code of an exterior database (gBUSE0 DRU, 4 digits)
 
     def to_dict(self) -> dict:
         d = {"name": self.name}
@@ -50,7 +56,36 @@ class Stop:
             d["note"] = self.note
         if self.minutes is not None:
             d["minutes"] = int(self.minutes) if float(self.minutes).is_integer() else self.minutes
+        if self.via:
+            d["via"] = True
+        if self.code:
+            d["code"] = self.code
         return d
+
+    @staticmethod
+    def from_dict(s) -> "Stop":
+        if isinstance(s, str):
+            s = {"name": s}
+        icons = s.get("icons") or []
+        if isinstance(icons, str):
+            icons = [i.strip() for i in icons.replace(",", " ").split() if i.strip()]
+        return Stop(str(s["name"]), str(s.get("zone", "") or ""), icons, bool(s.get("request")),
+                    str(s.get("note", "") or ""), str(s.get("zone_name", "") or ""), _minutes(s.get("minutes")),
+                    bool(s.get("via")), str(s.get("code", "") or ""))
+
+
+def mark_via(stops: list, text: str):
+    """Old free-text "přes A - B" -> mark the stops whose names match the parts (exact, then prefix,
+    then substring; the first and last stop are never via stops)."""
+    import re
+    inner = stops[1:-1]
+    for part in [x.strip() for x in re.split(r"\s[-–]\s|,\s*|/", text) if x.strip()]:
+        low = part.lower()
+        for test in (lambda n: n == low, lambda n: n.startswith(low), lambda n: low in n):
+            hit = next((s for s in inner if test(s.name.lower()) and not s.via), None)
+            if hit:
+                hit.via = True
+                break
 
 
 @dataclass
@@ -59,29 +94,36 @@ class Route:
     destination: str
     stops: list = field(default_factory=list)
     messages: dict = field(default_factory=dict)
-    via: str = ""                  # optional "přes …" for exterior panels
+    dest_code: str = ""            # optional destination code of an exterior database (gBUSE0 CIL)
+    # set when the route is one trip of a line (sim/line.py); informative for the panels / UI
+    direction: str = ""
+    course: str = ""
+    trip: int | None = None        # index of the trip in the course
+    departure: str = ""            # "HH:MM"
 
     @staticmethod
     def from_dict(d: dict) -> "Route":
-        stops = []
-        for s in d.get("stops") or []:
-            if isinstance(s, str):
-                s = {"name": s}
-            icons = s.get("icons") or []
-            if isinstance(icons, str):
-                icons = [i.strip() for i in icons.replace(",", " ").split() if i.strip()]
-            stops.append(Stop(str(s["name"]), str(s.get("zone", "") or ""), icons, bool(s.get("request")),
-                              str(s.get("note", "") or ""), str(s.get("zone_name", "") or ""),
-                              _minutes(s.get("minutes"))))
+        stops = [Stop.from_dict(s) for s in d.get("stops") or []]
+        if d.get("via") and not any(s.via for s in stops):
+            mark_via(stops, str(d["via"]))          # BUSE Studio ≤ 0.3: "přes" was a free text
+        trip = d.get("trip")
         return Route(str(d.get("line", "")), str(d.get("destination", "") or (stops[-1].name if stops else "")),
-                     stops, dict(d.get("messages") or {}), str(d.get("via", "") or ""))
+                     stops, dict(d.get("messages") or {}),
+                     str(d.get("dest_code", "") or ""), str(d.get("direction", "") or ""),
+                     str(d.get("course", "") or ""), int(trip) if trip is not None else None,
+                     str(d.get("departure", "") or ""))
 
     def to_dict(self) -> dict:
         d = {"line": self.line, "destination": self.destination}
-        if self.via:
-            d["via"] = self.via
+        if self.dest_code:
+            d["dest_code"] = self.dest_code
         d["stops"] = [s.to_dict() for s in self.stops]
         d["messages"] = dict(self.messages)
+        for k in ("direction", "course", "departure"):
+            if getattr(self, k):
+                d[k] = getattr(self, k)
+        if self.trip is not None:
+            d["trip"] = self.trip
         return d
 
     @staticmethod

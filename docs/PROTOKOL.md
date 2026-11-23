@@ -267,26 +267,51 @@ gBUSE si drží data v textových souborech a HEX skládá až při uložení:
 Do `*.lin`, `*.mim`, `*.dop` a `*.cyk` umí gBUSE i exportovat HEX.
 Cykly (CYK) popisují střídání informací. Volby efektů pro začátek zobrazení jsou: okamžité rozsvícení, přiběhnutí zprava, nasunutí zdola, nasunutí zhora, trvale běžící text. Pro konec: zhasnutí, vyběhnutí doleva, vysunutí nahoru, vysunutí dolů, ponechání.
 
-### 4.6 Formát gBUSE0 (vnější panely, `57 00`) **[KÓD]**
-Funkce `GBUSE0.EXE` 0x48E400. Stará varianta má magic `0x55`. Hlavička má 0x50 B:
+### 4.6 Formát gBUSE0 (vnější panely, `57 00`) **[KÓD + OVĚŘENO na souborech]**
+Funkce `GBUSE0.EXE` 0x48E400, manuál `PRG/gBUSE0/CZ/gBUSE0.doc` (ekselcom-pixel-master.zip). Stará varianta má
+magic `0x55`. Implementace: [`busepanel/gbuse0/`](../busepanel/gbuse0) (čtení databáze + interpret záznamu).
+Ověřeno vykreslením záznamů z BRNO ADcel0/ADbok4/ADzad7, OSTRAVA, TRAM_PRAHA a KOSICE PANEL1–3.
+
+Hlavička má 0x50 B (vícebajtová čísla jsou big-endian):
 
 | Offset | Význam |
 |---|---|
 | 00 | `57` |
-| 01–08 | geometrie: linka a cíl, řádky a sloupce (OSTRAVA: `00 12 00 1B 00 12 1C 6F` = 19 řádků; linka sloupce 0–27, cíl 28–111) |
-| 09–0A | bitové masky povolených povelů (jiné přiřazení bitů než gBUSE1) |
-| 0B | volba |
-| 0D–10 | předvolby **linky**: font (`E0`+n), mezera, posun, zpoždění |
-| 11–14 | předvolby **cíle** |
-| 15/17/19/1B | ukazatele BE: **FNT, LIN, CIL, …** (prázdný = `00 4F`) |
-| 1F–2E | verze dat |
-| 2F–36 | geometrie a předvolby **druhého řádku** |
-| 37–… | další ukazatele (DRU = druhý řádek, AFM) |
+| 01–04 | pole **linky**: řádek od, řádek do (počítáno **zdola**), sloupec od, sloupec do |
+| 05–08 | pole **cíle** (stejně) |
+| 09–0C | bitové masky povolených povelů (přiřazení bitů neznámé) |
+| 0D–10 | předvolby linky: font (`E0`+n), mezera (`B0`+n), posun (`C0`+n), interval v 0,1 s |
+| 11–14 | předvolby cíle |
+| 15 / 17 / 19 / 1B | ukazatele **FNT, LIN, CIL, CIL4** (prázdný = `00 4F`) |
+| 1F–2E | verze dat (text) |
+| 2F–32 / 33–36 | pole **nácestných zastávek** (DRU) a jeho předvolby – jen u panelů, které ho mají (Brno boční) |
+| 37 | ukazatel **DRU** |
 | 4F | `FF` |
 
-- Ukazatele v OSTRAVA.hex: FNT 0x0080, LIN 0x6800, CIL 0x6960 – sedí na titulky sekcí **[OVĚŘENO na souboru]**.
-- Fonty jsou vysoké 10 bodů, sloupec má 2 bajty.
-- Detailní rozbor a builder pro gBUSE0 zatím chybí.
+- Klíče záznamů: LIN a CIL třímístné (`l123`, `z123`), CIL4 a DRU čtyřmístné (`zC1234`, `zD1234…`).
+- Fonty mají stejný blokový formát jako gBUSE1 (4.3). Znak je vysoký až 28 bodů, sloupec má ceil(výška/8) bajtů,
+  nejvyšší bit prvního bajtu je horní bod. (OSTRAVA má 10bodové fonty – odtud dřívější „2 B na sloupec“.)
+- Počet sloupců panelu = nejvyšší sloupec ze **všech** polí + 1 (zadní panel ADzad7 má jen pole linky, 28 sloupců).
+
+**Řídicí kódy v záznamu** (FW úrovně podle manuálu: 1.6, 2.11, 2.13, 2.15, 3.08, 3.18):
+
+| Kód | Význam |
+|---|---|
+| `E0`+n / `B0`+n / `C0`+n | font / mezera mezi znaky / posun dolů o n řádků |
+| `ESC l n`, `ESC p n`, `ESC h n`, `ESC d n` | okno: levý, pravý sloupec, horní, dolní řádek; hodnota n−0x0F, číslováno od 1, sloupce zleva, řádky **zdola** |
+| `ESC s n` | počáteční sloupec textu (jinak se text centruje v okně) |
+| `ESC c` / `ESC i` / `ESC o` / `ESC x` | okno zpět na celé pole / invertovat okno / smazat / překrýt bez mazání (3.08) |
+| `ESC b` | dokud záznam běží, ostatní telegramy se ignorují |
+| `ESC w` | potlačí zobrazení nácestných zastávek (2.15) |
+| `ESC z n` | interval stránky **[ODHAD]** |
+| `FF` | formátování od začátku |
+| `LF` | první LF jen formátuje (víc řádků v jednom snímku), každé další LF **zobrazí snímek** |
+| `VT` | zobrazí snímek a cyklí od snímku po prvním LF **[OVĚŘENO na Košicích – 3 snímky]** |
+| `CR` | zobrazí snímek a skončí |
+
+Formátování maže jen pás řádků, který text zabírá (ne celé pole). Povely panelu: `l`, `z`, `zC`, `zD` (až 10
+nácestných, 2.13), `zN` (nácestné textem), `zI` / `zA` / `aA` (volný text s automatickým formátováním, 3.08;
+dvouřádkový s LF od 3.18), `kA`.
 
 Obsah panelu: 158 linek, 245 cílů (Pardubice) a 230 zastávek. Zastávky jsou košické (Kavečany…), zřejmě zbytek starší databáze.
 
@@ -327,7 +352,7 @@ Ověřené IBIS povely na panelu: `l010` + `z001` → panel zobrazí „1 LÁZN�
 
 ## 8. Otevřené otázky
 - Význam `ESC a/l/p/z/b` a parametru `n` u `ESC t`. Řešení: rozbor editoru cyklů nebo firmwaru 8051.
-- gBUSE0: přesné přiřazení bitů povelů a builder.
+- gBUSE0: přiřazení bitů masek povelů (09–0C), parametr `ESC z`, oddělovač v `zN`; builder (zápis HEX) zatím není.
 - gBUSE1 FW 1.xx (magic `0xAA`) a soubory 1.12 se sekcemi CYK/DOP (Brno ADled) – kód je zmapovaný, round-trip zatím nebyl zkoušen.
 - Ověřit na panelu přepínače `x99xx` a volný text (kap. 9.3).
 - Proč se nezobrazilo `zC` (hledání záznamu, rutina 0x0C23).
@@ -476,3 +501,27 @@ Bitmapy metra, vlaku, letadla, šipky, zvonku, přívozu, výluky, ČD a rohů s
 ze standardu PID (SK bus, příloha 2, „seznam požadovaných znaků“, sloupec vnitřní panely, kódy 0x3C, 0x7E, 0x5C,
 0x3E, 0xAA, 0x8A, 0x24, 0x25, 0x5B/0x5D). PID tam má piktogramy přímo na místě znaků; BUSE Studio je kvůli
 zachování kódové tabulky dává na volné kódy výše.
+
+## 10. Vnější panely v simulaci (BS 210, gBUSE0) **[ODHAD]**
+Skutečný vnější panel ani palubní počítač BS100 k dispozici nemáme. Emulátor v
+[`busepanel/peripherals/exterior.py`](../busepanel/peripherals/exterior.py) proto vychází z kap. 4.6 a z manuálů
+gBUSE0 a dBUSE. Co je odhad:
+
+- **Varianty bez databáze** ([`exterior.yaml`](../busepanel/peripherals/exterior.yaml)): v1 čelní 140×19, v2 boční
+  s číslem 110×19, v4 zadní 28×19. Pole linky má 28 sloupců. Fonty jsou originální fonty gBUSE0 0–12
+  ([`gbuse0_font.yaml`](../busepanel/peripherals/gbuse0_font.yaml)), převzaté z dat gBUSE0. Soubory `*.fnt`
+  editoru gBUSE0 k dispozici nejsou.
+- **Řádek nácestných zastávek**: `stop_field: top` (10 řádků nahoře) nebo `bottom` (8 řádků dole, cíl nad ním).
+- **Číslo linky**: bez záznamu LIN se vykreslí číslo podle `line_map` univerzální databáze (`l098` → „607“). Klíč
+  je stejný, jaký posílá BS120, takže se oba panely na jedné lince nepřou.
+- **Volný text** `zI`: automatické formátování vybere největší font, který se vejde, s mezerou 1, případně 0. Když
+  text nevejde, rozdělí ho na dva řádky u mezery, a když nejsou místo ani na dva řádky, použije nejužší font na
+  jednom řádku. Font se nepoužije, když v něm některý znak chybí, nebo když jeho písmena nesedí na jedné účaří
+  (font 9 má malá písmena jako horní index).
+- **Font ze skladby textů**: kódy fontu a mezery (`E0`+n, `B0`+n) na začátku textu `zI` nebo položky `zN` určí
+  font místo automatického formátování.
+- **Nácestné** `zN`: zastávky odděluje `|`. Střídají se po době stránky ze sekvence `via`. Jsou to zastávky
+  označené `via: true`, které vozidlo ještě nemá za sebou.
+- **Sdílená linka**: IBIS je vysílací linka. Telegram, který už na lince je, ovladač vnějšího panelu nepošle znovu.
+  Všechny vnější panely na jednom COM portu tak ukazují stejnou linku a cíl, stejně jako ve voze s BS100.
+  Ovládání BS120 (`v` + `x9996/x9997`) se nemění.

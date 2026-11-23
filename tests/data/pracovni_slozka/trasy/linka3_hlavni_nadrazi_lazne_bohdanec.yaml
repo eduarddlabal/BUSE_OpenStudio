@@ -1,0 +1,106 @@
+line: "3"
+destination: LÁZNĚ BOHDANEČ,U Mlýnů
+via: Semtín - Rybitví
+stops:
+- name: Hlavní nádraží
+  zone: I
+  zone_name: Pardubice
+  icons:
+  - vlak
+  - bus
+  note: Hlavní nádraží (st. 1)
+- name: U Marka
+  zone: I
+  zone_name: Pardubice
+  note: U Marka
+- name: Palackého
+  zone: I
+  zone_name: Pardubice
+  note: Palackého
+- name: Masarykovo nám.
+  zone: I
+  zone_name: Pardubice
+  icons:
+  - prestup
+  note: Masarykovo nám.(st. 1)
+- name: Zimní stadion
+  zone: I
+  zone_name: Pardubice
+  note: Zimní stadion
+- name: Stavařov
+  zone: I
+  zone_name: Pardubice
+  note: Stavařov
+- name: Terminál Univerzita
+  zone: I
+  zone_name: Pardubice
+  icons:
+  - prestup
+  note: Terminál Univerzita (st. 1)
+- name: Poděbradská
+  zone: I
+  zone_name: Pardubice
+  note: Poděbradská
+- name: Trnová,křiž.
+  zone: I
+  zone_name: Pardubice
+  request: true
+  note: Trnová
+- name: Globus
+  zone: I
+  zone_name: Pardubice
+  note: Globus
+- name: Semtín, zastávka
+  zone: I
+  zone_name: Pardubice
+  request: true
+  note: Semtín,zastávka
+- name: Semtín, hlavní brána
+  zone: I
+  zone_name: Pardubice
+  request: true
+  note: Semtín,hlavní brána
+- name: Semtín, vlečka
+  zone: I
+  zone_name: Pardubice
+  request: true
+  note: Semtín,vlečka
+- name: Rybitví, závod
+  zone: I
+  zone_name: Pardubice
+  request: true
+  note: Rybitví,závod
+- name: Rybitví, UMA továrna
+  zone: I
+  zone_name: Pardubice
+  request: true
+  note: Rybitví,UMA továrna
+- name: Rybitví, UMA točna
+  zone: I
+  zone_name: Pardubice
+  note: Rybitví,UMA točna
+- name: Lázně Bohdaneč, aut.nádr.
+  zone: II
+  zone_name: Lázně Bohdaneč
+  note: Lázně Bohdaneč,aut.nádr.
+- name: Lázně Bohdaneč, náměstí
+  zone: II
+  zone_name: Lázně Bohdaneč
+  note: Lázně Bohdaneč,náměstí
+- name: Lázně Bohdaneč, točna
+  zone: II
+  zone_name: Lázně Bohdaneč
+  note: Lázně Bohdaneč,točna
+- name: Lázně Bohdaneč, Na Pískách
+  zone: II
+  zone_name: Pardubice
+  request: true
+  note: Lázně Bohdaneč,Na Pískách
+- name: Lázně Bohdaneč, U Mlýnů
+  zone: II
+  zone_name: Pardubice
+  note: Lázně Bohdaneč,U Mlýnů
+messages:
+  odklon: Spoj jede odklonem
+  zpozdeni: Spoj má zpoždění, omlouváme se
+  tocna: Spoj končí v zastávce Lázně Bohdaneč, točna

@@ -1,0 +1,22 @@
+line: "7"
+destination: Sídliště Dukla
+stops:
+- name: Hlavní nádraží
+  zone: P
+  icons:
+  - vlak
+  - bus
+- name: Masarykovo náměstí
+  zone: P
+- name: Náměstí Republiky
+  zone: P
+  icons:
+  - prestup
+- name: U Kostela
+  zone: P
+  request: true
+- name: Sídliště Dukla
+  zone: "1"
+messages:
+  odklon: Spoj jede odklonem přes ul. Pražskou
+  vyluka: Výluka – zastávka U Kostela se neobsluhuje

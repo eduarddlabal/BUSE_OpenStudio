@@ -1,11 +1,12 @@
-"""A vehicle = several panels (profile + output + role), driven by a SimEngine.
+"""A vehicle = buses + peripherals (busepanel/peripherals), driven by a SimEngine.
 
-Vehicle config (YAML, vozidla/<name>.yaml):
+Vehicle config (YAML, vozidla/<name>.yaml) – see busepanel/peripherals/__init__.py:
   name: Solaris 12
+  buses: {ibis: {output: serial, port: /dev/ttyUSB0, address: 10}}
   panels:
-    - {name: vnitřní, role: interior, profile: BS120, output: serial, port: /dev/ttyUSB0, address: 10}
-    - {name: čelní,   role: front,    profile: BS210, output: esp, device: celni}
-    - {name: náhled,  role: interior, profile: BS120, output: virtual}
+    - {name: vnitřní, role: interior, type: BS120, bus: ibis}
+    - {name: čelní,   role: front,    type: BS210, variant: v1, bus: ibis}
+    - {name: náhled,  role: interior, profile: BS120, output: virtual}     # old form: own output
   settings: {interior: {items: [next, time, zone], seconds: 4}}
 """
 from __future__ import annotations
@@ -15,6 +16,7 @@ import time
 
 from ..live.modes import text_payload
 from ..panels.profile import profile as get_profile
+from ..peripherals.interior import PanelSlot  # noqa: F401  (re-export, legacy API)
 
 ROLES = {"interior": "vnitřní", "front": "čelní", "side": "boční", "rear": "zadní"}
 
@@ -88,21 +90,6 @@ def make_measure(fonts, prof):
     return measure
 
 
-class PanelSlot:
-    def __init__(self, name, role, prof, output, shadow=None):
-        self.name, self.role, self.profile, self.output = name, role, prof, output
-        self.shadow = shadow          # VirtualPanel mirroring a real panel (preview in the UI)
-        self.mode = None              # last x99xx switch sent to this panel
-        self.last = None
-        self.error = None
-        self.cursor = {}              # page pacing of this panel (SimEngine._pick)
-
-    def status(self) -> dict:
-        st = {"name": self.name, "role": self.role, "profile": self.profile.name, **self.output.status()}
-        st["error"] = self.error or st.get("error")
-        return st
-
-
 def make_output(cfg: dict, project=None):
     from ..outputs.serial_out import SerialOutput
     from ..outputs.virtual import VirtualPanel
@@ -121,8 +108,9 @@ def make_output(cfg: dict, project=None):
 
 
 class Vehicle:
-    def __init__(self, engine, fonts, panels: list[PanelSlot], log=None, line_map: dict | None = None):
+    def __init__(self, engine, fonts, panels: list, log=None, line_map: dict | None = None):
         self.engine, self.fonts, self.panels = engine, fonts, panels
+        self.buses = {}
         self.line_map = line_map or {}
         self.log = log or (lambda m: None)
         self.running = False
@@ -131,21 +119,14 @@ class Vehicle:
         self._lock = threading.Lock() # one tick at a time (loop thread, state requests)
 
     @staticmethod
-    def from_config(cfg: dict, engine, project, log=None) -> "Vehicle":
-        slots = []
-        for p in cfg.get("panels") or [{"name": "náhled", "role": "interior", "output": "virtual"}]:
-            prof = get_profile(p.get("profile"))
-            out = make_output(p, project)
-            shadow = None
-            if out.kind not in ("virtual", "lcd"):
-                from ..outputs.virtual import VirtualPanel
-                shadow = VirtualPanel(out.name + " (náhled)", project, prof)
-            slots.append(PanelSlot(p.get("name", p.get("role", "panel")), p.get("role", "interior"), prof,
-                                   out, shadow))
-        for s in slots:
-            s.output.fonts = project.fonts
-        veh = Vehicle(engine, project.fonts, slots, log, line_map=project.data.get("line_map") or {})
-        ref = next((s.profile for s in slots if s.role == "interior"), slots[0].profile if slots else None)
+    def from_config(cfg: dict, engine, project, log=None, base_dir: str = ".") -> "Vehicle":
+        from ..peripherals import build_peripherals
+        line_map = project.data.get("line_map") or {}
+        slots, buses = build_peripherals(cfg, project, base_dir=base_dir, line_map=line_map, log=log)
+        veh = Vehicle(engine, project.fonts, slots, log, line_map=line_map)
+        veh.buses = buses
+        interior = [s for s in slots if getattr(s, "profile", None) is not None]
+        ref = next((s.profile for s in interior if s.role == "interior"), interior[0].profile if interior else None)
         if ref is not None:
             engine.measure = make_measure(project.fonts, ref)
         return veh
@@ -157,37 +138,22 @@ class Vehicle:
             self._tick(now, virtual_only)
 
     def _tick(self, now, virtual_only):
-        for slot in self.panels:
-            if virtual_only and slot.output.kind != "virtual":
+        for p in self.panels:
+            if p.kind == "lcd":                      # add-on LCD: the web page reads the state itself
                 continue
-            if slot.output.kind == "lcd":            # add-on LCD: the web page reads the state itself
+            if virtual_only and p.real:
                 continue
             try:
-                spec = self.engine.display(slot.role, now, two_line=slot.profile.geometry.rows > 8,
-                                           cursor=slot.cursor)
-                tel = spec_telegrams(spec, slot.profile, self.fonts, self.line_map)
-                if tel != slot.last:
-                    from ..live.modes import order_for_panel
-                    out, new_mode = order_for_panel(tel, slot.mode)
-                    slot.output.send(*out)
-                    slot.mode = new_mode
-                    if slot.shadow is not None:
-                        slot.shadow.send(*out)
-                    slot.last = tel
-                    slot.error = None
-                    if now is None:
-                        slot.cursor["t"] = time.time()     # the page is shown from now on
-                    from ..outputs.base import tel_text
-                    self.log(f"{slot.name}: " + "  ".join(tel_text(t, self.fonts) for t in tel))
+                p.update(self, now, virtual_only)
             except Exception as e:      # noqa: BLE001 – keep the other panels running
-                slot.error = str(e)
-                slot.last = None
+                p.error = str(e)
+                p.last = None
 
     def resend(self):
-        for s in self.panels:
-            s.last = None
-            s.mode = None
-            s.cursor.clear()
+        for b in self.buses.values():
+            b.reset()
+        for p in self.panels:
+            p.resend()
 
     def run(self, period: float = 0.5, gen: int | None = None):
         gen = self._gen if gen is None else gen

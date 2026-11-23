@@ -314,6 +314,7 @@
       <button data-ev="depart" title="D">Odjezd (D)</button>
       <button data-ev="next" class="primary" title="mezerník / →">Další ▶ (mezerník)</button>
       <button data-ev="end">Konečná</button>
+      <button data-ev="next_trip" title="další spoj kurzu">Další spoj ⏭</button>
       <button data-ev="reset">Reset</button>
     </div>
     <div class="row">
@@ -330,31 +331,50 @@
 
   <div class="cols3">
     <div class="card">
-      <h3>Trasa linky</h3>
+      <h3>Linka</h3>
       <div class="row">
         <select id="routeSelect"></select><button id="routeLoad">Načíst</button>
         <input id="routePath" value="trasy/linka7.yaml" style="flex:1"><button id="routeSave" class="primary">Uložit</button>
       </div>
-      <div class="grid4">
-        <label>Linka <input id="rLine"></label>
-        <label>Cíl <input id="rDest"></label>
-        <label>Přes (volitelně) <input id="rVia"></label>
+      <div class="row">
+        <label>Číslo linky <input id="rLine" style="width:6em"></label>
+        <label style="flex:1">Simulovaný spoj <select id="rTrip" style="width:100%"></select></label>
       </div>
-      <div class="stopwrap"><table class="stops">
-        <thead><tr><th>#</th><th>Zastávka</th><th>Pásmo</th><th>Ikony</th><th title="na znamení">Zn.</th><th title="minuty od začátku spoje (LCD panel)">Min.</th><th></th></tr></thead>
-        <tbody id="rStops"></tbody></table></div>
-      <div class="row"><button id="rAddStop">+ Zastávka</button></div>
+      <p id="rTripNote" class="muted small" hidden></p>
+
+      <h3>Směry</h3>
+      <div class="row dirtabs" id="rDirTabs"></div>
+      <div id="rDirEdit">
+        <div class="grid4">
+          <label title="označení směru (např. A, 1, tam)">Směr <input id="rDirId" style="width:5em"></label>
+          <label>Cíl <input id="rDest"></label>
+          <label title="záznam CIL databáze vnějšího panelu (ovládání kódy)">Kód cíle <input id="rDestCode" style="width:5em"></label>
+        </div>
+        <div class="stopwrap"><table class="stops">
+          <thead><tr><th>#</th><th>Zastávka</th><th>Pásmo</th><th>Ikony</th><th title="na znamení">Zn.</th><th title="minuty od začátku směru (LCD panel)">Min.</th><th title="nácestná – ukazuje se na vnějších panelech">Přes</th><th title="kód zastávky v databázi vnějšího panelu (DRU)">Kód</th><th></th></tr></thead>
+          <tbody id="rStops"></tbody></table></div>
+        <div class="row"><button id="rAddStop">+ Zastávka</button>
+          <button id="rDirReverse" title="nový směr se zastávkami v opačném pořadí">Obrácený směr</button>
+          <button id="rDirDel" class="danger">Smazat směr</button></div>
+      </div>
+
+      <h3>Kurzy a spoje</h3>
+      <p class="muted small">Kurz = pořadí spojů, které vůz jede za sebou. Spoj jede po zastávkách svého směru;
+        „Od“ / „Do“ ho zkrátí (cíl je pak poslední obsloužená zastávka, pokud nevyplníte vlastní).</p>
+      <div id="rCourses"></div>
+      <div class="row"><button id="rAddCourse">+ Kurz</button></div>
+
       <h3>Mimořádné informace</h3>
       <div id="rMsgs"></div>
       <div class="row"><button id="rAddMsg">+ Mimořádnost</button></div>
       <details>
-        <summary>Import trasy z CSV</summary>
+        <summary>Import zastávek směru z CSV</summary>
         <textarea id="rCsv" rows="5" class="mono">poradi;zastavka;pasmo;ikony;na_znameni
 1;Hlavní nádraží;P;vlak bus;
 2;Masarykovo náměstí;P;;
 3;U Kostela;P;;ano
 4;Sídliště Dukla;1;;</textarea>
-        <div class="row"><button id="rCsvImport">Importovat</button></div>
+        <div class="row"><button id="rCsvImport">Nahradit zastávky vybraného směru</button></div>
       </details>
       <p class="muted small">Ikony: <span id="iconNames"></span>. V textech se píší jako <code>{icon:metro}</code>.</p>
     </div>
@@ -363,7 +383,7 @@
       <h3>Vozidlo a panely</h3>
       <div class="row">
         <select id="vehSelect"></select><button id="vehLoad">Načíst</button>
-        <input id="vehPath" value="vozidla/autobus.yaml" style="flex:1"><button id="vehSave" class="primary">Uložit</button>
+        <input id="vehPath" value="vozidla/autobus.yaml" title="libovolná podsložka vozidla/ se v seznamu zobrazí jako skupina" style="flex:1"><button id="vehSave" class="primary">Uložit</button>
       </div>
       <div id="vehPanels"></div>
       <div class="row"><button id="vehAdd">+ Panel</button><button id="vehApply">Použít</button></div>
@@ -392,7 +412,10 @@
         <select id="seqSelect">
           <option value="next">Příští zastávka (na trase)</option>
           <option value="destination">Směr / cíl (v zastávce)</option>
-          <option value="exterior">Vnější panely (čelní, boční, zadní)</option>
+          <option value="exterior">Vnější panely – cíl (čelní a ostatní)</option>
+          <option value="exterior_side">Vnější panely – cíl na bočním</option>
+          <option value="exterior_rear">Vnější panely – cíl na zadním</option>
+          <option value="via">Vnější panely – řádek nácestných zastávek</option>
           <option value="zone">Tarifní zóna</option>
           <option value="time">Čas</option>
           <option value="message">Mimořádnost</option>
@@ -406,9 +429,12 @@
         <tbody id="seqPages"></tbody></table></div>
       <p class="muted small">Proměnné: <code>{name}</code> zastávka, <code>{icons}</code> ikony, <code>{zone}</code> číslo zóny,
         <code>{zone_name}</code> název zóny, <code>{destination}</code> cíl, <code>{DESTINATION}</code> cíl velkými písmeny,
-        <code>{dest_icons}</code> ikony cílové zastávky, <code>{via}</code> přes, <code>{line}</code> linka,
+        <code>{dest_icons}</code> ikony cílové zastávky, <code>{via}</code> nácestné zastávky (zaškrtnuté „Přes“),
+        <code>{via_stop}</code> jedna nácestná zastávka (řádek nácestných: stránka pro každou), <code>{line}</code> linka,
         <code>{time}</code> čas, <code>{message}</code> text mimořádnosti. Ikony i v textu: <code>{icon:vlak}</code>.
-        Font 0 je tenký, 3 normální (podle fontů v databázi). Prázdný font nebo mezera = hodnota z „Font / mezera“ výše.</p>
+        Vnitřní panely: font 0 je tenký, 3 normální (podle fontů v databázi); prázdný font nebo mezera = hodnota
+        z „Font / mezera“ výše. Vnější panely: fonty gBUSE0 (0–3 malé, 5 střední, 6–9 velké, 11 drobný); bez fontu si
+        panel text naformátuje sám (největší font, který se vejde). Vlastní formáty: složka <code>formaty/</code>.</p>
     </div>
 
     <div class="card">
@@ -423,7 +449,8 @@
       <h3>API pro externí ovládání</h3>
       <p class="muted small">Např. plugin do OMSI: <code>POST /api/sim/event</code> s <code>{"type": "arrive"}</code> nebo WebSocket
         <code>ws://…/ws/sim</code> (stejné zprávy, odpověď = stav). Typy: start, depart, arrive, next, prev, end, reset,
-        message (<code>key</code> / <code>text</code>), clear_message, goto (<code>index</code>).</p>
+        message (<code>key</code> / <code>text</code>), clear_message, goto (<code>index</code>), next_trip.
+        Výběr spoje: <code>POST /api/sim/trip</code> s <code>{"course": "1", "index": 0}</code> nebo <code>{"direction": "A"}</code>.</p>
     </div>
   </div>
 </div>

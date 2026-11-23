@@ -1,0 +1,26 @@
+# Exterior DOT-LED panels (gBUSE0, BS210) – simulation variants.
+# Columns / rows are 0-based here, y = row from the TOP. A database (gBUSE0 HEX) given to the panel
+# overrides these fields; without one the panel uses the original gBUSE0 fonts (gbuse0_font.yaml).
+#
+#   v1 – main (front) panel         140 x 19   line + destination
+#   v2 – side panel with the number 110 x 19   line + destination
+#   v4 – rear panel                  28 x 19   line only
+# stop_field: top | bottom splits the destination field: a via-stop line (zD / zN) above or below the
+# destination; stop_rows: its height (default 10 on top, 8 at the bottom).
+v1:
+  title: v1 – hlavní (čelní) panel 140×19
+  columns: 140
+  rows: 19
+  line: [0, 27]
+  dest: [28, 139]
+v2:
+  title: v2 – boční panel s číslem 110×19
+  columns: 110
+  rows: 19
+  line: [0, 27]
+  dest: [28, 109]
+v4:
+  title: v4 – zadní panel 28×19
+  columns: 28
+  rows: 19
+  line: [0, 27]

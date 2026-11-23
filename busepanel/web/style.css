@@ -93,3 +93,8 @@ table.stops td input[data-f=name] { width: 100%; min-width: 9em; }
 table.stops button { padding: 1px 6px; }
 .nowrap { white-space: nowrap; }
 .vpanel { border: 1px solid var(--line); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.dirtabs button.active { border-color: var(--accent); font-weight: 600; }
+.course { border: 1px solid var(--line); border-radius: 6px; padding: 6px; margin: 6px 0; }
+.course.sim { border-color: var(--accent); }
+table.stops tr.sim td { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+table.stops td select { max-width: 9em; }

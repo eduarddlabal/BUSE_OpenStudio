@@ -1,0 +1,34 @@
+# Text format (skladba textů) – a ready-made set of sequences selectable in the vehicle editor.
+# Own formats: put more *.yaml files here or into the working folder formaty/ (same structure).
+# Sequences: see ../displays_doc.txt. Interior fonts = gBUSE fonts (0 thin, 3 normal);
+# exterior fonts = gBUSE0 fonts (0–3 small, 5 medium, 6–9 large, 11 tiny).
+title: Základní (příští zastávka / čas / zóna)
+interior:
+  items: [next, time, zone]
+  seconds: 3
+  time_format: "%H:%M"
+  at_stop: line_dest
+  message_mode: cycle
+  line: at_stop
+  font: 3
+  spacing: 1
+  sequences:
+    next:
+      - {text: "Příští zastávka / Next stop", font: 0, role: heading}
+      - {text: "{name}{icons}"}
+      - {text: "zastávka na znamení / request stop", font: 0, when: request}
+    destination:
+      - {text: "Směr / Direction", font: 0, role: heading}
+      - {text: "{destination}"}
+      - {text: "Přes {via}", font: 0, when: via}
+    zone:
+      - {text: "Tarifní zóna / Zone", font: 0, role: heading}
+      - {text: "{zone} {zone_name}"}
+    time: [{text: "{time}"}]
+    message: [{text: "{message}"}]
+    final: [{text: "Konečná zastávka - prosíme, vystupte"}]
+    stop: [{text: "{name}{icons}"}]
+    # exterior panels: destination field (exterior_side / exterior_rear override it for that role)
+    exterior: [{text: "{destination}"}]
+    # exterior panels with a via-stop field: one page per remaining via stop ({via_stop}), in a small font
+    via: [{text: "{via_stop}", font: 11, seconds: 3}]

@@ -1,0 +1,30 @@
+name: Testovací autobus (test v počítači)
+panels:
+- name: Vnitřní
+  role: interior
+  profile: BS120
+  output: virtual
+- name: Čelní
+  role: front
+  profile: BS120
+  output: virtual
+settings:
+  interior:
+    items:
+    - next
+    - time
+    - zone
+    seconds: 4
+    next_format: "Příští zastávka: {name}{icons}"
+    request_suffix: " – na znamení"
+    time_format: "%H:%M"
+    zone_format: Tarifní pásmo {zone}
+    at_stop: line_dest
+    final_text: Konečná zastávka - prosíme, vystupte
+    message_mode: cycle
+    font: 3
+    spacing: 1
+  exterior:
+    format: '{destination}'
+    font: 3
+    spacing: 1

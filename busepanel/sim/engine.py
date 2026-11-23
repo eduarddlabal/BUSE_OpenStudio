@@ -13,29 +13,33 @@ from __future__ import annotations
 import copy
 import datetime as dt
 import re
+import os
 import time
 
-THIN = 0          # headings and extra lines; other pages take the font from the role settings
+import yaml
 
-DEFAULT_SEQUENCES = {
-    "next": [
-        {"text": "Příští zastávka / Next stop", "font": THIN, "role": "heading"},
-        {"text": "{name}{icons}"},
-        {"text": "zastávka na znamení / request stop", "font": THIN, "when": "request"},
-    ],
-    "destination": [
-        {"text": "Směr / Direction", "font": THIN, "role": "heading"},
-        {"text": "{destination}"},
-        {"text": "Přes {via}", "font": THIN, "when": "via"},
-    ],
-    "exterior": [{"text": "{destination}"}],
-    "zone": [{"text": "Tarifní zóna / Zone", "font": THIN, "role": "heading"},
-             {"text": "{zone} {zone_name}"}],
-    "time": [{"text": "{time}"}],
-    "message": [{"text": "{message}"}],
-    "final": [{"text": "Konečná zastávka - prosíme, vystupte"}],
-    "stop": [{"text": "{name}{icons}"}],
-}
+FORMATS_DIR = os.path.join(os.path.dirname(__file__), "formats")
+FORMAT_ALIASES = {"dpp": "linka_stale"}       # names used by BUSE Studio 2.x vehicle files
+
+
+def load_formats(extra_dir: str | None = None) -> dict:
+    """Text formats (skladba textů): built-in sim/formats/*.yaml + <working folder>/formaty/*.yaml.
+    name -> {"title", "interior": settings incl. sequences}"""
+    out = {}
+    for d in (FORMATS_DIR, extra_dir):
+        if not d or not os.path.isdir(d):
+            continue
+        for fn in sorted(os.listdir(d)):
+            if fn.endswith((".yaml", ".yml")):
+                with open(os.path.join(d, fn), encoding="utf-8") as f:
+                    data = yaml.safe_load(f) or {}
+                if isinstance(data.get("interior"), dict):
+                    out[os.path.splitext(fn)[0]] = {"title": str(data.get("title") or fn), "interior": data["interior"]}
+    return out
+
+
+PRESETS = load_formats()
+DEFAULT_SEQUENCES = copy.deepcopy(PRESETS["zakladni"]["interior"]["sequences"])
 
 DEFAULT_SETTINGS = {
     "interior": {
@@ -48,42 +52,20 @@ DEFAULT_SETTINGS = {
         "spacing": 1,
         "sequences": copy.deepcopy(DEFAULT_SEQUENCES),
     },
-    "exterior": {"font": 3, "spacing": 1, "seconds": 4},
-}
-
-# Ready-made display formats ("Formát" in the UI): a preset replaces the interior settings.
-DPP_SEQUENCES = {
-    # Standardy DPP – vnitřní informační panel s číslem linky (linka je zobrazena stále)
-    "next": [   # mimo zastávku: příští zastávka + piktogramy přestupu; na znamení běžícím textem
-        {"text": "{name}{icons}", "when": "not_request"},
-        {"text": "{name}{icons} - na znamení / request stop {icon:znameni}", "when": "request", "run": True},
-    ],
-    "destination": [{"text": "{icon:sipka} {DESTINATION}{dest_icons}"}],   # zastávka: šipka + cíl spoje
-    "exterior": [{"text": "{destination}"}],
-    "zone": [{"text": "{zone} {zone_name}"}],
-    "time": [{"text": "{time}"}],
-    "message": [{"text": "{message}", "run": True}],
-    "final": [{"text": "Konečná zastávka, prosíme vystupte / Final stop, please leave the tram.", "run": True}],
-    "stop": [{"text": "{name}{icons}"}],
-}
-
-PRESETS = {
-    "zakladni": {"title": "Základní (příští zastávka / čas / zóna)",
-                 "interior": {k: v for k, v in DEFAULT_SETTINGS["interior"].items()} | {"line": "at_stop"}},
-    "dpp": {"title": "DPP – linka stále, příští zastávka / šipka + cíl / konečná",
-            "interior": {"items": ["next"], "seconds": 4, "time_format": "%H:%M", "at_stop": "line_dest",
-                         "message_mode": "override", "line": "always", "font": 3, "spacing": 1,
-                         "sequences": DPP_SEQUENCES}},
+    # exterior panels: font / spacing only from the pages (otherwise the panel formats the text itself)
+    "exterior": {"seconds": 4},
 }
 
 CONDITIONS = {"always", "request", "not_request", "via", "zone"}
 
 
-def preset_settings(name: str) -> dict:
-    """Interior settings of a preset (deep copy, tagged with the preset name)."""
-    if name not in PRESETS:
+def preset_settings(name: str, extra_dir: str | None = None) -> dict:
+    """Interior settings of a format (deep copy, tagged with the format name)."""
+    name = FORMAT_ALIASES.get(name, name)
+    formats = load_formats(extra_dir) if extra_dir else PRESETS
+    if name not in formats:
         raise ValueError(f"neznámý formát {name!r}")
-    return {**copy.deepcopy(PRESETS[name]["interior"]), "format": name}
+    return {**copy.deepcopy(formats[name]["interior"]), "format": name}
 
 
 def merge_settings(user: dict | None) -> dict:
@@ -177,12 +159,14 @@ class SimEngine:
         return {"phase": self.phase, "pos": self.pos, "stop": cur.name if cur else None,
                 "next": st[self.pos].name if self.phase == "driving" and st else None,
                 "message": self.message, "message_key": self.message_key,
-                "line": self.route.line, "destination": self.route.destination, "events": self.events[-10:]}
+                "line": self.route.line, "destination": self.route.destination, "events": self.events[-10:],
+                "direction": getattr(self.route, "direction", ""), "course": getattr(self.route, "course", ""),
+                "trip": getattr(self.route, "trip", None), "departure": getattr(self.route, "departure", "")}
 
     # ---- page composition -----------------------------------------------------
     @staticmethod
     def _icons(stop) -> str:
-        """LED icons of a stop (PID style). metro-A … metro-D become the stylised letter(s) [AB],
+        """LED icons of a stop. metro-A … metro-D become the stylised letter(s) [AB],
         S lines / vlak-S9 the train pictogram; names without an LED pictogram are left out."""
         from ..core.icons import ICONS
         letters, out = "", []
@@ -209,7 +193,8 @@ class SimEngine:
             "zone": stop.zone if stop else "", "zone_name": stop.zone_name if stop else "",
             "request": " – na znamení" if stop and stop.request else "", "is_request": bool(stop and stop.request),
             "destination": self.route.destination, "DESTINATION": self.route.destination.upper(),
-            "dest_icons": self._icons(last) if last else "", "via": self.route.via, "line": self.route.line,
+            "dest_icons": self._icons(last) if last else "", "via": " - ".join(x.name for x in self.via_stops()),
+            "line": self.route.line,
             "time": dt.datetime.fromtimestamp(now).strftime(s.get("time_format", "%H:%M")),
             "message": self.message or "",
         }
@@ -224,11 +209,11 @@ class SimEngine:
         seqs = self.settings["interior"].get("sequences") or {}
         out = []
         for p in seqs.get(seq_name) or DEFAULT_SEQUENCES.get(seq_name, []):
-            if not self._ok(p, ctx):
+            if not self._ok(p, {**ctx, "via_stop": ""}):
                 continue
             try:
                 # {icon:name} is panel markup, not a format field -> escape it before format()
-                text = re.sub(r"\{(icon:[^{}]*)\}", r"{{\1}}", str(p.get("text", ""))).format(**ctx)
+                text = re.sub(r"\{(icon:[^{}]*)\}", r"{{\1}}", str(p.get("text", ""))).format(**ctx, via_stop="")
             except (KeyError, IndexError, ValueError):
                 text = str(p.get("text", ""))
             out.append({"text": text,
@@ -313,16 +298,56 @@ class SimEngine:
             pages += self._pages("message", ctx, s)
         return self._spec(self._pick(pages, now, two_line), ln)
 
-    def exterior(self, now: float | None = None, two_line: bool = False) -> dict:
-        s = self.settings["exterior"]
+    def via_stops(self) -> list:
+        """Via stops (marked via: true) still ahead, without the terminal."""
+        st = self.route.stops
+        if not st or self.phase == "ended":
+            return []
+        start = self.pos + (1 if self.phase in ("at_stop", "idle") else 0)
+        return [x for x in st[start:-1] if x.via]
+
+    def _ext_settings(self) -> dict:
+        s = self.settings.get("exterior") or {}
+        return {"seconds": s.get("seconds", 4)}     # no default font: the panel formats the text
+
+    def _seq_for(self, base: str, role: str) -> str:
+        seqs = self.settings["interior"].get("sequences") or {}
+        name = f"{base}_{role}"
+        return name if seqs.get(name) or DEFAULT_SEQUENCES.get(name) else base
+
+    def exterior(self, now: float | None = None, two_line: bool = False, role: str = "front") -> dict:
         now = self.clock() if now is None else now
         ctx = self._context(now)
-        return self._spec(self._pick(self._pages("exterior", ctx, s), now, two_line), self.route.line)
+        pages = self._pages(self._seq_for("exterior", role), ctx, self._ext_settings())
+        return self._spec(self._pick(pages, now, two_line), self.route.line)
+
+    def via_pages(self, role: str = "side", now: float | None = None) -> list[dict]:
+        """Pages of the via-stop line of an exterior panel: a page with {via_stop} is repeated for every
+        remaining via stop; the panel itself flips through them."""
+        now = self.clock() if now is None else now
+        ctx = self._context(now)
+        seqs = self.settings["interior"].get("sequences") or {}
+        name = self._seq_for("via", role)
+        out = []
+        for p in seqs.get(name) or DEFAULT_SEQUENCES.get(name, []):
+            stops = self.via_stops() if "{via_stop}" in str(p.get("text", "")) else [None]
+            for stop in stops:
+                c = {**ctx, "via_stop": stop.name if stop else ""}
+                if not self._ok(p, c):
+                    continue
+                try:
+                    text = re.sub(r"\{(icon:[^{}]*)\}", r"{{\1}}", str(p.get("text", ""))).format(**c)
+                except (KeyError, IndexError, ValueError):
+                    text = str(p.get("text", ""))
+                if text.strip():
+                    out.append({"text": text, "font": p.get("font"), "spacing": p.get("spacing"),
+                                "seconds": float(p.get("seconds") or 3), "code": stop.code if stop else ""})
+        return out
 
     def display(self, role: str, now: float | None = None, two_line: bool = False, cursor: dict | None = None) -> dict:
         """cursor: per-panel dict for page pacing (see _pick); None = pages purely by the clock."""
         self._cursor = cursor
         try:
-            return self.interior(now, two_line) if role == "interior" else self.exterior(now, two_line)
+            return self.interior(now, two_line) if role == "interior" else self.exterior(now, two_line, role)
         finally:
             self._cursor = None

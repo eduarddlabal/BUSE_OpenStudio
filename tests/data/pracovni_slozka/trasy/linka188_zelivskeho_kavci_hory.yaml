@@ -1,0 +1,239 @@
+line: "188"
+messages:
+  odklon: Spoj jede odklonem
+  zpozdeni: Spoj má zpoždění, omlouváme se
+directions:
+  "1":
+    destination: KAVČÍ HORY
+    stops:
+    - name: Želivského
+      zone: P
+      icons:
+      - metro-A
+      request: true
+      minutes: 0
+    - name: Pod Třebešínem
+      zone: P
+      request: true
+      minutes: 1
+    - name: Na Palouku
+      zone: P
+      request: true
+      minutes: 2
+    - name: Hostýnská
+      zone: P
+      request: true
+      minutes: 3
+    - name: Plaňanská
+      zone: P
+      request: true
+      minutes: 4
+    - name: Sídliště Malešice
+      zone: P
+      request: true
+      minutes: 5
+    - name: Limuzská
+      zone: P
+      request: true
+      minutes: 7
+    - name: Dobročovická
+      zone: P
+      request: true
+      minutes: 10
+    - name: Strašnická
+      zone: P
+      icons:
+      - metro-A
+      request: true
+      minutes: 12
+    - name: Na Hroudě
+      zone: P
+      minutes: 13
+    - name: Staré Strašnice
+      zone: P
+      request: true
+      minutes: 14
+    - name: Korytná
+      zone: P
+      request: true
+      minutes: 16
+    - name: Želivecká
+      zone: P
+      request: true
+      minutes: 18
+    - name: Jesenická
+      zone: P
+      request: true
+      minutes: 20
+    - name: V Korytech
+      zone: P
+      request: true
+      minutes: 22
+    - name: Pod Vinicí
+      zone: P
+      request: true
+      minutes: 23
+    - name: Záběhlice
+      zone: P
+      request: true
+      minutes: 24
+    - name: Bohdalecká
+      zone: P
+      request: true
+      minutes: 25
+    - name: Chodovská
+      zone: P
+      minutes: 27
+    - name: Plynárna Michle
+      zone: P
+      request: true
+      minutes: 28
+    - name: Michelská
+      zone: P
+      minutes: 30
+    - name: Pod Jezerkou
+      zone: P
+      minutes: 31
+    - name: Kloboučnická
+      zone: P
+      request: true
+      minutes: 32
+    - name: Jezerka
+      zone: P
+      request: true
+      minutes: 34
+    - name: Sdružení
+      zone: P
+      request: true
+      minutes: 35
+    - name: Pankrác
+      zone: P
+      icons:
+      - metro-C
+      request: true
+      minutes: 37
+    - name: Sídliště Pankrác
+      zone: P
+      request: true
+      minutes: 39
+    - name: Kavčí hory
+      zone: P
+      request: true
+      minutes: 40
+  "2":
+    destination: ŽELIVSKÉHO
+    stops:
+    - name: Kavčí hory
+      zone: P
+      request: true
+      minutes: 0
+    - name: Sídliště Pankrác
+      zone: P
+      request: true
+      minutes: 1
+    - name: Pankrác
+      zone: P
+      icons:
+      - metro-C
+      request: true
+      minutes: 3
+    - name: Sdružení
+      zone: P
+      request: true
+      minutes: 5
+    - name: Jezerka
+      zone: P
+      request: true
+      minutes: 6
+    - name: Kloboučnická
+      zone: P
+      request: true
+      minutes: 8
+    - name: Pod Jezerkou
+      zone: P
+      minutes: 9
+    - name: Michelská
+      zone: P
+      minutes: 10
+    - name: Plynárna Michle
+      zone: P
+      request: true
+      minutes: 12
+    - name: Chodovská
+      zone: P
+      minutes: 13
+    - name: Bohdalecká
+      zone: P
+      request: true
+      minutes: 15
+    - name: Záběhlice
+      zone: P
+      request: true
+      minutes: 16
+    - name: Pod Vinicí
+      zone: P
+      request: true
+      minutes: 17
+    - name: V Korytech
+      zone: P
+      request: true
+      minutes: 18
+    - name: Jesenická
+      zone: P
+      request: true
+      minutes: 20
+    - name: Želivecká
+      zone: P
+      request: true
+      minutes: 22
+    - name: Korytná
+      zone: P
+      request: true
+      minutes: 24
+    - name: Staré Strašnice
+      zone: P
+      request: true
+      minutes: 26
+    - name: Na Hroudě
+      zone: P
+      minutes: 27
+    - name: Strašnická
+      zone: P
+      icons:
+      - metro-A
+      request: true
+      minutes: 28
+    - name: Dobročovická
+      zone: P
+      request: true
+      minutes: 30
+    - name: Limuzská
+      zone: P
+      request: true
+      minutes: 33
+    - name: Sídliště Malešice
+      zone: P
+      request: true
+      minutes: 35
+    - name: Plaňanská
+      zone: P
+      request: true
+      minutes: 36
+    - name: Hostýnská
+      zone: P
+      request: true
+      minutes: 37
+    - name: Na Palouku
+      zone: P
+      request: true
+      minutes: 38
+    - name: Pod Třebešínem
+      zone: P
+      request: true
+      minutes: 39
+    - name: Želivského
+      zone: P
+      icons:
+      - metro-A
+      request: true
+      minutes: 40

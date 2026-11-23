@@ -1,0 +1,5376 @@
+# Original gBUSE0 font set for 19-row exterior DOT-LED panels (fonts 0-12, as stored in gBUSE0 data).
+# Ink heights: 0-3 small (9 rows incl. accents), 4 (10), 5 (16), 6-9 large (19), 10 digits only (19),
+# 11 tiny (8), 12 line digits. Code table = gBUSE (Kamenický).
+codetable:
+  undefined: 40 AA AB AC AD AE AF B0 B1 B2 B3 B5 B6 B7 B8 B9 BA BB BC BD BE BF
+  map:
+    "80": Č
+    "81": ü
+    "82": é
+    "83": ď
+    "84": ä
+    "85": Ď
+    "86": Ť
+    "87": č
+    "88": ě
+    "89": Ě
+    8A: Ĺ
+    8B: Í
+    8C: ľ
+    8D: ĺ
+    8E: Ä
+    8F: Á
+    "90": É
+    "91": ž
+    "92": Ž
+    "93": ô
+    "94": ö
+    "95": Ó
+    "96": ů
+    "97": Ú
+    "98": ý
+    "99": Ö
+    9A: Ü
+    9B: Š
+    9C: Ľ
+    9D: Ý
+    9E: Ř
+    9F: ť
+    A0: á
+    A1: í
+    A2: ó
+    A3: ú
+    A4: ň
+    A5: Ň
+    A6: Ů
+    A7: Ô
+    A8: š
+    A9: ř
+    B4: '@'
+    C0: ˙
+fonts:
+- id: 0
+  glyphs:
+    "#20":
+      height: 10
+      hex: 00 00 00 00
+    '!':
+      height: 10
+      hex: 3e 80
+    '&':
+      height: 10
+      hex: 7c 00 44 00 44 00 47 c0 44 00 44 00 7c 00
+    '''':
+      height: 10
+      hex: 10 00 20 00
+    (:
+      height: 10
+      hex: 1f 00 20 80
+    ):
+      height: 10
+      hex: 20 80 1f 00
+    +:
+      height: 10
+      hex: 04 00 04 00 1f 00 04 00 04 00
+    ',':
+      height: 10
+      hex: 00 80 03 00
+    '-':
+      height: 10
+      hex: 04 00 04 00
+    .:
+      height: 10
+      hex: 00 80
+    /:
+      height: 10
+      hex: 02 00 04 00 08 00
+    "0":
+      height: 10
+      hex: 1f 00 20 80 20 80 1f 00
+    "1":
+      height: 10
+      hex: 10 00 3f 80
+    "2":
+      height: 10
+      hex: 11 80 22 80 24 80 18 80
+    "3":
+      height: 10
+      hex: 11 00 24 80 24 80 1b 00
+    "4":
+      height: 10
+      hex: 0e 00 12 00 27 80 02 00
+    "5":
+      height: 10
+      hex: 3d 00 24 80 24 80 23 00
+    "6":
+      height: 10
+      hex: 1f 00 24 80 24 80 13 00
+    "7":
+      height: 10
+      hex: 20 00 27 80 28 00 30 00
+    "8":
+      height: 10
+      hex: 1b 00 24 80 24 80 1b 00
+    "9":
+      height: 10
+      hex: 19 00 24 80 24 80 1f 00
+    ":":
+      height: 10
+      hex: 05 00
+    ;:
+      height: 10
+      hex: 05 80
+    '=':
+      height: 10
+      hex: 05 00 05 00 05 00
+    A:
+      height: 10
+      hex: 1f 80 24 00 24 00 1f 80
+    B:
+      height: 10
+      hex: 3f 80 24 80 24 80 1b 00
+    C:
+      height: 10
+      hex: 1f 00 20 80 20 80 11 00
+    D:
+      height: 10
+      hex: 3f 80 20 80 20 80 1f 00
+    E:
+      height: 10
+      hex: 3f 80 24 80 24 80 20 80
+    F:
+      height: 10
+      hex: 3f 80 24 00 20 00
+    G:
+      height: 10
+      hex: 1f 00 20 80 24 80 17 00
+    H:
+      height: 10
+      hex: 3f 80 04 00 04 00 3f 80
+    I:
+      height: 10
+      hex: 20 80 3f 80 20 80
+    J:
+      height: 10
+      hex: 01 00 20 80 20 80 3f 00
+    K:
+      height: 10
+      hex: 3f 80 0c 00 12 00 21 80
+    L:
+      height: 10
+      hex: 3f 80 00 80 00 80
+    M:
+      height: 10
+      hex: 3f 80 10 00 08 00 10 00 3f 80
+    N:
+      height: 10
+      hex: 3f 80 08 00 04 00 3f 80
+    O:
+      height: 10
+      hex: 1f 00 20 80 20 80 1f 00
+    P:
+      height: 10
+      hex: 3f 80 24 00 24 00 18 00
+    Q:
+      height: 10
+      hex: 1f 00 20 80 21 80 1e 80
+    R:
+      height: 10
+      hex: 3f 80 26 00 25 00 18 80
+    S:
+      height: 10
+      hex: 18 80 24 80 24 80 23 00
+    T:
+      height: 10
+      hex: 20 00 3f 80 20 00
+    U:
+      height: 10
+      hex: 3f 00 00 80 00 80 3f 00
+    V:
+      height: 10
+      hex: 3e 00 01 00 00 80 01 00 3e 00
+    W:
+      height: 10
+      hex: 3f 80 01 00 06 00 01 00 3f 80
+    X:
+      height: 10
+      hex: 3b 80 04 00 04 00 3b 80
+    Y:
+      height: 10
+      hex: 38 00 04 00 03 80 04 00 38 00
+    Z:
+      height: 10
+      hex: 23 80 24 80 28 80 30 80
+    '[':
+      height: 10
+      hex: 3f 80 20 80
+    \:
+      height: 10
+      hex: 02 00 02 00
+    ']':
+      height: 10
+      hex: 20 80 3f 80
+    _:
+      height: 10
+      hex: 00 80 00 80 00 80 00 80
+    a:
+      height: 10
+      hex: 07 00 08 80 08 80 0f 80
+    b:
+      height: 10
+      hex: 3f 80 08 80 08 80 07 00
+    c:
+      height: 10
+      hex: 07 00 08 80 08 80
+    d:
+      height: 10
+      hex: 07 00 08 80 08 80 3f 80
+    e:
+      height: 10
+      hex: 07 00 0a 80 0a 80 06 80
+    f:
+      height: 10
+      hex: 08 00 1f 80 28 00
+    g:
+      height: 10
+      hex: 04 80 0a 80 0a 80 0f 00
+    h:
+      height: 10
+      hex: 3f 80 08 00 08 00 07 80
+    i:
+      height: 10
+      hex: 2f 80
+    j:
+      height: 10
+      hex: 00 80 2f 00
+    k:
+      height: 10
+      hex: 3f 80 02 00 0d 80
+    l:
+      height: 10
+      hex: 3f 80
+    m:
+      height: 10
+      hex: 0f 80 08 00 0f 80 08 00 07 80
+    n:
+      height: 10
+      hex: 0f 80 08 00 08 00 07 80
+    o:
+      height: 10
+      hex: 07 00 08 80 08 80 07 00
+    p:
+      height: 10
+      hex: 0f 80 09 00 09 00 06 00
+    q:
+      height: 10
+      hex: 06 00 09 00 09 00 0f 80
+    r:
+      height: 10
+      hex: 0f 80 04 00 08 00
+    s:
+      height: 10
+      hex: 04 80 0a 80 09 00
+    t:
+      height: 10
+      hex: 08 00 3f 00 08 80
+    u:
+      height: 10
+      hex: 0f 00 00 80 00 80 0f 00
+    v:
+      height: 10
+      hex: 0e 00 01 00 00 80 01 00 0e 00
+    w:
+      height: 10
+      hex: 0f 80 01 00 02 00 01 00 0f 80
+    x:
+      height: 10
+      hex: 08 80 05 00 02 00 05 00 08 80
+    y:
+      height: 10
+      hex: 0c 80 02 80 02 80 0f 00
+    z:
+      height: 10
+      hex: 08 80 09 80 0a 80 0c 80
+    '|':
+      height: 10
+      hex: ff 80
+    Č:
+      height: 10
+      hex: 1f 00 a0 80 60 80 a0 80
+    ü:
+      height: 10
+      hex: 2f 00 00 80 00 80 2f 00
+    é:
+      height: 10
+      hex: 07 00 0a 80 2a 80 46 80
+    ď:
+      height: 10
+      hex: 07 00 88 80 48 80 bf 80
+    ä:
+      height: 10
+      hex: 27 00 08 80 08 80 2f 80
+    Ď:
+      height: 10
+      hex: 3f 80 a0 80 60 80 9f 00
+    Ť:
+      height: 10
+      hex: 20 00 a0 00 7f 80 a0 00 20 00
+    č:
+      height: 10
+      hex: 47 00 28 80 48 80
+    ě:
+      height: 10
+      hex: 07 00 4a 80 2a 80 46 80
+    Ě:
+      height: 10
+      hex: 3f 80 a4 80 64 80 a0 80
+    Í:
+      height: 10
+      hex: 20 80 7f 80 a0 80
+    ľ:
+      height: 10
+      hex: 3f 80 60 00
+    Ä:
+      height: 10
+      hex: 9f 80 24 00 24 00 9f 80
+    Á:
+      height: 10
+      hex: 1f 80 24 00 64 00 9f 80
+    É:
+      height: 10
+      hex: 3f 80 24 80 64 80 a0 80
+    ž:
+      height: 10
+      hex: 08 80 49 80 2a 80 4c 80
+    Ž:
+      height: 10
+      hex: 21 80 a2 80 64 80 a8 80 30 80
+    ô:
+      height: 10
+      hex: 27 00 48 80 48 80 27 00
+    ö:
+      height: 10
+      hex: 27 00 08 80 08 80 27 00
+    Ó:
+      height: 10
+      hex: 1f 00 20 80 60 80 9f 00
+    ů:
+      height: 10
+      hex: 0f 00 60 80 60 80 0f 00
+    Ú:
+      height: 10
+      hex: 3f 00 00 80 40 80 bf 00
+    ý:
+      height: 10
+      hex: 0c 80 02 80 22 80 4f 00
+    Ö:
+      height: 10
+      hex: 9f 00 20 80 20 80 9f 00
+    Ü:
+      height: 10
+      hex: bf 00 00 80 00 80 bf 00
+    Š:
+      height: 10
+      hex: 18 80 a4 80 64 80 a3 00
+    Ľ:
+      height: 10
+      hex: 3f 80 60 80 00 80
+    Ý:
+      height: 10
+      hex: 38 00 04 00 43 80 84 00 38 00
+    Ř:
+      height: 10
+      hex: 3f 80 a6 00 65 00 98 80
+    ť:
+      height: 10
+      hex: 08 00 1f 00 68 80
+    á:
+      height: 10
+      hex: 07 00 08 80 28 80 4f 80
+    í:
+      height: 10
+      hex: 2f 80 40 00
+    ó:
+      height: 10
+      hex: 07 00 08 80 28 80 47 00
+    ú:
+      height: 10
+      hex: 0f 00 00 80 20 80 4f 00
+    ň:
+      height: 10
+      hex: 0f 80 48 00 28 00 47 80
+    Ň:
+      height: 10
+      hex: 3f 80 90 00 48 00 84 00 3f 80
+    Ů:
+      height: 10
+      hex: 3f 00 c0 80 c0 80 3f 00
+    Ô:
+      height: 10
+      hex: 4f 00 90 80 90 80 4f 00
+    š:
+      height: 10
+      hex: 04 80 4a 80 2a 80 49 00
+    ř:
+      height: 10
+      hex: 4f 80 24 00 48 00
+- id: 1
+  glyphs:
+    "#20":
+      height: 10
+      hex: 00 00 00 00 00 00
+    '!':
+      height: 10
+      hex: 3e 80
+    '&':
+      height: 10
+      hex: 7c 00 44 00 44 00 47 c0 44 00 44 00 7c 00
+    '''':
+      height: 10
+      hex: 10 00 20 00
+    (:
+      height: 10
+      hex: 1f 00 20 80
+    ):
+      height: 10
+      hex: 20 80 1f 00
+    +:
+      height: 10
+      hex: 04 00 04 00 1f 00 04 00 04 00
+    ',':
+      height: 10
+      hex: 00 80 03 00
+    '-':
+      height: 10
+      hex: 04 00 04 00 04 00
+    .:
+      height: 10
+      hex: 00 80
+    /:
+      height: 10
+      hex: 01 00 02 00 04 00 08 00 10 00
+    "0":
+      height: 10
+      hex: 1f 00 20 80 20 80 20 80 1f 00
+    "1":
+      height: 10
+      hex: 10 80 3f 80 00 80
+    "2":
+      height: 10
+      hex: 10 80 21 80 22 80 24 80 18 80
+    "3":
+      height: 10
+      hex: 11 00 20 80 24 80 24 80 1b 00
+    "4":
+      height: 10
+      hex: 06 00 0a 00 12 00 27 80 02 00
+    "5":
+      height: 10
+      hex: 3d 00 24 80 24 80 24 80 23 00
+    "6":
+      height: 10
+      hex: 1f 00 24 80 24 80 24 80 13 00
+    "7":
+      height: 10
+      hex: 20 00 20 00 27 80 28 00 30 00
+    "8":
+      height: 10
+      hex: 1b 00 24 80 24 80 24 80 1b 00
+    "9":
+      height: 10
+      hex: 19 00 24 80 24 80 24 80 1f 00
+    ":":
+      height: 10
+      hex: 05 00
+    ;:
+      height: 10
+      hex: 05 80
+    '=':
+      height: 10
+      hex: 05 00 05 00 05 00
+    "#40":
+      height: 9
+      hex: 00 00 0f 00 10 80 16 80 12 80 0e 80 00 00
+    A:
+      height: 10
+      hex: 1f 80 24 00 24 00 24 00 1f 80
+    B:
+      height: 10
+      hex: 3f 80 24 80 24 80 24 80 1b 00
+    C:
+      height: 10
+      hex: 1f 00 20 80 20 80 20 80 11 00
+    D:
+      height: 10
+      hex: 3f 80 20 80 20 80 20 80 1f 00
+    E:
+      height: 10
+      hex: 3f 80 24 80 24 80 24 80 20 80
+    F:
+      height: 10
+      hex: 3f 80 24 00 24 00 24 00 20 00
+    G:
+      height: 10
+      hex: 1f 00 20 80 24 80 24 80 17 00
+    H:
+      height: 10
+      hex: 3f 80 04 00 04 00 04 00 3f 80
+    I:
+      height: 10
+      hex: 20 80 3f 80 20 80
+    J:
+      height: 10
+      hex: 01 00 20 80 20 80 20 80 3f 00
+    K:
+      height: 10
+      hex: 3f 80 04 00 0a 00 11 00 20 80
+    L:
+      height: 10
+      hex: 3f 80 00 80 00 80 00 80 00 80
+    M:
+      height: 10
+      hex: 3f 80 10 00 08 00 10 00 3f 80
+    N:
+      height: 10
+      hex: 3f 80 10 00 08 00 04 00 3f 80
+    O:
+      height: 10
+      hex: 1f 00 20 80 20 80 20 80 1f 00
+    P:
+      height: 10
+      hex: 3f 80 24 00 24 00 24 00 18 00
+    Q:
+      height: 10
+      hex: 1f 00 20 80 22 80 21 00 1e 80
+    R:
+      height: 10
+      hex: 3f 80 24 00 26 00 25 00 18 80
+    S:
+      height: 10
+      hex: 19 00 24 80 24 80 24 80 13 00
+    T:
+      height: 10
+      hex: 20 00 20 00 3f 80 20 00 20 00
+    U:
+      height: 10
+      hex: 3f 00 00 80 00 80 00 80 3f 00
+    V:
+      height: 10
+      hex: 3e 00 01 00 00 80 01 00 3e 00
+    W:
+      height: 10
+      hex: 3f 80 01 00 06 00 01 00 3f 80
+    X:
+      height: 10
+      hex: 31 80 0a 00 04 00 0a 00 31 80
+    Y:
+      height: 10
+      hex: 38 00 04 00 03 80 04 00 38 00
+    Z:
+      height: 10
+      hex: 21 80 22 80 24 80 28 80 30 80
+    '[':
+      height: 19
+      hex: 00 1f 00 00 3c 00 00 70 00 01 e0 00 03 a0 00 07 30 00 0e 38 00 1f ff 80 7f ff 80 00 60 00 00 59 00 00 3d 80 00 24 80 00 37 80 00 13 00 00 00 00 07 ff 80 07 ff 80 00 0e 00 00 1b 00 00 31 80 00
+        00 80 00 1f 00 00 3f 80 00 20 80 00 20 80 00 3f 80 00 1f 00
+    \:
+      height: 10
+      hex: 10 00 08 00 04 00 02 00 01 00
+    ']':
+      height: 10
+      hex: 20 80 20 80 3f 80
+    _:
+      height: 10
+      hex: 00 80 00 80 00 80 00 80 00 80
+    a:
+      height: 10
+      hex: 07 00 08 80 08 80 0f 80
+    b:
+      height: 10
+      hex: 3f 80 08 80 08 80 07 00
+    c:
+      height: 10
+      hex: 07 00 08 80 08 80 08 80
+    d:
+      height: 10
+      hex: 07 00 08 80 08 80 3f 80
+    e:
+      height: 10
+      hex: 07 00 0a 80 0a 80 06 80
+    f:
+      height: 10
+      hex: 08 00 1f 80 28 00
+    g:
+      height: 10
+      hex: 04 80 0a 80 0a 80 0f 00
+    h:
+      height: 10
+      hex: 3f 80 08 00 08 00 07 80
+    i:
+      height: 10
+      hex: 2f 80
+    j:
+      height: 10
+      hex: 00 80 2f 00
+    k:
+      height: 10
+      hex: 3f 80 02 00 05 00 08 80
+    l:
+      height: 10
+      hex: 3f 80
+    m:
+      height: 10
+      hex: 0f 80 08 00 0f 80 08 00 07 80
+    n:
+      height: 10
+      hex: 0f 80 08 00 08 00 07 80
+    o:
+      height: 10
+      hex: 07 00 08 80 08 80 07 00
+    p:
+      height: 10
+      hex: 0f 80 09 00 09 00 06 00
+    q:
+      height: 10
+      hex: 06 00 09 00 09 00 0f 80
+    r:
+      height: 10
+      hex: 0f 80 04 00 08 00
+    s:
+      height: 10
+      hex: 04 80 0a 80 0a 80 09 00
+    t:
+      height: 10
+      hex: 08 00 3f 00 08 80
+    u:
+      height: 10
+      hex: 0f 00 00 80 00 80 0f 00
+    v:
+      height: 10
+      hex: 0e 00 01 00 00 80 01 00 0e 00
+    w:
+      height: 10
+      hex: 0f 80 01 00 02 00 01 00 0f 80
+    x:
+      height: 10
+      hex: 08 80 05 00 02 00 05 00 08 80
+    y:
+      height: 10
+      hex: 0c 80 02 80 02 80 0f 00
+    z:
+      height: 10
+      hex: 08 80 09 80 0a 80 0c 80
+    '|':
+      height: 10
+      hex: ff 80
+    Č:
+      height: 10
+      hex: 1f 00 a0 80 60 80 a0 80 11 00
+    ü:
+      height: 10
+      hex: 2f 00 00 80 00 80 2f 00
+    é:
+      height: 10
+      hex: 07 00 0a 80 2a 80 46 80
+    ď:
+      height: 10
+      hex: 07 00 88 80 48 80 bf 80
+    ä:
+      height: 10
+      hex: 27 00 08 80 08 80 2f 80
+    Ď:
+      height: 10
+      hex: 3f 80 a0 80 60 80 a0 80 1f 00
+    Ť:
+      height: 10
+      hex: 20 00 a0 00 7f 80 a0 00 20 00
+    č:
+      height: 10
+      hex: 07 00 48 80 28 80 48 80
+    ě:
+      height: 10
+      hex: 07 00 4a 80 2a 80 46 80
+    Ě:
+      height: 10
+      hex: 3f 80 a4 80 64 80 a4 80 20 80
+    Í:
+      height: 10
+      hex: 20 80 7f 80 a0 80
+    ľ:
+      height: 10
+      hex: 3f 80 60 00
+    Ä:
+      height: 10
+      hex: 1f 80 a4 00 24 00 a4 00 1f 80
+    Á:
+      height: 10
+      hex: 1f 80 24 00 64 00 a4 00 1f 80
+    É:
+      height: 10
+      hex: 3f 80 24 80 64 80 a4 80 20 80
+    ž:
+      height: 10
+      hex: 08 80 49 80 2a 80 4c 80
+    Ž:
+      height: 10
+      hex: 21 80 a2 80 64 80 a8 80 30 80
+    ô:
+      height: 10
+      hex: 27 00 48 80 48 80 27 00
+    ö:
+      height: 10
+      hex: 27 00 08 80 08 80 27 00
+    Ó:
+      height: 10
+      hex: 1f 00 20 80 60 80 a0 80 1f 00
+    ů:
+      height: 10
+      hex: 0f 00 60 80 60 80 0f 00
+    Ú:
+      height: 10
+      hex: 3f 00 00 80 40 80 80 80 3f 00
+    ý:
+      height: 10
+      hex: 0c 80 02 80 22 80 4f 00
+    Ö:
+      height: 10
+      hex: 1f 00 a0 80 20 80 a0 80 1f 00
+    Ü:
+      height: 10
+      hex: 3f 00 80 80 00 80 80 80 3f 00
+    Š:
+      height: 10
+      hex: 19 00 a4 80 64 80 a4 80 13 00
+    Ľ:
+      height: 10
+      hex: 3f 80 40 80 20 80 40 80 00 80
+    Ý:
+      height: 10
+      hex: 38 00 04 00 43 80 84 00 38 00
+    Ř:
+      height: 10
+      hex: 3f 80 a4 00 66 00 a5 00 18 80
+    ť:
+      height: 10
+      hex: 08 00 1f 00 68 80
+    á:
+      height: 10
+      hex: 07 00 08 80 28 80 4f 80
+    í:
+      height: 10
+      hex: 2f 80 40 00
+    ó:
+      height: 10
+      hex: 07 00 08 80 28 80 47 00
+    ú:
+      height: 10
+      hex: 0f 00 00 80 20 80 4f 00
+    ň:
+      height: 10
+      hex: 0f 80 48 00 28 00 47 80
+    Ň:
+      height: 10
+      hex: 3f 80 90 00 48 00 84 00 3f 80
+    Ů:
+      height: 10
+      hex: 3f 00 40 80 a0 80 40 80 3f 00
+    Ô:
+      height: 10
+      hex: 0f 00 50 80 90 80 50 80 0f 00
+    š:
+      height: 10
+      hex: 04 80 4a 80 2a 80 49 00
+    ř:
+      height: 10
+      hex: 4f 80 24 00 48 00
+- id: 2
+  glyphs:
+    "#20":
+      height: 10
+      hex: 00 00 00 00 00 00
+    '!':
+      height: 10
+      hex: 3e 80 3e 80
+    '&':
+      height: 10
+      hex: 03 00 37 80 7c 80 48 80 7d 80 33 00 04 80
+    '''':
+      height: 10
+      hex: 18 00 30 00
+    (:
+      height: 10
+      hex: 1f 00 20 80
+    ):
+      height: 10
+      hex: 20 80 1f 00
+    +:
+      height: 10
+      hex: 04 00 04 00 1f 00 1f 00 04 00 04 00
+    ',':
+      height: 10
+      hex: 00 80 03 80 03 00
+    '-':
+      height: 10
+      hex: 06 00 06 00 06 00
+    .:
+      height: 10
+      hex: 01 80 01 80
+    /:
+      height: 10
+      hex: 03 00 06 00 0c 00 18 00
+    "0":
+      height: 10
+      hex: 1f 00 3f 80 20 80 3f 80 1f 00
+    "1":
+      height: 10
+      hex: 10 00 3f 80 3f 80
+    "2":
+      height: 10
+      hex: 11 80 33 80 26 80 3c 80 18 80
+    "3":
+      height: 10
+      hex: 11 00 31 80 24 80 3f 80 1b 00
+    "4":
+      height: 10
+      hex: 0e 00 1e 00 33 80 27 80 02 00
+    "5":
+      height: 10
+      hex: 3d 00 3d 80 24 80 27 80 23 00
+    "6":
+      height: 10
+      hex: 1f 00 3f 80 24 80 37 80 13 00
+    "7":
+      height: 10
+      hex: 30 00 23 80 27 80 3c 00 38 00
+    "8":
+      height: 10
+      hex: 1b 00 3f 80 24 80 3f 80 1b 00
+    "9":
+      height: 10
+      hex: 19 00 3d 80 24 80 3f 80 1f 00
+    ":":
+      height: 10
+      hex: 0d 80 0d 80
+    ;:
+      height: 10
+      hex: 09 80 09 80
+    '=':
+      height: 10
+      hex: 05 00 05 00 05 00 05 00
+    A:
+      height: 10
+      hex: 1f 80 3f 80 24 00 3f 80 1f 80
+    B:
+      height: 10
+      hex: 3f 80 3f 80 24 80 3f 80 1b 00
+    C:
+      height: 10
+      hex: 1f 00 3f 80 20 80 31 80 11 00
+    D:
+      height: 10
+      hex: 3f 80 3f 80 20 80 3f 80 1f 00
+    E:
+      height: 10
+      hex: 3f 80 3f 80 24 80 20 80
+    F:
+      height: 10
+      hex: 3f 80 3f 80 24 00 20 00
+    G:
+      height: 10
+      hex: 1f 00 3f 80 20 80 32 80 13 00
+    H:
+      height: 10
+      hex: 3f 80 3f 80 04 00 3f 80 3f 80
+    I:
+      height: 10
+      hex: 3f 80 3f 80
+    J:
+      height: 10
+      hex: 01 00 21 80 20 80 3f 80 3f 00
+    K:
+      height: 10
+      hex: 3f 80 3f 80 0e 00 1b 80 31 80
+    L:
+      height: 10
+      hex: 3f 80 3f 80 00 80 00 80
+    M:
+      height: 10
+      hex: 3f 80 3f 80 18 00 0c 00 18 00 3f 80 3f 80
+    N:
+      height: 10
+      hex: 3f 80 3f 80 18 00 0c 00 3f 80 3f 80
+    O:
+      height: 10
+      hex: 1f 00 3f 80 20 80 3f 80 1f 00
+    P:
+      height: 10
+      hex: 3f 80 3f 80 24 00 3c 00 18 00
+    Q:
+      height: 10
+      hex: 1f 00 3f 80 20 80 3d 00 1e 80
+    R:
+      height: 10
+      hex: 3f 80 3f 80 24 00 3f 80 1b 80
+    S:
+      height: 10
+      hex: 19 00 3d 80 24 80 37 80 13 00
+    T:
+      height: 10
+      hex: 20 00 3f 80 3f 80 20 00
+    U:
+      height: 10
+      hex: 3f 00 3f 80 00 80 3f 80 3f 00
+    V:
+      height: 10
+      hex: 3e 00 3f 00 03 80 3f 00 3e 00
+    W:
+      height: 10
+      hex: 3f 00 3f 80 00 80 03 00 00 80 3f 80 3f 00
+    X:
+      height: 10
+      hex: 31 80 3b 80 0e 00 0e 00 3b 80 31 80
+    Y:
+      height: 10
+      hex: 30 00 38 00 0f 80 0f 80 38 00 30 00
+    Z:
+      height: 10
+      hex: 31 80 33 80 26 80 2c 80 39 80 31 80
+    '[':
+      height: 19
+      hex: 0f fe 00 0f fe 00 0f fe 00 00 00 00 0f fe 00 0f fe 00 0f fe 00 03 b8 00 07 1c 00 0e 0e 00 0c 06 00 00 00 00 0f fe 00 0f fe 00 0f fe 00 0e ee 00 0e ee 00 0e ee 00 00 00 00 00 1e 00 00 7e 00 01
+        fe 00 07 f8 00 0f 30 00 07 f8 00 01 fe 00 00 7e 00 00 1e 00
+    \:
+      height: 19
+      hex: 00 00 00 00 00 00 00 1f c0 00 02 00 00 02 00 7f 02 00 49 1f c0 49 00 00 49 07 c0 36 0a 00 00 12 00 1f 0a 00 28 07 c0 48 00 00 28 1f 80 1f 00 40 00 00 40 7e 00 40 01 1f 80 01 00 00 01 0c 80 7e
+        12 40 00 12 40 00 12 40 00 09 80 00 00 00 00 00 00 00 00 00
+    ']':
+      height: 10
+      hex: 20 80 3f 80 3f 80
+    _:
+      height: 10
+      hex: 00 80 00 80 00 80 00 80 00 80 00 80
+    a:
+      height: 10
+      hex: 07 00 0f 80 08 80 0f 80 0f 80
+    b:
+      height: 10
+      hex: 3f 80 3f 80 08 80 0f 80 07 00
+    c:
+      height: 10
+      hex: 07 00 0f 80 08 80 0d 80 05 00
+    d:
+      height: 10
+      hex: 07 00 0f 80 08 80 3f 80 3f 80
+    e:
+      height: 10
+      hex: 07 00 0f 80 0a 80 0a 80 06 80
+    f:
+      height: 10
+      hex: 08 00 1f 80 3f 80 28 00
+    g:
+      height: 10
+      hex: 04 00 0e 80 0a 80 0f 80 0f 00
+    h:
+      height: 10
+      hex: 3f 80 3f 80 08 00 0f 80 07 80
+    i:
+      height: 10
+      hex: 2f 80 2f 80
+    j:
+      height: 10
+      hex: 00 80 2f 80 2f 00
+    k:
+      height: 10
+      hex: 3f 80 3f 80 02 00 0f 80 0d 80
+    l:
+      height: 10
+      hex: 3f 00 3f 80 00 80
+    m:
+      height: 10
+      hex: 0f 80 0f 80 08 00 07 80 08 00 0f 80 07 80
+    n:
+      height: 10
+      hex: 0f 80 0f 80 08 00 0f 80 07 80
+    o:
+      height: 10
+      hex: 07 00 0f 80 08 80 0f 80 07 00
+    p:
+      height: 10
+      hex: 0f 80 0f 80 09 00 0f 00 06 00
+    q:
+      height: 10
+      hex: 04 00 0e 00 0a 00 0f 80 0f 80
+    r:
+      height: 10
+      hex: 0f 80 0f 80 04 00 08 00
+    s:
+      height: 10
+      hex: 04 80 0e 80 0a 80 0b 80 09 00
+    t:
+      height: 10
+      hex: 08 00 3f 00 3f 80 08 80
+    u:
+      height: 10
+      hex: 0f 00 0f 80 00 80 0f 80 0f 00
+    v:
+      height: 10
+      hex: 0e 00 0f 00 00 80 0f 00 0e 00
+    w:
+      height: 10
+      hex: 0f 00 0f 80 00 80 03 00 00 80 0f 80 0f 00
+    x:
+      height: 10
+      hex: 08 80 0d 80 07 00 0d 80 08 80
+    y:
+      height: 10
+      hex: 0c 00 0e 80 02 80 0f 80 0f 00
+    z:
+      height: 10
+      hex: 08 80 09 80 0b 80 0e 80 0c 80
+    '|':
+      height: 10
+      hex: ff 80 ff 80
+    Č:
+      height: 10
+      hex: 1f 00 bf 80 60 80 b1 80 11 00
+    ü:
+      height: 10
+      hex: 2f 00 2f 80 00 80 2f 80 2f 00
+    é:
+      height: 10
+      hex: 07 00 0f 80 2a 80 4a 80 06 80
+    ď:
+      height: 10
+      hex: 47 00 2f 80 48 80 3f 80 3f 80
+    ä:
+      height: 10
+      hex: 27 00 2f 80 08 80 2f 80 2f 80
+    Ď:
+      height: 10
+      hex: 3f 80 bf 80 60 80 bf 80 1f 00
+    Ť:
+      height: 10
+      hex: 20 00 20 00 bf 80 7f 80 a0 00 20 00
+    č:
+      height: 10
+      hex: 07 00 4f 80 28 80 4d 80 05 00
+    ě:
+      height: 10
+      hex: 07 00 4f 80 2a 80 4a 80 06 80
+    Ě:
+      height: 10
+      hex: 3f 80 bf 80 64 80 a4 80 20 80
+    Í:
+      height: 10
+      hex: 20 80 3f 80 7f 80 a0 80
+    ľ:
+      height: 10
+      hex: 3f 00 3f 80 c0 80
+    ĺ:
+      height: 10
+      hex: 3f 00 1f 80 60 80
+    Ä:
+      height: 10
+      hex: 9f 80 bf 80 24 00 bf 80 9f 80
+    Á:
+      height: 10
+      hex: 1f 80 3f 80 64 00 bf 80 1f 80
+    É:
+      height: 10
+      hex: 3f 80 3f 80 64 80 a4 80 20 80
+    ž:
+      height: 10
+      hex: 08 80 49 80 2b 80 4e 80 0c 80
+    Ž:
+      height: 10
+      hex: 31 80 33 80 a6 80 6c 80 b9 80 31 80
+    ö:
+      height: 10
+      hex: 27 00 2f 80 08 80 2f 80 27 00
+    Ó:
+      height: 10
+      hex: 1f 00 3f 80 60 80 bf 80 1f 00
+    ů:
+      height: 10
+      hex: 0f 00 4f 80 a0 80 4f 80 0f 00
+    Ú:
+      height: 10
+      hex: 3f 00 3f 80 40 80 bf 80 3f 00
+    ý:
+      height: 10
+      hex: 0c 00 0e 80 22 80 4f 80 0f 00
+    Ö:
+      height: 10
+      hex: 9f 00 bf 80 20 80 20 80 bf 80 9f 00
+    Ü:
+      height: 10
+      hex: bf 00 bf 80 00 80 bf 80 bf 00
+    Š:
+      height: 10
+      hex: 19 00 bd 80 64 80 b7 80 13 00
+    Ľ:
+      height: 10
+      hex: 3f 80 3f 80 c0 80 00 80 00 80
+    Ý:
+      height: 10
+      hex: 30 00 38 00 0f 80 4f 80 b8 00 30 00
+    Ř:
+      height: 10
+      hex: 3f 80 bf 80 64 00 bf 80 1b 80
+    ť:
+      height: 10
+      hex: 08 00 3f 00 3f 80 68 80
+    á:
+      height: 10
+      hex: 07 00 0f 80 08 80 2f 80 4f 80
+    í:
+      height: 10
+      hex: 2f 80 4f 80
+    ó:
+      height: 10
+      hex: 07 00 0f 80 28 80 4f 80 07 00
+    ú:
+      height: 10
+      hex: 0f 00 0f 80 20 80 4f 80 0f 00
+    ň:
+      height: 10
+      hex: 0f 80 4f 80 28 00 4f 80 07 80
+    Ň:
+      height: 10
+      hex: 3f 80 3f 80 98 00 4c 00 bf 80 3f 80
+    Ů:
+      height: 10
+      hex: 3f 00 3f 80 c0 80 ff 80 3f 00
+    Ô:
+      height: 10
+      hex: 0f 00 5f 80 90 80 5f 80 0f 00
+    š:
+      height: 10
+      hex: 04 80 4e 80 2a 80 4b 80 09 00
+    ř:
+      height: 10
+      hex: 0f 80 4f 80 24 00 48 00
+- id: 3
+  glyphs:
+    "#20":
+      height: 10
+      hex: 00 00 00 00 00 00
+    '!':
+      height: 10
+      hex: 3e 80 3e 80
+    '&':
+      height: 10
+      hex: 03 00 37 80 7c 80 48 80 7d 80 33 00 04 80
+    '''':
+      height: 10
+      hex: 18 00 30 00
+    (:
+      height: 10
+      hex: 1f 00 20 80
+    ):
+      height: 10
+      hex: 20 80 1f 00
+    +:
+      height: 10
+      hex: 04 00 04 00 1f 00 1f 00 04 00 04 00
+    ',':
+      height: 10
+      hex: 00 80 03 80 03 00
+    '-':
+      height: 10
+      hex: 06 00 06 00 06 00 06 00
+    .:
+      height: 10
+      hex: 01 80 01 80
+    /:
+      height: 10
+      hex: 03 00 06 00 0c 00 18 00
+    "0":
+      height: 10
+      hex: 1f 00 3f 80 20 80 20 80 3f 80 1f 00
+    "1":
+      height: 10
+      hex: 10 00 3f 80 3f 80
+    "2":
+      height: 10
+      hex: 11 80 33 80 26 80 24 80 3c 80 18 80
+    "3":
+      height: 10
+      hex: 11 00 31 80 24 80 24 80 3f 80 1b 00
+    "4":
+      height: 10
+      hex: 06 00 0e 00 1a 00 33 80 27 80 02 00
+    "5":
+      height: 10
+      hex: 3d 00 3d 80 24 80 24 80 27 80 23 00
+    "6":
+      height: 10
+      hex: 1f 00 3f 80 24 80 24 80 37 80 13 00
+    "7":
+      height: 10
+      hex: 30 00 23 80 27 80 2c 00 38 00 30 00
+    "8":
+      height: 10
+      hex: 1b 00 3f 80 24 80 24 80 3f 80 1b 00
+    "9":
+      height: 10
+      hex: 19 00 3d 80 24 80 24 80 3f 80 1f 00
+    ":":
+      height: 10
+      hex: 0d 80 0d 80
+    ;:
+      height: 10
+      hex: 09 80 09 80
+    '=':
+      height: 10
+      hex: 05 00 05 00 05 00 05 00
+    A:
+      height: 10
+      hex: 1f 80 3f 80 24 00 24 00 3f 80 1f 80
+    B:
+      height: 10
+      hex: 3f 80 3f 80 24 80 24 80 3f 80 1b 00
+    C:
+      height: 10
+      hex: 1f 00 3f 80 20 80 20 80 31 80 11 00
+    D:
+      height: 10
+      hex: 3f 80 3f 80 20 80 20 80 3f 80 1f 00
+    E:
+      height: 10
+      hex: 3f 80 3f 80 24 80 24 80 20 80
+    F:
+      height: 10
+      hex: 3f 80 3f 80 24 00 24 00 20 00
+    G:
+      height: 10
+      hex: 1f 00 3f 80 20 80 22 80 33 80 13 00
+    H:
+      height: 10
+      hex: 3f 80 3f 80 04 00 04 00 3f 80 3f 80
+    I:
+      height: 10
+      hex: 20 80 3f 80 3f 80 20 80
+    J:
+      height: 10
+      hex: 01 00 21 80 20 80 3f 80 3f 00
+    K:
+      height: 10
+      hex: 3f 80 3f 80 04 00 0e 00 3b 80 31 80
+    L:
+      height: 10
+      hex: 3f 80 3f 80 00 80 00 80 00 80
+    M:
+      height: 10
+      hex: 3f 80 3f 80 18 00 0c 00 18 00 3f 80 3f 80
+    N:
+      height: 10
+      hex: 3f 80 3f 80 18 00 0c 00 3f 80 3f 80
+    O:
+      height: 10
+      hex: 1f 00 3f 80 20 80 20 80 3f 80 1f 00
+    P:
+      height: 10
+      hex: 3f 80 3f 80 24 00 24 00 3c 00 18 00
+    Q:
+      height: 10
+      hex: 1f 00 3f 80 20 80 20 80 3d 00 1e 80
+    R:
+      height: 10
+      hex: 3f 80 3f 80 24 00 24 00 3f 80 1b 80
+    S:
+      height: 10
+      hex: 19 00 3d 80 24 80 24 80 37 80 13 00
+    T:
+      height: 10
+      hex: 20 00 20 00 3f 80 3f 80 20 00 20 00
+    U:
+      height: 10
+      hex: 3f 00 3f 80 00 80 00 80 3f 80 3f 00
+    V:
+      height: 10
+      hex: 3c 00 3e 00 03 00 01 80 03 00 3e 00 3c 00
+    W:
+      height: 10
+      hex: 3f 00 3f 80 00 80 03 00 00 80 3f 80 3f 00
+    X:
+      height: 10
+      hex: 31 80 3b 80 0e 00 0e 00 3b 80 31 80
+    Y:
+      height: 10
+      hex: 38 00 3c 00 07 80 07 80 3c 00 38 00
+    Z:
+      height: 10
+      hex: 31 80 33 80 26 80 2c 80 39 80 31 80
+    '[':
+      height: 19
+      hex: 07 fc 00 4f fe 40 1c 07 00 38 03 80 70 01 c0 e3 f0 e0 c7 f8 60 cc 0c 60 cc 0c 60 cc 0c 60 cc 0c 60 ce 1c 60 c6 18 60 c0 00 60 c0 00 60 ce 1c 60 cc 3c 60 cc 6c 60 cc cc 60 cd 8c 60 cf 0c 60 ce
+        1c 60 e0 00 e0 70 01 c0 38 03 80 1c 07 00 4f fe 40 07 fc 00
+    \:
+      height: 10
+      hex: 18 00 0c 00 06 00 03 00
+    ']':
+      height: 10
+      hex: 20 80 20 80 3f 80 3f 80
+    _:
+      height: 10
+      hex: 00 80 00 80 00 80 00 80 00 80 00 80
+    a:
+      height: 10
+      hex: 07 00 0f 80 08 80 0f 80 0f 80
+    b:
+      height: 10
+      hex: 3f 80 3f 80 08 80 0f 80 07 00
+    c:
+      height: 10
+      hex: 07 00 0f 80 08 80 0d 80 05 00
+    d:
+      height: 10
+      hex: 07 00 0f 80 08 80 3f 80 3f 80
+    e:
+      height: 10
+      hex: 07 00 0f 80 0a 80 0a 80 06 80
+    f:
+      height: 10
+      hex: 08 00 1f 80 3f 80 28 00
+    g:
+      height: 10
+      hex: 04 00 0e 80 0a 80 0f 80 0f 00
+    h:
+      height: 10
+      hex: 3f 80 3f 80 08 00 0f 80 07 80
+    i:
+      height: 10
+      hex: 2f 00 2f 80 00 80
+    j:
+      height: 10
+      hex: 00 80 2f 80 2f 00
+    k:
+      height: 10
+      hex: 3f 80 3f 80 02 00 0f 80 0d 80
+    l:
+      height: 10
+      hex: 3f 00 3f 80 00 80
+    m:
+      height: 10
+      hex: 0f 80 0f 80 08 00 07 80 08 00 0f 80 07 80
+    n:
+      height: 10
+      hex: 0f 80 0f 80 08 00 0f 80 07 80
+    o:
+      height: 10
+      hex: 07 00 0f 80 08 80 0f 80 07 00
+    p:
+      height: 10
+      hex: 0f 80 0f 80 09 00 0f 00 06 00
+    q:
+      height: 10
+      hex: 04 00 0e 00 0a 00 0f 80 0f 80
+    r:
+      height: 10
+      hex: 0f 80 0f 80 04 00 08 00
+    s:
+      height: 10
+      hex: 04 80 0e 80 0a 80 0b 80 09 00
+    t:
+      height: 10
+      hex: 08 00 3f 00 3f 80 08 80
+    u:
+      height: 10
+      hex: 0f 00 0f 80 00 80 0f 80 0f 00
+    v:
+      height: 10
+      hex: 0e 00 0f 00 00 80 0f 00 0e 00
+    w:
+      height: 10
+      hex: 0f 00 0f 80 00 80 03 00 00 80 0f 80 0f 00
+    x:
+      height: 10
+      hex: 08 80 0d 80 07 00 0d 80 08 80
+    y:
+      height: 10
+      hex: 0c 00 0e 80 02 80 0f 80 0f 00
+    z:
+      height: 10
+      hex: 08 80 09 80 0b 80 0e 80 0c 80
+    '|':
+      height: 10
+      hex: ff 80 ff 80
+    Č:
+      height: 10
+      hex: 1f 00 3f 80 a0 80 60 80 b1 80 11 00
+    ü:
+      height: 10
+      hex: 2f 00 2f 80 00 80 2f 80 2f 00
+    é:
+      height: 10
+      hex: 07 00 0f 80 2a 80 4a 80 06 80
+    ď:
+      height: 10
+      hex: 47 00 2f 80 48 80 3f 80 3f 80
+    ä:
+      height: 10
+      hex: 27 00 2f 80 08 80 2f 80 2f 80
+    Ď:
+      height: 10
+      hex: 3f 80 3f 80 a0 80 60 80 bf 80 1f 00
+    Ť:
+      height: 10
+      hex: 20 00 20 00 bf 80 7f 80 a0 00 20 00
+    č:
+      height: 10
+      hex: 07 00 4f 80 28 80 4d 80 05 00
+    ě:
+      height: 10
+      hex: 07 00 4f 80 2a 80 4a 80 06 80
+    Ě:
+      height: 10
+      hex: 3f 80 bf 80 64 80 a4 80 20 80
+    Í:
+      height: 10
+      hex: 20 80 3f 80 7f 80 a0 80
+    ľ:
+      height: 10
+      hex: 3f 00 3f 80 c0 80
+    Ä:
+      height: 10
+      hex: 9f 80 bf 80 24 00 24 00 bf 80 9f 80
+    Á:
+      height: 10
+      hex: 1f 80 3f 80 24 00 64 00 bf 80 1f 80
+    É:
+      height: 10
+      hex: 3f 80 3f 80 64 80 a4 80 20 80
+    ž:
+      height: 10
+      hex: 08 80 49 80 2b 80 4e 80 0c 80
+    Ž:
+      height: 10
+      hex: 31 80 33 80 a6 80 6c 80 b9 80 31 80
+    ö:
+      height: 10
+      hex: 27 00 2f 80 08 80 2f 80 27 00
+    Ó:
+      height: 10
+      hex: 1f 00 3f 80 20 80 60 80 bf 80 1f 00
+    ů:
+      height: 10
+      hex: 0f 00 4f 80 a0 80 4f 80 0f 00
+    Ú:
+      height: 10
+      hex: 3f 00 3f 80 00 80 40 80 bf 80 3f 00
+    ý:
+      height: 10
+      hex: 0c 00 0e 80 22 80 4f 80 0f 00
+    Ö:
+      height: 10
+      hex: 9f 00 bf 80 20 80 20 80 bf 80 9f 00
+    Ü:
+      height: 10
+      hex: bf 00 bf 80 00 80 00 80 bf 80 bf 00
+    Š:
+      height: 10
+      hex: 19 00 3d 80 a4 80 64 80 b7 80 13 00
+    Ľ:
+      height: 10
+      hex: 3f 80 3f 80 c0 80 00 80 00 80
+    Ý:
+      height: 10
+      hex: 30 00 38 00 0f 80 4f 80 b8 00 30 00
+    Ř:
+      height: 10
+      hex: 3f 80 3f 80 a4 00 64 00 bf 80 1b 80
+    ť:
+      height: 10
+      hex: 08 00 3f 00 3f 80 68 80
+    á:
+      height: 10
+      hex: 07 00 0f 80 08 80 2f 80 4f 80
+    í:
+      height: 10
+      hex: 0f 00 2f 80 40 80
+    ó:
+      height: 10
+      hex: 07 00 0f 80 28 80 4f 80 07 00
+    ú:
+      height: 10
+      hex: 0f 00 0f 80 20 80 4f 80 0f 00
+    ň:
+      height: 10
+      hex: 0f 80 4f 80 28 00 4f 80 07 80
+    Ň:
+      height: 10
+      hex: 3f 80 3f 80 98 00 4c 00 bf 80 3f 80
+    Ů:
+      height: 10
+      hex: 3f 00 3f 80 c0 80 c0 80 3f 80 3f 00
+    Ô:
+      height: 10
+      hex: 0f 00 5f 80 90 80 90 80 5f 80 0f 00
+    š:
+      height: 10
+      hex: 04 80 4e 80 2a 80 4b 80 09 00
+    ř:
+      height: 10
+      hex: 0f 80 4f 80 24 00 48 00
+    "#AF":
+      height: 9
+      hex: ff 80 80 80 80 80 9f 80 cf 80 e7 80 cf 80 9f 80 80 80 80 80 ff 80
+- id: 4
+  glyphs:
+    "#20":
+      height: 10
+      hex: 00 00 00 00 00 00 00 00
+    '!':
+      height: 10
+      hex: fc c0 fc c0
+    '&':
+      height: 10
+      hex: 01 80 1b c0 3e 40 24 40 3e c0 19 80 02 40
+    '''':
+      height: 10
+      hex: 20 00 e0 00 c0 00
+    (:
+      height: 10
+      hex: 7f 80 80 40
+    ):
+      height: 10
+      hex: 80 40 7f 80
+    +:
+      height: 10
+      hex: 0c 00 0c 00 3f 00 3f 00 0c 00 0c 00
+    ',':
+      height: 10
+      hex: 00 40 01 c0 01 80
+    '-':
+      height: 10
+      hex: 0c 00 0c 00 0c 00 0c 00
+    .:
+      height: 10
+      hex: 00 c0 00 c0
+    /:
+      height: 10
+      hex: 01 80 03 00 06 00 0c 00 18 00 30 00 60 00
+    "0":
+      height: 10
+      hex: 7f 80 ff c0 c0 c0 c0 c0 ff c0 7f 80
+    "1":
+      height: 10
+      hex: 20 00 60 00 ff c0 ff c0
+    "2":
+      height: 10
+      hex: 61 c0 e3 c0 c6 c0 cc c0 f8 c0 71 c0
+    "3":
+      height: 10
+      hex: 61 80 e1 c0 cc c0 cc c0 ff c0 73 80
+    "4":
+      height: 10
+      hex: 0f 00 3f 00 f3 00 c7 c0 0f c0 03 00
+    "5":
+      height: 10
+      hex: fd 80 fd c0 cc c0 cc c0 cf c0 c7 80
+    "6":
+      height: 10
+      hex: 7f 80 ff c0 cc c0 cc c0 ef c0 67 80
+    "7":
+      height: 10
+      hex: c0 00 c0 00 c7 c0 df c0 f8 00 e0 00
+    "8":
+      height: 10
+      hex: 73 80 ff c0 cc c0 cc c0 ff c0 73 80
+    "9":
+      height: 10
+      hex: 79 80 fd c0 cc c0 cc c0 ff c0 7f 80
+    ":":
+      height: 10
+      hex: 19 80 19 80
+    ;:
+      height: 10
+      hex: 00 40 19 c0 19 80
+    '=':
+      height: 10
+      hex: 1b 00 1b 00 1b 00 1b 00
+    A:
+      height: 10
+      hex: 7f c0 ff c0 cc 00 cc 00 ff c0 7f c0
+    B:
+      height: 10
+      hex: ff c0 ff c0 cc c0 cc c0 ff c0 73 80
+    C:
+      height: 10
+      hex: 7f 80 ff c0 c0 c0 c0 c0 e1 c0 61 80
+    D:
+      height: 10
+      hex: ff c0 ff c0 c0 c0 c0 c0 ff c0 7f 80
+    E:
+      height: 10
+      hex: ff c0 ff c0 cc c0 cc c0 cc c0 c0 c0
+    F:
+      height: 10
+      hex: ff c0 ff c0 cc 00 cc 00 cc 00 c0 00
+    G:
+      height: 10
+      hex: 7f 80 ff c0 c0 c0 c6 c0 e7 c0 67 80
+    H:
+      height: 10
+      hex: ff c0 ff c0 0c 00 0c 00 ff c0 ff c0
+    I:
+      height: 10
+      hex: ff c0 ff c0
+    J:
+      height: 10
+      hex: 01 80 c1 c0 c0 c0 c0 c0 ff c0 ff 80
+    K:
+      height: 10
+      hex: ff c0 ff c0 1e 00 33 00 61 c0 c0 c0
+    L:
+      height: 10
+      hex: ff c0 ff c0 00 c0 00 c0 00 c0
+    M:
+      height: 10
+      hex: ff c0 ff c0 70 00 38 00 70 00 ff c0 ff c0
+    N:
+      height: 10
+      hex: ff c0 ff c0 70 00 38 00 1c 00 ff c0 ff c0
+    O:
+      height: 10
+      hex: 7f 80 ff c0 c0 c0 c0 c0 ff c0 7f 80
+    P:
+      height: 10
+      hex: ff c0 ff c0 cc 00 cc 00 fc 00 78 00
+    Q:
+      height: 10
+      hex: 7f 80 ff c0 c0 c0 c3 40 fd 80 7e c0
+    R:
+      height: 10
+      hex: ff c0 ff c0 cc 00 ce 00 fb c0 71 c0
+    S:
+      height: 10
+      hex: 79 80 fc c0 cc c0 cc c0 cf c0 67 80
+    T:
+      height: 10
+      hex: c0 00 c0 00 ff c0 ff c0 c0 00 c0 00
+    U:
+      height: 10
+      hex: ff 80 ff c0 00 c0 00 c0 ff c0 ff 80
+    V:
+      height: 10
+      hex: fe 00 ff 00 03 80 01 c0 03 80 ff 00 fe 00
+    W:
+      height: 10
+      hex: ff c0 ff c0 03 80 07 00 03 80 ff c0 ff c0
+    X:
+      height: 10
+      hex: e3 c0 f7 c0 3e 00 1c 00 3e 00 f7 c0 e3 c0
+    Y:
+      height: 10
+      hex: f8 00 fc 00 07 c0 07 c0 fc 00 f8 00
+    Z:
+      height: 10
+      hex: c3 c0 c7 c0 ce c0 dc c0 f8 c0 f0 c0
+    '[':
+      height: 19
+      hex: 00 00 00 00 0e 80 00 0e 80 00 06 80 00 06 80 00 06 80 00 06 80 20 06 80 20 0e 80 20 17 80 20 1f 80 60 0f 80 60 07 80 60 07 80 60 07 a0 60 07 e0 60 0f c0 60 0f a0 60 2f e0 60 6f e0 70 df c0 38
+        ff 80 3f ff 80 1f ff 00 0f fe 00 07 e0 00 00 fc 00 00 3e 00
+    \:
+      height: 10
+      hex: 60 00 30 00 18 00 0c 00 06 00 03 00 01 80
+    ']':
+      height: 10
+      hex: c0 c0 c0 c0 ff c0 ff c0
+    _:
+      height: 10
+      hex: 00 c0 00 c0 00 c0 00 c0 00 c0 00 c0
+    a:
+      height: 10
+      hex: 0f 80 1f c0 18 c0 1f c0 1f c0
+    b:
+      height: 10
+      hex: ff c0 ff c0 18 c0 1f c0 0f 80
+    c:
+      height: 10
+      hex: 0f 80 1f c0 18 c0 18 c0 08 80
+    d:
+      height: 10
+      hex: 0f 80 1f c0 18 c0 ff c0 ff c0
+    e:
+      height: 10
+      hex: 0f 80 1f c0 1a c0 1e c0 0e 80
+    f:
+      height: 10
+      hex: 18 00 7f c0 ff c0 d8 00
+    g:
+      height: 10
+      hex: 1c 80 3e c0 36 c0 3f c0 3f 80
+    h:
+      height: 10
+      hex: ff c0 ff c0 18 00 1f c0 0f c0
+    i:
+      height: 10
+      hex: df 80 df c0 00 c0
+    j:
+      height: 10
+      hex: 00 c0 df c0 df 80
+    k:
+      height: 10
+      hex: ff c0 ff c0 07 00 0d c0 18 c0
+    l:
+      height: 10
+      hex: ff 80 ff c0 00 c0
+    m:
+      height: 10
+      hex: 1f c0 1f c0 18 00 1f c0 1f c0 18 00 1f c0 0f c0
+    n:
+      height: 10
+      hex: 1f c0 1f c0 18 00 1f c0 0f c0
+    o:
+      height: 10
+      hex: 0f 80 1f c0 18 c0 1f c0 0f 80
+    p:
+      height: 10
+      hex: 1f c0 1f c0 1b 00 1f 00 0e 00
+    q:
+      height: 10
+      hex: 0e 00 1f 00 1b 00 1f c0 1f c0
+    r:
+      height: 10
+      hex: 1f c0 1f c0 0c 00 18 00
+    s:
+      height: 10
+      hex: 0e 80 1e c0 1a c0 1b c0 0b 80
+    t:
+      height: 10
+      hex: 18 00 ff 80 ff c0 18 c0
+    u:
+      height: 10
+      hex: 1f 80 1f c0 00 c0 1f c0 1f 80
+    v:
+      height: 10
+      hex: 1f 00 1f 80 01 c0 1f 80 1f 00
+    w:
+      height: 10
+      hex: 1f c0 1f c0 01 80 03 00 01 80 1f c0 1f c0
+    x:
+      height: 10
+      hex: 18 c0 1d c0 07 00 07 00 1d c0 18 c0
+    y:
+      height: 10
+      hex: 1c 80 1e c0 06 c0 1f c0 1f 80
+    z:
+      height: 10
+      hex: 19 c0 1b c0 1e c0 1c c0 18 c0
+    '|':
+      height: 10
+      hex: ff c0 ff c0
+    Č:
+      height: 10
+      hex: 1f 80 3f c0 b0 c0 70 c0 b9 c0 19 80
+    ü:
+      height: 10
+      hex: df 80 df c0 00 c0 df c0 df 80
+    é:
+      height: 10
+      hex: 0f 80 1f c0 5a c0 de c0 8e 80
+    ď:
+      height: 10
+      hex: 8f 80 5f c0 98 c0 ff c0 ff c0
+    ä:
+      height: 10
+      hex: cf 80 df c0 18 c0 df c0 df c0
+    č:
+      height: 10
+      hex: 0f 80 9f c0 58 c0 98 c0 08 80
+    ě:
+      height: 10
+      hex: 0f 80 9f c0 5a c0 9e c0 0e 80
+    ľ:
+      height: 10
+      hex: ff 80 ff c0 00 c0 c0 00
+    Ä:
+      height: 10
+      hex: 9f c0 bf c0 33 00 33 00 bf c0 9f c0
+    ž:
+      height: 10
+      hex: 19 c0 9b c0 5e c0 9c c0 18 c0
+    Ž:
+      height: 10
+      hex: 30 c0 31 c0 b3 c0 76 c0 bc c0 38 c0 30 c0
+    ô:
+      height: 10
+      hex: 0f 80 5f c0 98 c0 5f c0 0f 80
+    ö:
+      height: 10
+      hex: cf 80 df c0 18 c0 df c0 cf 80
+    ů:
+      height: 10
+      hex: 1f 80 5f c0 a0 c0 5f c0 1f 80
+    ý:
+      height: 10
+      hex: 1c 80 1e c0 46 c0 df c0 9f 80
+    Ö:
+      height: 10
+      hex: 9f 80 bf c0 30 c0 30 c0 bf c0 9f 80
+    Ü:
+      height: 10
+      hex: bf 80 bf c0 00 c0 00 c0 bf c0 bf 80
+    Š:
+      height: 10
+      hex: 1c 80 3e c0 b6 c0 76 c0 b7 c0 13 80
+    Ř:
+      height: 10
+      hex: 3f c0 3f c0 b7 00 77 80 be c0 1c 40
+    ť:
+      height: 10
+      hex: 18 00 ff 80 ff c0 18 c0 c0 00
+    á:
+      height: 10
+      hex: 0f 80 1f c0 58 c0 df c0 9f c0
+    í:
+      height: 10
+      hex: 5f 80 df c0 80 c0
+    ó:
+      height: 10
+      hex: 0f 80 1f c0 58 c0 df c0 8f 80
+    ú:
+      height: 10
+      hex: 1f 80 1f c0 40 c0 df c0 9f 80
+    ň:
+      height: 10
+      hex: 1f c0 9f c0 58 00 9f c0 0f c0
+    š:
+      height: 10
+      hex: 0e 80 9e c0 5a c0 9b c0 0b 80
+    ř:
+      height: 10
+      hex: 1f c0 9f c0 4c 00 98 00
+- id: 5
+  glyphs:
+    "#20":
+      height: 16
+      hex: 00 00 00 00 00 00 00 00
+    '!':
+      height: 16
+      hex: 1f f3 1f f3
+    '''':
+      height: 16
+      hex: 04 00 1c 00 18 00
+    (:
+      height: 16
+      hex: 0f fe 10 01
+    ):
+      height: 16
+      hex: 10 01 0f fe
+    +:
+      height: 16
+      hex: 00 30 00 30 00 fc 00 fc 00 30 00 30
+    ',':
+      height: 16
+      hex: 00 01 00 07 00 06
+    '-':
+      height: 16
+      hex: 00 30 00 30 00 30 00 30 00 30
+    .:
+      height: 16
+      hex: 00 03 00 03
+    /:
+      height: 16
+      hex: 00 18 00 30 00 60 00 c0 01 80
+    "0":
+      height: 16
+      hex: 0f fe 1f ff 18 03 18 03 1f ff 0f fe
+    "1":
+      height: 16
+      hex: 06 00 0e 03 1f ff 1f ff 00 03
+    "2":
+      height: 16
+      hex: 0c 1f 1c 3f 18 73 18 e3 1f c3 0f 83
+    "3":
+      height: 16
+      hex: 0c 06 1c c7 18 c3 18 c3 1f ff 0f 3e
+    "4":
+      height: 16
+      hex: 01 f0 03 f0 07 30 0e 7f 1c ff 00 30
+    "5":
+      height: 16
+      hex: 1f c6 1f c7 18 c3 18 c3 18 ff 18 7e
+    "6":
+      height: 16
+      hex: 0f fe 1f ff 18 c3 18 c3 1c ff 0c 7e
+    "7":
+      height: 16
+      hex: 1c 00 18 3f 18 7f 18 e0 1f c0 1f 80
+    "8":
+      height: 16
+      hex: 0f 3e 1f ff 18 c3 18 c3 1f ff 0f 3e
+    "9":
+      height: 16
+      hex: 0f 86 1f c7 18 c3 18 c3 1f ff 0f fe
+    ":":
+      height: 16
+      hex: 00 66 00 66
+    ;:
+      height: 16
+      hex: 00 01 00 67 00 66
+    '=':
+      height: 16
+      hex: 00 d8 00 d8 00 d8 00 d8 00 d8
+    A:
+      height: 16
+      hex: 0f ff 1f ff 18 c0 18 c0 1f ff 0f ff
+    B:
+      height: 16
+      hex: 1f ff 1f ff 18 c3 18 c3 1f ff 0f 3e
+    C:
+      height: 16
+      hex: 0f fe 1f ff 18 03 18 03 1c 07 0c 06
+    D:
+      height: 16
+      hex: 1f ff 1f ff 18 03 18 03 1f ff 0f fe
+    E:
+      height: 16
+      hex: 1f ff 1f ff 18 c3 18 c3 18 c3 18 03
+    F:
+      height: 16
+      hex: 1f ff 1f ff 18 c0 18 c0 18 c0 18 00
+    G:
+      height: 16
+      hex: 0f fe 1f ff 18 03 18 63 1c 7f 0c 7e
+    H:
+      height: 16
+      hex: 1f ff 1f ff 00 c0 00 c0 1f ff 1f ff
+    I:
+      height: 16
+      hex: 1f ff 1f ff
+    J:
+      height: 16
+      hex: 00 06 18 07 18 03 18 03 1f ff 1f fe
+    K:
+      height: 16
+      hex: 1f ff 1f ff 00 e0 01 f0 1f bf 1f 1f
+    L:
+      height: 16
+      hex: 1f ff 1f ff 00 03 00 03 00 03
+    M:
+      height: 16
+      hex: 1f ff 1f ff 0e 00 07 00 0e 00 1f ff 1f ff
+    N:
+      height: 16
+      hex: 1f ff 1f ff 07 00 03 80 1f ff 1f ff
+    O:
+      height: 16
+      hex: 0f fe 1f ff 18 03 18 03 1f ff 0f fe
+    P:
+      height: 16
+      hex: 1f ff 1f ff 18 c0 18 c0 1f c0 0f 80
+    Q:
+      height: 16
+      hex: 0f fe 1f ff 18 03 18 0d 1f f6 0f fb
+    R:
+      height: 16
+      hex: 1f ff 1f ff 18 f0 18 f8 1f df 0f 8f
+    S:
+      height: 16
+      hex: 0f 8e 1f cf 18 c3 18 c3 1c ff 0c 7e
+    T:
+      height: 16
+      hex: 18 00 18 00 1f ff 1f ff 18 00 18 00
+    U:
+      height: 16
+      hex: 1f fe 1f ff 00 03 00 03 1f ff 1f fe
+    V:
+      height: 16
+      hex: 1f f8 1f fc 00 0e 00 07 00 0e 1f fc 1f f8
+    W:
+      height: 16
+      hex: 1f ff 1f ff 00 0e 00 1c 00 0e 1f ff 1f ff
+    X:
+      height: 16
+      hex: 1f 1f 1f bf 01 f0 00 e0 01 f0 1f bf 1f 1f
+    Y:
+      height: 16
+      hex: 1f c0 1f e0 00 7f 00 7f 1f e0 1f c0
+    Z:
+      height: 16
+      hex: 18 1f 18 3f 18 73 18 e3 19 c3 1f 83 1f 03
+    '[':
+      height: 19
+      hex: 00 03 80 00 07 80 00 0f 80 00 1e 00 00 3c 00 00 78 00 00 70 00 00 e0 00 01 c0 00 01 90 80 03 39 80 06 3f 80 0c 3f 80 1c 7e 00 18 f8 00 33 f0 00 67 b0 00 5e 21 00 f8 23 80 f0 07 80 c0 00 80 00
+        f0 80 01 f9 80 03 1f 80 03 0f 00 03 00 00 03 00 80 03 c3 80 01 87 80 00 1e 00 00 3c 00 00 e6 00 01 e7 00 07 47 80 0e cd 80 3c d8 80 70 f0 80 e0 60 80 c0 00 00 80 00 00 00 03 00 00 0f 80 00 1f 80
+        00 31 80 00 61 80 00 41 80 00 63 00 00 7f 00 00 7c 00 00 20 00 00 20 00 00 60 00 00 40 00 00 c0 00 01 80 00 01 80 00
+    \:
+      height: 16
+      hex: 01 80 00 c0 00 60 00 30 00 18
+    ']':
+      height: 16
+      hex: 18 03 1f ff 1f ff
+    _:
+      height: 16
+      hex: 00 03 00 03 00 03 00 03 00 03 00 03
+    a:
+      height: 16
+      hex: 00 7e 00 ff 00 c3 00 ff 00 ff
+    b:
+      height: 16
+      hex: 1f ff 1f ff 00 c3 00 ff 00 7e
+    c:
+      height: 16
+      hex: 00 7e 00 ff 00 c3 00 e7 00 66
+    d:
+      height: 16
+      hex: 00 7e 00 ff 00 c3 1f ff 1f ff
+    e:
+      height: 16
+      hex: 00 7e 00 ff 00 db 00 fb 00 7b
+    f:
+      height: 16
+      hex: 00 c0 0f ff 1f ff 10 c0
+    g:
+      height: 16
+      hex: 00 73 00 fb 00 db 00 ff 00 fe
+    h:
+      height: 16
+      hex: 1f ff 1f ff 00 c0 00 ff 00 7f
+    i:
+      height: 16
+      hex: 0c ff 0c ff
+    j:
+      height: 16
+      hex: 00 01 0c ff 0c fe
+    k:
+      height: 16
+      hex: 1f ff 1f ff 00 18 00 ff 00 e7
+    l:
+      height: 16
+      hex: 1f fe 1f ff 00 01
+    m:
+      height: 16
+      hex: 00 ff 00 ff 00 c0 00 7f 00 c0 00 ff 00 7f
+    n:
+      height: 16
+      hex: 00 ff 00 ff 00 c0 00 ff 00 7f
+    o:
+      height: 16
+      hex: 00 7e 00 ff 00 c3 00 ff 00 7e
+    p:
+      height: 16
+      hex: 00 ff 00 ff 00 cc 00 fc 00 78
+    q:
+      height: 16
+      hex: 00 78 00 fc 00 cc 00 ff 00 ff
+    r:
+      height: 16
+      hex: 00 ff 00 ff 00 60 00 c0 00 c0
+    s:
+      height: 16
+      hex: 00 72 00 fb 00 db 00 df 00 4e
+    t:
+      height: 16
+      hex: 00 c0 1f fe 1f ff 00 c1
+    u:
+      height: 16
+      hex: 00 fe 00 ff 00 03 00 ff 00 fe
+    v:
+      height: 16
+      hex: 00 fc 00 fe 00 07 00 fe 00 fc
+    w:
+      height: 16
+      hex: 00 ff 00 ff 00 06 00 0c 00 06 00 ff 00 ff
+    x:
+      height: 16
+      hex: 00 c7 00 ef 00 38 00 38 00 ef 00 c7
+    y:
+      height: 16
+      hex: 00 f3 00 fb 00 1b 00 ff 00 fe
+    z:
+      height: 16
+      hex: 00 c7 00 cf 00 db 00 f3 00 e3
+    '|':
+      height: 16
+      hex: ff ff ff ff
+    Č:
+      height: 16
+      hex: 0f fe 9f ff d8 03 58 03 dc 07 8c 06
+    ü:
+      height: 16
+      hex: 0c fe 0c ff 00 03 0c ff 0c fe
+    é:
+      height: 16
+      hex: 00 7e 00 ff 04 db 0c fb 08 7b
+    ď:
+      height: 16
+      hex: 20 7e 10 ff 20 c3 1f ff 1f ff
+    ä:
+      height: 16
+      hex: 0c 7e 0c ff 00 c3 0c ff 0c ff
+    Ď:
+      height: 16
+      hex: 1f ff 9f ff d8 03 58 03 df ff 8f fe
+    Ť:
+      height: 16
+      hex: 18 00 98 00 df ff 5f ff d8 00 98 00
+    č:
+      height: 16
+      hex: 08 7e 0c ff 04 c3 0c e7 08 66
+    ě:
+      height: 16
+      hex: 08 7e 0c ff 04 db 0c fb 08 7b
+    Ě:
+      height: 16
+      hex: 1f ff 9f ff d8 c3 58 c3 d8 c3 98 03
+    Í:
+      height: 16
+      hex: 5f ff df ff 80 00
+    ľ:
+      height: 16
+      hex: 1f fe 1f ff 30 01 38 00
+    Ä:
+      height: 16
+      hex: cf ff df ff 18 c0 18 c0 df ff cf ff
+    Á:
+      height: 16
+      hex: 0f ff 1f ff 58 c0 d8 c0 9f ff 0f ff
+    É:
+      height: 16
+      hex: 1f ff 1f ff 58 c3 d8 c3 98 c3 18 03
+    ž:
+      height: 16
+      hex: 08 c7 0c cf 04 db 0c f3 08 e3
+    Ž:
+      height: 16
+      hex: 18 1f 98 3f d8 73 58 e3 d9 c3 9f 83 1f 03
+    ô:
+      height: 16
+      hex: 04 7e 0c ff 08 c3 0c ff 04 7e
+    ö:
+      height: 16
+      hex: 0c 7e 0c ff 00 c3 0c ff 0c 7e
+    Ó:
+      height: 16
+      hex: 0f fe 1f ff 58 03 d8 03 9f ff 0f fe
+    ů:
+      height: 16
+      hex: 00 fe 04 ff 0a 03 04 ff 00 fe
+    Ú:
+      height: 16
+      hex: 1f fe 1f ff 40 03 c0 03 9f ff 1f fe
+    ý:
+      height: 16
+      hex: 00 f3 00 fb 04 1b 0c ff 08 fe
+    Ö:
+      height: 16
+      hex: cf fe df ff 18 03 18 03 df ff cf fe
+    Ü:
+      height: 16
+      hex: df fe df ff 00 03 00 03 df ff df fe
+    Š:
+      height: 16
+      hex: 0f 86 9f c7 d8 c3 58 c3 dc ff 8c 7e
+    Ľ:
+      height: 16
+      hex: 1f ff 1f ff 00 03 38 03 30 03
+    Ý:
+      height: 16
+      hex: 1f c0 1f e0 40 7f c0 7f 9f e0 1f c0
+    Ř:
+      height: 16
+      hex: 1f ff 9f ff d8 f0 58 f8 df df 8f 8f
+    ť:
+      height: 16
+      hex: 00 c0 1f fe 1f ff 30 c1
+    á:
+      height: 16
+      hex: 00 7e 00 ff 04 c3 0c ff 08 ff
+    í:
+      height: 16
+      hex: 04 ff 08 ff
+    ó:
+      height: 16
+      hex: 00 7e 00 ff 04 c3 0c ff 08 7e
+    ú:
+      height: 16
+      hex: 00 fe 00 ff 04 03 0c ff 08 fe
+    ň:
+      height: 16
+      hex: 08 ff 0c ff 04 c0 0c ff 08 7f
+    Ň:
+      height: 16
+      hex: 1f ff 9f ff c7 00 43 80 df ff 9f ff
+    Ů:
+      height: 16
+      hex: 1f fe 5f ff a0 03 a0 03 5f ff 1f fe
+    Ô:
+      height: 16
+      hex: 4f fe df ff 98 03 98 03 df ff 4f fe
+    š:
+      height: 16
+      hex: 08 72 0c fb 04 db 0c df 08 4e
+    ř:
+      height: 16
+      hex: 08 ff 0c ff 04 60 0c c0 08 c0
+- id: 6
+  glyphs:
+    "#20":
+      height: 19
+      hex: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    '!':
+      height: 19
+      hex: 1f fc c0 1f fc c0
+    '''':
+      height: 19
+      hex: 04 00 00 1c 00 00 18 00 00
+    (:
+      height: 19
+      hex: 07 ff 00 08 00 80 10 00 40
+    ):
+      height: 19
+      hex: 10 00 40 08 00 80 07 ff 00
+    +:
+      height: 19
+      hex: 00 60 00 00 60 00 01 f8 00 01 f8 00 00 60 00 00 60 00
+    ',':
+      height: 19
+      hex: 00 00 40 00 01 c0 00 01 80
+    '-':
+      height: 19
+      hex: 00 60 00 00 60 00 00 60 00 00 60 00 00 60 00 00 60 00
+    .:
+      height: 19
+      hex: 00 00 c0 00 00 c0
+    /:
+      height: 19
+      hex: 00 0c 00 00 18 00 00 30 00 00 60 00 00 c0 00 01 80 00 03 00 00
+    "0":
+      height: 19
+      hex: 0f ff 80 1f ff c0 18 00 c0 18 00 c0 18 00 c0 1f ff c0 0f ff 80
+    "1":
+      height: 19
+      hex: 06 00 00 0e 00 c0 1f ff c0 1f ff c0 00 00 c0
+    "2":
+      height: 19
+      hex: 0c 07 c0 1c 0f c0 18 1c c0 18 38 c0 18 70 c0 1f e1 c0 0f c1 c0
+    "3":
+      height: 19
+      hex: 0c 01 80 1c 01 c0 18 60 c0 18 60 c0 18 60 c0 1f ff c0 0f 9f 80
+    "4":
+      height: 19
+      hex: 00 78 00 01 f8 00 07 98 00 1e 18 00 18 3f c0 00 7f c0 00 18 00 00 18 00
+    "5":
+      height: 19
+      hex: 1f c1 80 1f e1 c0 18 60 c0 18 60 c0 18 60 c0 18 7f c0 00 3f 80
+    "6":
+      height: 19
+      hex: 0f ff 80 1f ff c0 18 60 c0 18 60 c0 18 60 c0 1c 7f c0 0c 3f 80
+    "7":
+      height: 19
+      hex: 1c 00 00 1c 0f c0 18 3f c0 18 78 00 18 e0 00 1f c0 00 1f 80 00
+    "8":
+      height: 19
+      hex: 0f 9f 80 1f ff c0 18 60 c0 18 60 c0 18 60 c0 1f ff c0 0f 9f 80
+    "9":
+      height: 19
+      hex: 0f c1 80 1f e1 c0 18 60 c0 18 60 c0 18 60 c0 1f ff c0 0f ff 80
+    ":":
+      height: 19
+      hex: 00 66 00 00 66 00
+    ;:
+      height: 19
+      hex: 00 01 00 00 67 00 00 66 00
+    '=':
+      height: 19
+      hex: 00 d8 00 00 d8 00 00 d8 00 00 d8 00 00 d8 00 00 d8 00
+    A:
+      height: 19
+      hex: 0f ff c0 1f ff c0 18 60 00 18 60 00 18 60 00 1f ff c0 0f ff c0
+    B:
+      height: 19
+      hex: 1f ff c0 1f ff c0 18 60 c0 18 60 c0 18 60 c0 1f ff c0 0f 9f 80
+    C:
+      height: 19
+      hex: 0f ff 80 1f ff c0 18 00 c0 18 00 c0 18 00 c0 1c 01 c0 0c 01 80
+    D:
+      height: 19
+      hex: 1f ff c0 1f ff c0 18 00 c0 18 00 c0 1c 01 c0 0f ff 80 07 ff 00
+    E:
+      height: 19
+      hex: 1f ff c0 1f ff c0 18 60 c0 18 60 c0 18 60 c0 18 00 c0
+    F:
+      height: 19
+      hex: 1f ff c0 1f ff c0 18 60 00 18 60 00 18 60 00 18 00 00
+    G:
+      height: 19
+      hex: 0f ff 80 1f ff c0 18 00 c0 18 60 c0 18 60 c0 1c 7f c0 0c 7f 80
+    H:
+      height: 19
+      hex: 1f ff c0 1f ff c0 00 60 00 00 60 00 00 60 00 1f ff c0 1f ff c0
+    I:
+      height: 19
+      hex: 1f ff c0 1f ff c0
+    J:
+      height: 19
+      hex: 00 01 80 18 01 c0 18 00 c0 18 00 c0 18 00 c0 1f ff c0 1f ff 80
+    K:
+      height: 19
+      hex: 1f ff c0 1f ff c0 01 f0 00 03 b8 00 07 1c 00 0e 0f c0 1c 07 c0
+    L:
+      height: 19
+      hex: 1f ff c0 1f ff c0 00 00 c0 00 00 c0 00 00 c0
+    M:
+      height: 19
+      hex: 1f ff c0 1f ff c0 0e 00 00 07 80 00 03 c0 00 07 80 00 0e 00 00 1f ff c0 1f ff c0
+    N:
+      height: 19
+      hex: 1f ff c0 1f ff c0 01 c0 00 00 e0 00 00 70 00 1f ff c0 1f ff c0
+    O:
+      height: 19
+      hex: 0f ff 80 1f ff c0 18 00 c0 18 00 c0 18 00 c0 1f ff c0 0f ff 80
+    P:
+      height: 19
+      hex: 1f ff c0 1f ff c0 18 60 00 18 60 00 18 60 00 1f e0 00 0f c0 00
+    Q:
+      height: 19
+      hex: 0f ff 80 1f ff c0 18 00 c0 18 0e c0 18 07 40 1f fb 80 0f fd c0
+    R:
+      height: 19
+      hex: 1f ff c0 1f ff c0 18 70 00 18 78 00 18 7c 00 1f ef c0 0f c7 c0
+    S:
+      height: 19
+      hex: 0f c1 80 1f e1 c0 18 60 c0 18 60 c0 18 60 c0 1c 7f c0 0c 3f 80
+    T:
+      height: 19
+      hex: 18 00 00 18 00 00 1f ff c0 1f ff c0 18 00 00 18 00 00
+    U:
+      height: 19
+      hex: 1f ff 80 1f ff c0 00 00 c0 00 00 c0 00 00 c0 1f ff c0 1f ff 80
+    V:
+      height: 19
+      hex: 1f fe 00 1f ff 00 00 03 80 00 01 c0 00 03 80 1f ff 00 1f fe 00
+    W:
+      height: 19
+      hex: 1f ff c0 1f ff c0 00 03 80 00 0f 00 00 1e 00 00 0f 00 00 03 80 1f ff c0 1f ff c0
+    X:
+      height: 19
+      hex: 1f 8f c0 1f df c0 00 f8 00 00 70 00 00 70 00 00 f8 00 1f df c0 1f 8f c0
+    Y:
+      height: 19
+      hex: 1f c0 00 1f e0 00 00 70 00 00 3f c0 00 3f c0 00 70 00 1f e0 00 1f c0 00
+    Z:
+      height: 19
+      hex: 18 0f c0 18 1f c0 18 38 c0 18 70 c0 18 e0 c0 1f c0 c0 1f 80 c0
+    '[':
+      height: 19
+      hex: 00 00 00 00 00 00 00 00 00 00 00 00 7f ff c0 7f ff c0 40 00 40 40 00 40 40 00 40 47 1c 40 47 1c 40 47 1c 40 42 08 40 40 00 40 60 40 c0 70 e1 c0 7f ff c0 7f ff c0 00 00 00 7f ff c0 7f ff c0 78
+        00 40 70 00 40 60 00 40 43 1f c0 47 1f c0 47 1f c0 43 1f c0 60 00 40 70 00 40 78 00 40 7f ff c0 7f ff c0 00 00 00 7f ff c0 7f ff c0 40 01 c0 40 00 c0 40 00 40 7f f8 40 7f fc 40 7f fc 40 7f f8 40
+        40 00 40 40 00 c0 40 01 c0 7f ff c0 7f ff c0 00 00 00 7f ff c0 7f ff c0 40 00 40 40 00 40 40 00 40 7e 1f c0 7e 1f c0
+    \:
+      height: 19
+      hex: 03 00 00 01 80 00 00 c0 00 00 60 00 00 30 00 00 18 00 00 0c 00
+    ']':
+      height: 19
+      hex: 7e 1f c0 7e 1f c0 40 00 40 40 00 40 40 00 40 7f ff c0 7f ff c0 00 00 00 7f ff c0 7f ff c0 78 00 40 70 00 40 60 00 40 43 1f c0 47 1f c0 47 1f c0 43 1f c0 60 00 40 70 00 40 78 00 40 7f ff c0 7f
+        ff c0 00 00 00 7f ff c0 7f ff c0 40 01 c0 40 00 c0 40 00 40 7f f8 40 7f fc 40 7f fc 40 7f f8 40 40 00 40 40 00 c0 40 01 c0 7f ff c0 7f ff c0 00 00 00 7f ff c0 7f ff c0 60 7c 40 40 3c 40 42 1c 40
+        47 1c 40 47 1c 40 47 1c 40 47 1c 40 47 08 40 47 80 c0 7f c1 c0 7f ff c0 7f ff c0 00 00 00 00 00 00 00 00 00 00 00 00
+    _:
+      height: 19
+      hex: 00 00 40 00 00 40 00 00 40 00 00 40 00 00 40 00 00 40
+    a:
+      height: 19
+      hex: 00 3f 80 00 7f c0 00 60 c0 00 60 c0 00 7f c0 00 7f c0
+    b:
+      height: 19
+      hex: 1f ff c0 1f ff c0 00 60 c0 00 60 c0 00 7f c0 00 3f 80
+    c:
+      height: 19
+      hex: 00 3f 80 00 7f c0 00 60 c0 00 60 c0 00 71 c0 00 31 80
+    d:
+      height: 19
+      hex: 00 3f 80 00 7f c0 00 60 c0 00 60 c0 1f ff c0 1f ff c0
+    e:
+      height: 19
+      hex: 00 3f 80 00 7f c0 00 66 c0 00 66 c0 00 7e c0 00 3c 80
+    f:
+      height: 19
+      hex: 00 60 00 0f ff c0 1f ff c0 10 60 00
+    g:
+      height: 19
+      hex: 00 3e 60 00 7f 60 00 63 60 00 63 60 00 7f e0 00 7f c0
+    h:
+      height: 19
+      hex: 1f ff c0 1f ff c0 00 60 00 00 60 00 00 7f c0 00 3f c0
+    i:
+      height: 19
+      hex: 06 7f c0 06 7f c0
+    j:
+      height: 19
+      hex: 00 00 20 06 7f e0 06 7f c0
+    k:
+      height: 19
+      hex: 1f ff c0 1f ff c0 00 0e 00 00 1f 00 00 7b c0 00 71 c0
+    l:
+      height: 19
+      hex: 1f ff 80 1f ff c0 00 00 40
+    m:
+      height: 19
+      hex: 00 7f c0 00 7f c0 00 60 00 00 7f c0 00 7f c0 00 60 00 00 7f c0 00 3f c0
+    n:
+      height: 19
+      hex: 00 7f c0 00 7f c0 00 60 00 00 60 00 00 7f c0 00 3f c0
+    o:
+      height: 19
+      hex: 00 3f 80 00 7f c0 00 60 c0 00 60 c0 00 7f c0 00 3f 80
+    p:
+      height: 19
+      hex: 00 7f e0 00 7f e0 00 61 80 00 61 80 00 7f 80 00 3f 00
+    q:
+      height: 19
+      hex: 00 3f 00 00 7f 80 00 61 80 00 61 80 00 7f e0 00 7f e0
+    r:
+      height: 19
+      hex: 00 7f c0 00 7f c0 00 38 00 00 70 00 00 60 00
+    s:
+      height: 19
+      hex: 00 3c 80 00 7e c0 00 66 c0 00 66 c0 00 67 c0 00 23 80
+    t:
+      height: 19
+      hex: 00 60 00 1f ff 80 1f ff c0 00 60 40
+    u:
+      height: 19
+      hex: 00 7f 80 00 7f c0 00 00 c0 00 00 c0 00 7f c0 00 7f 80
+    v:
+      height: 19
+      hex: 00 7e 00 00 7f 00 00 03 80 00 01 c0 00 03 80 00 7f 00 00 7e 00
+    w:
+      height: 19
+      hex: 00 7f 80 00 7f c0 00 01 c0 00 0f 80 00 01 c0 00 7f c0 00 7f 80
+    x:
+      height: 19
+      hex: 00 71 c0 00 7b c0 00 1f 00 00 0e 00 00 1f 00 00 7b c0 00 71 c0
+    y:
+      height: 19
+      hex: 00 7e 60 00 7f 60 00 03 60 00 03 60 00 7f e0 00 7f c0
+    z:
+      height: 19
+      hex: 00 61 c0 00 63 c0 00 67 c0 00 6e c0 00 7c c0 00 78 c0 00 70 c0
+    '|':
+      height: 19
+      hex: ff ff c0 ff ff c0
+    Č:
+      height: 19
+      hex: 0f ff 80 9f ff c0 d8 00 c0 58 00 c0 d8 00 c0 9c 01 c0 0c 01 80
+    ü:
+      height: 19
+      hex: 06 7f 80 06 7f c0 00 00 c0 00 00 c0 06 7f c0 06 7f 80
+    é:
+      height: 19
+      hex: 00 3f 80 00 7f c0 00 66 c0 02 66 c0 06 7e c0 04 3c 80
+    ď:
+      height: 19
+      hex: 00 3f 80 20 7f c0 10 60 c0 20 60 c0 1f ff c0 1f ff c0
+    ä:
+      height: 19
+      hex: 06 3f 80 06 7f c0 00 60 c0 00 60 c0 06 7f c0 06 7f c0
+    Ď:
+      height: 19
+      hex: 1f ff c0 9f ff c0 d8 00 c0 58 00 c0 dc 01 c0 8f ff 80 07 ff 00
+    Ť:
+      height: 19
+      hex: 18 00 00 98 00 00 df ff c0 5f ff c0 d8 00 00 98 00 00
+    č:
+      height: 19
+      hex: 00 3f 80 04 7f c0 06 60 c0 02 60 c0 06 71 c0 04 31 80
+    ě:
+      height: 19
+      hex: 00 3f 80 04 7f c0 06 66 c0 02 66 c0 06 7e c0 04 3c 80
+    Ě:
+      height: 19
+      hex: 1f ff c0 9f ff c0 d8 60 c0 58 60 c0 d8 60 c0 98 00 c0
+    Í:
+      height: 19
+      hex: 5f ff c0 df ff c0 80 00 00
+    ľ:
+      height: 19
+      hex: 1f ff 80 1f ff c0 00 00 40 38 00 00
+    Ä:
+      height: 19
+      hex: cf ff c0 df ff c0 18 60 00 18 60 00 18 60 00 df ff c0 cf ff c0
+    Á:
+      height: 19
+      hex: 0f ff c0 1f ff c0 18 60 00 58 60 00 d8 60 00 9f ff c0 0f ff c0
+    É:
+      height: 19
+      hex: 1f ff c0 1f ff c0 58 60 c0 d8 60 c0 98 60 c0 18 00 c0
+    ž:
+      height: 19
+      hex: 00 61 c0 04 63 c0 06 67 c0 02 6e c0 06 7c c0 04 78 c0 00 70 c0
+    Ž:
+      height: 19
+      hex: 18 0f c0 98 1f c0 d8 38 c0 58 70 c0 d8 e0 c0 9f c0 c0 1f 80 c0
+    ô:
+      height: 19
+      hex: 01 3f 80 03 7f c0 06 60 c0 06 60 c0 03 7f c0 01 3f 80
+    ö:
+      height: 19
+      hex: 06 3f 80 06 7f c0 00 60 c0 00 60 c0 06 7f c0 06 3f 80
+    Ó:
+      height: 19
+      hex: 0f ff 80 1f ff c0 18 00 c0 58 00 c0 d8 00 c0 9f ff c0 0f ff 80
+    ů:
+      height: 19
+      hex: 00 7f 80 00 7f c0 04 00 c0 0a 00 c0 04 7f c0 00 7f 80
+    Ú:
+      height: 19
+      hex: 1f ff 80 1f ff c0 00 00 c0 40 00 c0 c0 00 c0 9f ff c0 1f ff 80
+    ý:
+      height: 19
+      hex: 00 7e 60 00 7f 60 00 03 60 02 03 60 06 7f e0 04 7f c0
+    Ö:
+      height: 19
+      hex: cf ff 80 df ff c0 18 00 c0 18 00 c0 18 00 c0 df ff c0 cf ff 80
+    Ü:
+      height: 19
+      hex: df ff 80 df ff c0 00 00 c0 00 00 c0 00 00 c0 df ff c0 df ff 80
+    Š:
+      height: 19
+      hex: 0f c1 80 9f e1 c0 d8 60 c0 58 60 c0 d8 60 c0 9c 7f c0 0c 3f 80
+    Ľ:
+      height: 19
+      hex: 1f ff c0 1f ff c0 00 00 c0 38 00 c0 30 00 c0
+    Ý:
+      height: 19
+      hex: 1f c0 00 1f e0 00 00 70 00 40 3f c0 c0 3f c0 80 70 00 1f e0 00 1f c0 00
+    Ř:
+      height: 19
+      hex: 1f ff c0 9f ff c0 d8 70 00 58 78 00 d8 7c 00 9f ef c0 0f c7 c0
+    ť:
+      height: 19
+      hex: 00 60 00 1f ff 80 1f ff c0 00 60 40 18 00 00
+    á:
+      height: 19
+      hex: 00 3f 80 00 7f c0 00 60 c0 02 60 c0 06 7f c0 04 7f c0
+    í:
+      height: 19
+      hex: 02 7f c0 06 7f c0 04 00 00
+    ó:
+      height: 19
+      hex: 00 3f 80 00 7f c0 02 60 c0 06 60 c0 04 7f c0 00 3f 80
+    ú:
+      height: 19
+      hex: 00 7f 80 00 7f c0 02 00 c0 06 00 c0 04 7f c0 00 7f 80
+    ň:
+      height: 19
+      hex: 00 7f c0 04 7f c0 06 60 00 02 60 00 06 7f c0 04 3f c0
+    Ň:
+      height: 19
+      hex: 1f ff c0 9f ff c0 c7 00 00 43 80 00 c1 c0 00 9f ff c0 1f ff c0
+    Ů:
+      height: 19
+      hex: 1f ff 80 1f ff c0 40 00 c0 a0 00 c0 40 00 c0 1f ff c0 1f ff 80
+    Ô:
+      height: 19
+      hex: 0f ff 80 5f ff c0 d8 00 c0 98 00 c0 d8 00 c0 5f ff c0 0f ff 80
+    š:
+      height: 19
+      hex: 00 3c 80 04 7e c0 06 66 c0 02 66 c0 06 67 c0 04 23 80
+    ř:
+      height: 19
+      hex: 04 7f c0 06 7f c0 02 38 00 06 70 00 04 60 00
+- id: 7
+  glyphs:
+    "#20":
+      height: 19
+      hex: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    '!':
+      height: 19
+      hex: 1f fc e0 1f fc e0 1f fc e0
+    '''':
+      height: 19
+      hex: 02 00 00 1e 00 00 1e 00 00 1c 00 00
+    (:
+      height: 19
+      hex: 0f ff c0 1f ff e0 18 00 60 10 00 20
+    ):
+      height: 19
+      hex: 10 00 20 18 00 60 1f ff e0 0f ff c0
+    +:
+      height: 19
+      hex: 00 0e 00 00 0e 00 00 3f 80 00 3f 80 00 3f 80 00 0e 00 00 0e 00
+    ',':
+      height: 19
+      hex: 00 00 20 00 01 e0 00 01 e0 00 01 c0
+    '-':
+      height: 19
+      hex: 00 0e 00 00 0e 00 00 0e 00 00 0e 00 00 0e 00 00 0e 00
+    .:
+      height: 19
+      hex: 00 00 e0 00 00 e0 00 00 e0
+    /:
+      height: 19
+      hex: 00 07 00 00 0e 00 00 1c 00 00 38 00 00 70 00 00 e0 00 01 c0 00 03 80 00
+    "0":
+      height: 19
+      hex: 0f ff c0 1f ff e0 1f ff e0 1c 00 e0 1c 00 e0 1f ff e0 1f ff e0 0f ff c0
+    "1":
+      height: 19
+      hex: 07 00 00 0f 00 00 1f ff e0 1f ff e0 1f ff e0
+    "2":
+      height: 19
+      hex: 0e 07 e0 1e 0f e0 1e 1f e0 1c 3c e0 1c 78 e0 1f f0 e0 1f e0 e0 0f c0 e0
+    "3":
+      height: 19
+      hex: 0e 01 c0 1e 01 e0 1e 71 e0 1c 70 e0 1c 70 e0 1f ff e0 1f ff e0 0f 8f c0
+    "4":
+      height: 19
+      hex: 01 f8 00 03 f8 00 07 f8 00 0f 38 00 1e 7f e0 1c ff e0 18 ff e0 00 38 00
+    "5":
+      height: 19
+      hex: 1f f1 c0 1f f1 e0 1f f1 e0 1c 70 e0 1c 70 e0 1c 7f e0 1c 7f e0 1c 3f c0
+    "6":
+      height: 19
+      hex: 0f ff c0 1f ff e0 1f ff e0 1c 70 e0 1c 70 e0 1e 7f e0 1e 7f e0 0e 3f c0
+    "7":
+      height: 19
+      hex: 1e 00 00 1c 00 00 1c 3f e0 1c 7f e0 1c ff e0 1f e0 00 1f c0 00 1f 80 00
+    "8":
+      height: 19
+      hex: 0f 8f c0 1f ff e0 1f ff e0 1c 70 e0 1c 70 e0 1f ff e0 1f ff e0 0f 8f c0
+    "9":
+      height: 19
+      hex: 0f e1 c0 1f f1 e0 1f f1 e0 1c 70 e0 1c 70 e0 1f ff e0 1f ff e0 0f ff c0
+    ":":
+      height: 19
+      hex: 00 71 c0 00 71 c0 00 71 c0
+    ;:
+      height: 19
+      hex: 00 00 20 00 71 e0 00 71 e0 00 71 c0
+    '=':
+      height: 19
+      hex: 00 73 80 00 73 80 00 73 80 00 73 80 00 73 80 00 73 80
+    A:
+      height: 19
+      hex: 0f ff e0 1f ff e0 1f ff e0 1c 70 00 1c 70 00 1f ff e0 1f ff e0 0f ff e0
+    B:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 1c 70 e0 1c 70 e0 1f ff e0 0f df c0 07 8f 80
+    C:
+      height: 19
+      hex: 0f ff c0 1f ff e0 1f ff e0 1c 00 e0 1c 00 e0 1e 01 e0 1e 01 e0 0e 01 c0
+    D:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 1c 00 e0 1c 00 e0 1f ff e0 0f ff c0 07 ff 80
+    E:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 1c 70 e0 1c 70 e0 1c 70 e0 1c 00 e0
+    F:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 1c 70 00 1c 70 00 1c 70 00 1c 00 00
+    G:
+      height: 19
+      hex: 0f ff c0 1f ff e0 1f ff e0 1c 00 e0 1c 0c e0 1e 0f e0 1e 0f e0 0e 0f c0
+    H:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 00 70 00 00 70 00 1f ff e0 1f ff e0 1f ff e0
+    I:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0
+    J:
+      height: 19
+      hex: 00 01 c0 1c 01 e0 1c 00 e0 1c 00 e0 1f ff e0 1f ff e0 1f ff c0
+    K:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 03 fe 00 07 8f 00 0f 07 e0 1e 03 e0 1e 01 e0
+    L:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 00 00 e0 00 00 e0 00 00 e0 00 00 e0
+    M:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 0f 00 00 07 80 00 03 c0 00 07 80 00 0f 00 00 1f ff e0 1f ff e0 1f ff e0
+    N:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 03 c0 00 01 e0 00 00 f0 00 00 78 00 1f ff e0 1f ff e0 1f ff e0
+    O:
+      height: 19
+      hex: 0f ff c0 1f ff e0 1f ff e0 1c 00 e0 1c 00 e0 1f ff e0 1f ff e0 0f ff c0
+    P:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 1c 70 00 1c 70 00 1f f0 00 1f f0 00 0f e0 00
+    Q:
+      height: 19
+      hex: 0f ff c0 1f ff e0 1f ff e0 1c 00 e0 1c 0f 60 1f f7 a0 1f fb c0 0f fd e0
+    R:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 1c 7e 00 1c 7f 00 1f f7 e0 1f f3 e0 0f e1 e0
+    S:
+      height: 19
+      hex: 0f e1 c0 1f f1 e0 1f f1 e0 1c 70 e0 1c 70 e0 1e 7f e0 1e 7f e0 0e 3f c0
+    T:
+      height: 19
+      hex: 1c 00 00 1c 00 00 1c 00 00 1f ff e0 1f ff e0 1f ff e0 1c 00 00 1c 00 00 1c 00 00
+    U:
+      height: 19
+      hex: 1f ff c0 1f ff e0 1f ff e0 00 00 e0 00 00 e0 1f ff e0 1f ff e0 1f ff c0
+    V:
+      height: 19
+      hex: 1f fe 00 1f ff 00 1f ff 80 00 03 c0 00 01 e0 00 03 c0 1f ff 80 1f ff 00 1f fe 00
+    W:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 00 03 c0 00 07 80 00 0f 00 00 07 80 00 03 c0 1f ff e0 1f ff e0 1f ff e0
+    X:
+      height: 19
+      hex: 1f 87 e0 1f cf e0 1f ff e0 00 fc 00 00 78 00 00 fc 00 1f ff e0 1f cf e0 1f 87 e0
+    Y:
+      height: 19
+      hex: 1f e0 00 1f f0 00 1f f0 00 00 7f e0 00 7f e0 00 7f e0 1f f0 00 1f f0 00 1f e0 00
+    Z:
+      height: 19
+      hex: 1c 0f e0 1c 1f e0 1c 3f e0 1c 78 e0 1c f0 e0 1f e0 e0 1f c0 e0 1f 80 e0
+    '[':
+      height: 19
+      hex: 00 1f e0 00 07 e0 00 01 e0 00 00 e0 00 00 e0 00 00 60 00 1c 20 00 3e 20 00 3f e0 00 3e 20 04 1c 20 0c 00 20 1c 00 20 1c 01 a0 3c 03 e0 7c 03 e0 7c 03 e0 3c 01 a0 1c 00 20 1c 00 20 1c 1c 20 04
+        3e 20 0c 3f e0 0c 3e 20 0c 1c 20 04 00 20 00 00 20 00 00 20
+    \:
+      height: 19
+      hex: 03 80 00 01 c0 00 00 e0 00 00 70 00 00 38 00 00 1c 00 00 0e 00 00 07 00
+    ']':
+      height: 19
+      hex: 00 00 60 02 00 a0 03 ff a0 03 ff a0 03 20 a0 03 20 a0 03 df a0 7f 20 a0 63 20 a0 63 df a0 63 20 a0 63 20 a0 63 df a0 63 20 a0 63 20 a0 63 df a0 63 20 a0 7f 20 a0 03 df a0 03 20 a0 03 20 a0 03
+        ff a0 03 ff a0 02 00 60 00 00 20 00 00 20 00 00 60 00 00 a0
+    _:
+      height: 19
+      hex: 00 00 e0 00 00 e0 00 00 e0 00 00 e0 00 00 e0 00 00 e0 00 00 e0 00 00 e0
+    a:
+      height: 19
+      hex: 00 3f c0 00 7f e0 00 7f e0 00 60 60 00 60 60 00 7f e0 00 7f e0 00 7f e0
+    b:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 00 60 60 00 60 60 00 7f e0 00 7f e0 00 3f c0
+    c:
+      height: 19
+      hex: 00 3f c0 00 7f e0 00 7f e0 00 60 60 00 60 60 00 70 e0 00 70 e0 00 30 c0
+    d:
+      height: 19
+      hex: 00 3f c0 00 7f e0 00 7f e0 00 60 60 00 60 60 1f ff e0 1f ff e0 1f ff e0
+    e:
+      height: 19
+      hex: 00 3f c0 00 7f e0 00 7f e0 00 66 60 00 66 60 00 7e e0 00 7e e0 00 3c c0
+    f:
+      height: 19
+      hex: 00 60 00 0f ff e0 1f ff e0 1f ff e0 10 60 00
+    g:
+      height: 19
+      hex: 00 3e 40 00 7f 60 00 7f 60 00 63 60 00 63 60 00 7f e0 00 7f e0 00 7f c0
+    h:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 00 60 00 00 60 00 00 7f e0 00 7f e0 00 3f e0
+    i:
+      height: 19
+      hex: 06 7f e0 06 7f e0 06 7f e0
+    j:
+      height: 19
+      hex: 00 00 20 00 00 60 06 7f e0 06 7f e0 06 7f c0
+    k:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 00 0f 00 00 1f 80 00 7f e0 00 79 e0 00 70 e0
+    l:
+      height: 19
+      hex: 1f ff c0 1f ff e0 1f ff e0 00 00 20
+    m:
+      height: 19
+      hex: 00 7f e0 00 7f e0 00 7f e0 00 60 00 00 60 00 00 3f e0 00 3f e0 00 60 00 00 60 00 00 7f e0 00 7f e0 00 3f e0
+    n:
+      height: 19
+      hex: 00 7f e0 00 7f e0 00 7f e0 00 60 00 00 60 00 00 7f e0 00 7f e0 00 3f e0
+    o:
+      height: 19
+      hex: 00 3f c0 00 7f e0 00 7f e0 00 60 60 00 60 60 00 7f e0 00 7f e0 00 3f c0
+    p:
+      height: 19
+      hex: 00 7f e0 00 7f e0 00 7f e0 00 61 80 00 61 80 00 7f 80 00 7f 80 00 3f 00
+    q:
+      height: 19
+      hex: 00 3f 00 00 7f 80 00 7f 80 00 61 80 00 61 80 00 7f e0 00 7f e0 00 7f e0
+    r:
+      height: 19
+      hex: 00 7f e0 00 7f e0 00 7f e0 00 38 00 00 70 00 00 70 00
+    s:
+      height: 19
+      hex: 00 3c c0 00 7e e0 00 7e e0 00 66 60 00 66 60 00 77 e0 00 77 e0 00 33 c0
+    t:
+      height: 19
+      hex: 00 60 00 1f ff c0 1f ff e0 1f ff e0 00 60 20
+    u:
+      height: 19
+      hex: 00 7f c0 00 7f e0 00 7f e0 00 00 60 00 00 60 00 7f e0 00 7f e0 00 7f c0
+    v:
+      height: 19
+      hex: 00 7f 00 00 7f 80 00 7f c0 00 01 e0 00 01 e0 00 7f c0 00 7f 80 00 7f 00
+    w:
+      height: 19
+      hex: 00 7f 00 00 7f 80 00 7f c0 00 00 e0 00 00 e0 00 1f c0 00 1f c0 00 00 e0 00 00 e0 00 7f c0 00 7f 80 00 7f 00
+    x:
+      height: 19
+      hex: 00 79 e0 00 7f e0 00 7f e0 00 0f 80 00 07 00 00 0f 80 00 7f e0 00 7f e0 00 79 e0
+    y:
+      height: 19
+      hex: 00 7e 40 00 7f 60 00 7f 60 00 03 60 00 03 60 00 7f e0 00 7f e0 00 7f c0
+    z:
+      height: 19
+      hex: 00 61 e0 00 63 e0 00 67 e0 00 6f 60 00 7e 60 00 7c 60 00 78 60
+    '|':
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0
+    Č:
+      height: 19
+      hex: 0f ff c0 1f ff e0 9f ff e0 dc 00 e0 5c 00 e0 de 01 e0 9e 01 e0 0e 01 c0
+    ü:
+      height: 19
+      hex: 0e 7f c0 0e 7f e0 0e 7f e0 00 00 60 00 00 60 0e 7f e0 0e 7f e0 0e 7f c0
+    é:
+      height: 19
+      hex: 00 3f c0 00 7f e0 00 7f e0 02 66 60 06 66 60 06 7e e0 04 7e e0 00 3c c0
+    ď:
+      height: 19
+      hex: 00 3f c0 00 7f e0 18 7f e0 1c 60 60 00 60 60 1f ff e0 1f ff e0 1f ff e0
+    ä:
+      height: 19
+      hex: 0e 3f c0 0e 7f e0 0e 7f e0 00 60 60 00 60 60 0e 7f e0 0e 7f e0 0e 7f e0
+    Ď:
+      height: 19
+      hex: 1f ff e0 1f ff e0 9f ff e0 dc 00 e0 5c 00 e0 df ff e0 8f ff c0 07 ff 80
+    Ť:
+      height: 19
+      hex: 1c 00 00 1c 00 00 9c 00 00 df ff e0 5f ff e0 df ff e0 9c 00 00 1c 00 00 1c 00 00
+    č:
+      height: 19
+      hex: 00 3f c0 00 7f e0 04 7f e0 06 60 60 02 60 60 06 70 e0 04 70 e0 00 30 c0
+    ě:
+      height: 19
+      hex: 00 3f c0 00 7f e0 04 7f e0 06 66 60 02 66 60 06 7e e0 04 7e e0 00 3c c0
+    Ě:
+      height: 19
+      hex: 1f ff e0 9f ff e0 df ff e0 5c 70 e0 dc 70 e0 9c 70 e0 1c 00 e0
+    Ĺ:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 00 00 e0 0c 00 e0 18 00 e0 30 00 e0
+    Í:
+      height: 19
+      hex: 5f ff e0 df ff e0 df ff e0 80 00 00
+    ľ:
+      height: 19
+      hex: 1f ff c0 1f ff e0 1f ff e0 00 00 20 30 00 00 38 00 00
+    Ä:
+      height: 19
+      hex: cf ff e0 df ff e0 df ff e0 1c 70 00 1c 70 00 df ff e0 df ff e0 cf ff e0
+    Á:
+      height: 19
+      hex: 0f ff e0 1f ff e0 1f ff e0 5c 70 00 dc 70 00 df ff e0 9f ff e0 0f ff e0
+    É:
+      height: 19
+      hex: 1f ff e0 1f ff e0 5f ff e0 dc 70 e0 dc 70 e0 9c 70 e0 1c 00 e0
+    ž:
+      height: 19
+      hex: 00 61 e0 04 63 e0 06 67 e0 02 6f 60 06 7e 60 04 7c 60 00 78 60
+    Ž:
+      height: 19
+      hex: 1c 0f e0 1c 1f e0 9c 3f e0 dc 78 e0 5c f0 e0 df e0 e0 9f c0 e0 1f 80 e0
+    ô:
+      height: 19
+      hex: 02 3f c0 06 7f e0 0c 7f e0 18 60 60 18 60 60 0c 7f e0 06 7f e0 02 3f c0
+    ö:
+      height: 19
+      hex: 0e 3f c0 0e 7f e0 0e 7f e0 00 60 60 00 60 60 0e 7f e0 0e 7f e0 0e 3f c0
+    Ó:
+      height: 19
+      hex: 0f ff c0 1f ff e0 1f ff e0 5c 00 e0 dc 00 e0 df ff e0 9f ff e0 0f ff c0
+    ů:
+      height: 19
+      hex: 00 7f c0 00 7f e0 0c 7f e0 12 00 60 12 00 60 0c 7f e0 00 7f e0 00 7f c0
+    Ú:
+      height: 19
+      hex: 1f ff c0 1f ff e0 1f ff e0 40 00 e0 c0 00 e0 df ff e0 9f ff e0 1f ff c0
+    ý:
+      height: 19
+      hex: 00 7e 40 00 7f 60 00 7f 60 02 03 60 06 03 60 06 7f e0 04 7f e0 00 7f c0
+    Ö:
+      height: 19
+      hex: cf ff c0 df ff e0 df ff e0 1c 00 e0 1c 00 e0 df ff e0 df ff e0 cf ff c0
+    Ü:
+      height: 19
+      hex: df ff c0 df ff e0 df ff e0 00 00 e0 00 00 e0 df ff e0 df ff e0 df ff c0
+    Š:
+      height: 19
+      hex: 0f e1 c0 1f f1 e0 9f f1 e0 dc 70 e0 5c 70 e0 de 7f e0 9e 7f e0 0e 3f c0
+    Ľ:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 00 00 e0 38 00 e0 30 00 e0 00 00 e0
+    Ý:
+      height: 19
+      hex: 1f e0 00 1f f0 00 1f f8 00 40 7f e0 c0 3f e0 c0 7f e0 9f f8 00 1f f0 00 1f e0 00
+    Ř:
+      height: 19
+      hex: 1f ff e0 1f ff e0 9f ff e0 dc 7e 00 5c 7f 00 df f7 e0 9f f3 e0 0f e1 e0
+    ť:
+      height: 19
+      hex: 00 60 00 1f ff c0 1f ff e0 1f ff e0 00 60 20 18 00 00 1c 00 00
+    á:
+      height: 19
+      hex: 00 3f c0 00 7f e0 00 7f e0 00 60 60 02 60 60 06 7f e0 06 7f e0 04 7f e0
+    í:
+      height: 19
+      hex: 02 7f e0 06 7f e0 06 7f e0 04 00 00
+    ó:
+      height: 19
+      hex: 00 3f c0 00 7f e0 00 7f e0 02 60 60 06 60 60 06 7f e0 04 7f e0 00 3f c0
+    ú:
+      height: 19
+      hex: 00 7f c0 00 7f e0 00 7f e0 02 00 60 06 00 60 06 7f e0 04 7f e0 00 7f c0
+    ň:
+      height: 19
+      hex: 00 7f e0 00 7f e0 04 7f e0 06 60 00 02 60 00 06 7f e0 04 7f e0 00 3f e0
+    Ň:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 8f 00 00 c7 80 00 43 c0 00 c1 e0 00 9f ff e0 1f ff e0 1f ff e0
+    Ů:
+      height: 19
+      hex: 1f ff c0 1f ff e0 5f ff e0 a0 00 e0 a0 00 e0 5f ff e0 1f ff e0 1f ff c0
+    Ô:
+      height: 19
+      hex: 0f ff c0 1f ff e0 5f ff e0 9c 00 e0 9c 00 e0 5f ff e0 1f ff e0 0f ff c0
+    š:
+      height: 19
+      hex: 00 3c c0 00 7e e0 04 7e e0 06 66 60 02 66 60 06 77 e0 04 77 e0 00 33 c0
+    ř:
+      height: 19
+      hex: 00 7f e0 04 7f e0 06 7f e0 02 38 00 06 70 00 04 70 00
+    "#AE":
+      height: 19
+      hex: 01 e0 00 07 f1 c0 0f fa 20 1f fa a0 3f fa 20 3f f9 c0 7f fc 00 7f fa 80 00 f9 00 00 fa 80 00 fc 00 00 f9 c0 00 fa 20 00 fa a0 01 fa 20 02 f9 c0 04 f0 00 08 00 00 10 00 00 10 00 00
+    "#AF":
+      height: 19
+      hex: 00 50 00 00 d8 00 01 d4 00 03 d2 00 07 d1 00 0f d0 80 1f c8 40 00 05 40 ff fc 40 00 05 40 7f f4 40 1f f5 40 07 f4 40 01 f5 40 00 74 40 00 35 40 00 14 40 ff fd 40 00 04 40 1f c4 40 0f c8 40 07
+        d0 40 03 d0 40 01 d1 c0 00 d2 40 00 54 40 00 3b c0 00 00 00
+    "#F0":
+      height: 19
+      hex: 01 20 00 03 30 00 07 38 00 0f 3c 00 1f 3e 00 3f 3f 00 7f 3f 80 7f 3f 80 77 3b 80 67 39 80 47 38 80 06 d8 00 05 e8 00 03 f0 00 03 f0 00 05 e8 00 06 d8 00 47 38 80 67 39 80 77 3b 80 7f 3f 80 7f
+        3f 80 3f 3f 00 1f 3e 00 0f 3c 00 07 38 00 03 30 00 01 20 00
+    "#F1":
+      height: 19
+      hex: 00 00 00 00 00 00 00 00 00 00 00 40 00 10 c0 00 31 c0 00 63 80 18 e7 00 3d fe 00 3f fe 00 3f fe 00 19 ff 00 0c e3 c0 0c 61 c0 02 30 80 00 18 00 00 18 40 00 18 c0 06 31 80 0f 7f 00 0f fe 00 0f
+        fe 00 06 7f 40 00 31 c0 00 18 80 00 08 00 00 00 00 00 00 00
+    "#F2":
+      height: 19
+      hex: 00 00 00 00 00 00 00 00 00 00 80 00 01 82 00 01 86 80 03 87 00 03 c7 c0 03 8f 80 03 bc 00 07 f8 00 0b f8 00 03 f2 00 03 ff e0 07 ff c0 0f ff 00 1f 20 00 3e 40 00 7c 00 00 78 00 00 f0 00 00 c0
+        00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    "#F3":
+      height: 19
+      hex: 00 3e 00 00 c1 80 01 80 c0 01 00 40 02 00 20 7f e0 20 ff f0 20 f2 30 20 62 30 20 02 30 20 02 30 40 02 30 c0 00 19 80 00 0e 00 00 06 00 00 03 00 00 01 80 00 00 c0 00 01 80
+    "#F4":
+      height: 19
+      hex: 00 01 80 00 03 80 00 07 80 00 0f 80 00 1f 80 00 3b 80 00 73 80 00 e3 80 01 c3 80 03 83 80 07 03 80 0e 03 80 1c 03 80 3b db 80 3b db 80 1c 03 80 0e 03 80 07 03 80 03 83 80 01 c3 80 00 e3 80 00
+        73 80 00 3b 80 00 1f 80 00 0f 80 00 07 80 00 03 80 00 01 80
+    "#F5":
+      height: 19
+      hex: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 20 00 00 40 00 00 80 00 01 00 00 02 00 00 04 00 00 08 00 00 10 00 00 20 00 00 40 00 00 80 00 01 00 00 02 00 00 04 00 00 08 00 00 10 00 00 20 00 00 40
+        00 00 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    "#F6":
+      height: 19
+      hex: 1f f0 00 1f f8 00 00 0c 00 00 06 00 00 06 00 00 0c 00 1f f8 00 1f f0 00 00 00 00 07 f8 00 0f fc 00 18 06 00 10 02 00 10 02 00 18 06 00 0f fc 00 07 f8 00 00 00 00 18 1e 00 18 3e 00 18 66 00 18
+        c6 00 19 86 00 1f 06 00 1e 06 00 00 00 00 00 06 00 00 06 00
+    "#F7":
+      height: 19
+      hex: 00 00 00 01 cc 00 03 ee 00 02 22 00 03 be 00 01 9c 00 00 00 00 03 fe 00 03 fe 00 00 02 00 00 02 00 00 02 00 00 00 00 03 fc 00 03 fe 00 00 02 00 00 02 00 03 fe 00 03 fc 00 00 00 00 02 1e 00 12
+        3e 00 0a 72 00 0b e2 00 13 c2 00 00 00 00 00 02 00 00 00 00
+    "#F8":
+      height: 19
+      hex: 00 0e 00 00 e4 00 03 1d 80 1e 0a 40 10 0a 40 10 09 80 1e 08 00 02 0b 80 06 0c 40 08 0d 40 08 0c 40 08 0b 80 06 08 00 02 0b 80 0e 0c 40 0e 0d 40 02 0c 40 12 0b 80 1e 08 00 10 09 80 17 ca 40 17
+        ca 40 10 09 80 1f fc 00 10 04 00 00 0e 00
+    "#F9":
+      height: 19
+      hex: 1f ff e0 10 00 20 10 07 e0 10 ff e0 17 fc 20 1f 04 20 30 07 e0 40 04 00 80 04 00 80 04 00 80 04 00 40 04 00 30 07 e0 1f 04 20 17 fc 20 10 ff e0 10 07 e0 10 00 20 1f ff e0
+    "#FA":
+      height: 19
+      hex: 00 80 00 05 ff e0 4f ff e0 ff 93 00 4f ff e0 05 ff e0 00 8f 00 00 3e 00 00 8f 00 05 ff e0 4f ff e0 ff 93 00 4f ff e0 05 ff e0 00 80 00
+    "#FB":
+      height: 28
+      hex: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+        00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    "#FC":
+      height: 28
+      hex: ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0
+        ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0
+    "#FD":
+      height: 28
+      hex: 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0
+        55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0
+    "#FE":
+      height: 28
+      hex: aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50
+        aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50
+- id: 8
+  glyphs:
+    "#20":
+      height: 19
+      hex: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    '!':
+      height: 19
+      hex: ff f8 e0 ff f8 e0 ff f8 e0
+    '''':
+      height: 19
+      hex: 10 00 00 f0 00 00 f0 00 00 e0 00 00
+    (:
+      height: 19
+      hex: 7f ff c0 ff ff e0 c0 00 60 80 00 20
+    ):
+      height: 19
+      hex: 80 00 20 c0 00 60 ff ff e0 7f ff c0
+    +:
+      height: 19
+      hex: 00 18 00 00 18 00 00 18 00 00 ff 00 00 ff 00 00 18 00 00 18 00 00 18 00
+    ',':
+      height: 19
+      hex: 00 00 20 00 01 e0 00 01 e0 00 01 c0
+    '-':
+      height: 19
+      hex: 00 18 00 00 18 00 00 18 00 00 18 00
+    .:
+      height: 19
+      hex: 00 00 60 00 00 60
+    /:
+      height: 19
+      hex: 00 06 00 00 0c 00 00 18 00 00 30 00 00 60 00 00 c0 00 01 80 00 03 00 00
+    "0":
+      height: 19
+      hex: 7f ff c0 ff ff e0 ff ff e0 e0 00 e0 e0 00 e0 ff ff e0 ff ff e0 7f ff c0
+    "1":
+      height: 19
+      hex: 3c 00 00 78 00 00 ff ff e0 ff ff e0 ff ff e0
+    "2":
+      height: 19
+      hex: 70 0f e0 f0 1f e0 f0 3f e0 e0 78 e0 e0 f0 e0 ff e0 e0 ff c0 e0 7f 80 e0
+    "3":
+      height: 19
+      hex: 70 01 c0 f0 01 e0 f0 e1 e0 e0 e0 e0 e0 e0 e0 ff ff e0 ff ff e0 7f 1f c0
+    "4":
+      height: 19
+      hex: 01 f0 00 07 f0 00 1f f0 00 7e 70 00 f8 ff e0 e0 ff e0 80 ff e0 00 70 00
+    "5":
+      height: 19
+      hex: ff e1 c0 ff e1 e0 ff e1 e0 e0 e0 e0 e0 e0 e0 e0 ff e0 e0 ff e0 e0 7f c0
+    "6":
+      height: 19
+      hex: 7f ff c0 ff ff e0 ff ff e0 e0 e0 e0 e0 e0 e0 f0 ff e0 f0 ff e0 70 7f c0
+    "7":
+      height: 19
+      hex: f0 00 00 e0 00 00 e0 7f e0 e1 ff e0 e7 ff e0 ff 80 00 fe 00 00 f8 00 00
+    "8":
+      height: 19
+      hex: 7f 1f c0 ff ff e0 ff ff e0 e0 e0 e0 e0 e0 e0 ff ff e0 ff ff e0 7f 1f c0
+    "9":
+      height: 19
+      hex: 7f c1 c0 ff e1 e0 ff e1 e0 e0 e0 e0 e0 e0 e0 ff ff e0 ff ff e0 7f ff c0
+    ":":
+      height: 19
+      hex: 00 c3 00 00 c3 00
+    ;:
+      height: 19
+      hex: 00 00 20 00 c1 e0 00 c1 c0
+    '=':
+      height: 19
+      hex: 00 c6 00 00 c6 00 00 c6 00 00 c6 00
+    A:
+      height: 19
+      hex: 7f ff e0 ff ff e0 ff ff e0 e0 e0 00 e0 e0 00 ff ff e0 ff ff e0 7f ff e0
+    B:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 e0 e0 e0 e0 e0 e0 ff ff e0 ff ff e0 7f bf c0
+    C:
+      height: 19
+      hex: 7f ff c0 ff ff e0 ff ff e0 e0 00 e0 e0 00 e0 f0 01 e0 f0 01 e0 70 01 c0
+    D:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 e0 00 e0 e0 00 e0 ff ff e0 ff ff e0 7f ff c0
+    E:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 00 e0 e0 00 e0
+    F:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 e0 e0 00 e0 e0 00 e0 e0 00 e0 00 00 e0 00 00
+    G:
+      height: 19
+      hex: 7f ff c0 ff ff e0 ff ff e0 e0 00 e0 e0 0c e0 f0 0f e0 f0 0f e0 70 0f c0
+    H:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 00 e0 00 00 e0 00 ff ff e0 ff ff e0 ff ff e0
+    I:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0
+    J:
+      height: 19
+      hex: 00 03 c0 e0 03 e0 e0 03 e0 e0 00 e0 e0 00 e0 ff ff e0 ff ff e0 ff ff c0
+    K:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 01 f0 00 03 f8 00 ff bf e0 ff 1f e0 fe 0f e0
+    L:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 00 00 e0 00 00 e0 00 00 e0 00 00 e0
+    M:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 78 00 00 3c 00 00 1e 00 00 3c 00 00 78 00 00 ff ff e0 ff ff e0 ff ff e0
+    N:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 1e 00 00 0f 00 00 07 80 00 ff ff e0 ff ff e0 ff ff e0
+    O:
+      height: 19
+      hex: 7f ff c0 ff ff e0 ff ff e0 e0 00 e0 e0 00 e0 ff ff e0 ff ff e0 7f ff c0
+    P:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 e0 e0 00 e0 e0 00 ff e0 00 ff e0 00 7f c0 00
+    Q:
+      height: 19
+      hex: 7f ff c0 ff ff e0 ff ff e0 e0 00 e0 e0 07 60 ff fb a0 ff fd c0 7f fe e0
+    R:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 e1 f0 00 e1 f8 00 ff ff e0 ff df e0 7f 8f e0
+    S:
+      height: 19
+      hex: 7f c1 c0 ff e1 e0 ff e1 e0 e0 e0 e0 e0 e0 e0 f0 ff e0 f0 ff e0 70 7f c0
+    T:
+      height: 19
+      hex: e0 00 00 e0 00 00 e0 00 00 ff ff e0 ff ff e0 ff ff e0 e0 00 00 e0 00 00 e0 00 00
+    U:
+      height: 19
+      hex: ff ff c0 ff ff e0 ff ff e0 00 00 e0 00 00 e0 ff ff e0 ff ff e0 ff ff c0
+    V:
+      height: 19
+      hex: ff fe 00 ff ff 00 ff ff 80 00 03 c0 00 01 e0 00 03 c0 ff ff 80 ff ff 00 ff fe 00
+    W:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 00 03 c0 00 07 80 00 0f 00 00 07 80 00 03 c0 ff ff e0 ff ff e0 ff ff e0
+    X:
+      height: 19
+      hex: fe 1f e0 ff 3f e0 ff ff e0 03 f0 00 01 e0 00 03 f0 00 ff ff e0 ff 3f e0 fe 1f e0
+    Y:
+      height: 19
+      hex: ff 80 00 ff c0 00 ff c0 00 01 ff e0 01 ff e0 01 ff e0 ff c0 00 ff c0 00 ff 80 00
+    Z:
+      height: 19
+      hex: e0 0f e0 e0 1f e0 e0 3f e0 e0 78 e0 e0 f0 e0 e1 e0 e0 e3 c0 e0 ff 80 e0 ff 00 e0 fe 00 e0
+    '[':
+      height: 19
+      hex: 07 ff 80 0a 08 40 4b fb 40 8a 0b 60 fa 08 40 8e 08 c0 8e 08 c0 8e 08 c0 fa 08 40 8a 0b 60 4b fb 40 0a 08 40 07 ff 80
+    \:
+      height: 19
+      hex: 0f ff 80 14 10 e0 14 16 e0 14 16 80 14 10 80 14 12 80 14 12 80 17 f2 80 14 12 80 14 12 80 14 10 80 14 16 80 14 16 e0 14 10 e0 0f ff 80
+    ']':
+      height: 19
+      hex: 07 ff 80 0c 10 e0 0c 16 e0 0c 16 e0 1c 10 80 f4 10 80 14 10 80 17 f4 80 14 10 80 f4 10 80 1c 10 80 0c 16 e0 0c 16 e0 0c 10 e0 07 ff 80
+    _:
+      height: 19
+      hex: 00 01 c0 00 ff 20 7f 89 20 04 89 20 04 f9 20 04 89 20 04 89 20 04 f9 20 04 89 20 04 89 20 04 f9 20 07 89 20 0c 89 20 14 ff 20 24 81 20 24 81 20 24 ff 20 fc 89 20 27 8a 20 00 fa 20 00 8a 20 00
+        0e 20 00 02 20 00 04 20 01 05 20 03 fc 40 00 05 80 00 06 00
+    a:
+      height: 19
+      hex: 00 e7 c0 01 ef e0 01 cf e0 01 cc 60 01 cc 60 01 ff e0 01 ff e0 00 ff e0
+    b:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 01 80 60 01 80 60 01 ff e0 01 ff e0 00 ff c0
+    c:
+      height: 19
+      hex: 00 ff c0 01 ff e0 01 ff e0 01 80 60 01 80 60 01 c0 e0 01 c0 e0 00 c0 c0
+    d:
+      height: 19
+      hex: 00 ff c0 01 ff e0 01 ff e0 01 80 60 01 80 60 ff ff e0 ff ff e0 ff ff e0
+    e:
+      height: 19
+      hex: 00 ff c0 01 ff e0 01 ff e0 01 8c 60 01 8c 60 01 fc e0 01 fc e0 00 fc c0
+    f:
+      height: 19
+      hex: 01 80 00 7f ff e0 ff ff e0 ff ff e0 81 80 00
+    g:
+      height: 19
+      hex: 00 fc 40 01 fe 60 01 fe 60 01 86 60 01 86 60 01 ff e0 01 ff e0 00 ff c0
+    h:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 01 80 00 01 80 00 01 ff e0 01 ff e0 00 ff e0
+    i:
+      height: 19
+      hex: 39 ff e0 39 ff e0 39 ff e0
+    j:
+      height: 19
+      hex: 00 00 20 00 00 60 39 ff e0 39 ff c0 39 ff 80
+    k:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 00 1e 00 00 3f 00 01 ff e0 01 f3 e0 01 e1 e0
+    l:
+      height: 19
+      hex: ff ff c0 ff ff e0 ff ff e0 00 00 20
+    m:
+      height: 19
+      hex: 01 ff e0 01 ff e0 01 ff e0 01 80 00 01 80 00 00 ff e0 00 ff e0 01 80 00 01 80 00 01 ff e0 01 ff e0 00 ff e0
+    n:
+      height: 19
+      hex: 01 ff e0 01 ff e0 01 ff e0 01 80 00 01 80 00 01 ff e0 01 ff e0 00 ff e0
+    o:
+      height: 19
+      hex: 00 ff c0 01 ff e0 01 ff e0 01 80 60 01 80 60 01 ff e0 01 ff e0 00 ff c0
+    p:
+      height: 19
+      hex: 01 ff e0 01 ff e0 01 ff e0 01 83 00 01 83 00 01 ff 00 01 ff 00 00 fe 00
+    q:
+      height: 19
+      hex: 00 fe 00 01 ff 00 01 ff 00 01 83 00 01 83 00 01 ff e0 01 ff e0 01 ff e0
+    r:
+      height: 19
+      hex: 01 ff e0 01 ff e0 01 ff e0 00 70 00 00 e0 00 01 c0 00 01 c0 00
+    s:
+      height: 19
+      hex: 00 f8 c0 01 fc e0 01 fc e0 01 8c 60 01 8c 60 01 cf e0 01 cf e0 00 c7 c0
+    t:
+      height: 19
+      hex: 01 80 00 ff ff c0 ff ff e0 ff ff e0 01 80 20
+    u:
+      height: 19
+      hex: 01 ff c0 01 ff e0 01 ff e0 00 00 60 00 00 60 01 ff e0 01 ff e0 01 ff c0
+    v:
+      height: 19
+      hex: 01 ff 00 01 ff 80 01 ff c0 00 01 e0 00 01 e0 01 ff c0 01 ff 80 01 ff 00
+    w:
+      height: 19
+      hex: 01 ff 00 01 ff 80 01 ff c0 00 01 e0 00 01 e0 00 3f c0 00 3f c0 00 01 e0 00 01 e0 01 ff c0 01 ff 80 01 ff 00
+    x:
+      height: 19
+      hex: 01 f3 e0 01 ff e0 01 ff e0 00 1f 00 00 0e 00 00 1f 00 01 ff e0 01 ff e0 01 f3 e0
+    y:
+      height: 19
+      hex: 01 fc 40 01 fe 60 01 fe 60 00 06 60 00 06 60 01 ff e0 01 ff e0 01 ff c0
+    z:
+      height: 19
+      hex: 01 83 e0 01 87 e0 01 8f e0 01 9e 60 01 fc 60 01 f8 60 01 f0 60
+    '|':
+      height: 19
+      hex: 00 00 a0 00 1f a0 00 7f a0 01 cf a0 00 7f a0 0f ff a0 f9 ff a0 0f ff a0 07 00 a0 fd ff a0 0f ff a0 01 c3 a0 01 ff a0 01 ff a0 01 c3 a0 01 ff a0 01 ff a0 03 c3 a0 00 ff a0 00 3f a0 00 00 60 00
+        00 60 00 00 60 00 00 60 00 00 e0 00 01 e0 00 03 e0 00 07 e0 00 0e 60 03 fc 20 07 fc 20 0a fc 20 3b fe 60 7a ff e0 3b e7 e0 0a c3 e0 0b c0 20 0a c3 e0 0b e7 e0 0a ff e0 0b fe 60 0a fc 20 0b fc 20
+        0a fc 20 0b fe 60 0a e3 e0 0b c1 e0 0a c0 20 0b c1 e0 0a e3 e0 0b ff e0 0a fe 60 0b fc 20 06 fc 20 03 fc 20 00 1e 60
+    Č:
+      height: 19
+      hex: 1f ff c0 3f ff e0 bf ff e0 70 00 e0 70 00 e0 bc 03 e0 3c 03 e0 1c 03 c0
+    ü:
+      height: 19
+      hex: 01 ff c0 19 ff e0 19 ff e0 00 00 60 00 00 60 19 ff e0 19 ff e0 01 ff c0
+    é:
+      height: 19
+      hex: 00 ff c0 01 ff e0 01 ff e0 09 8c 60 19 8c 60 39 fc e0 31 fc e0 20 fc c0
+    ď:
+      height: 19
+      hex: 00 ff c0 01 ff e0 c1 ff e0 e1 80 60 01 80 60 ff ff e0 ff ff e0 ff ff e0
+    ä:
+      height: 19
+      hex: 00 cf c0 19 df e0 19 9f e0 01 9c 60 01 9c 60 19 ff e0 19 ff e0 00 ff e0
+    Ď:
+      height: 19
+      hex: 3f ff e0 3f ff e0 bf ff e0 78 00 e0 78 00 e0 bf ff e0 3f ff e0 1f ff c0
+    Ť:
+      height: 19
+      hex: 38 00 00 38 00 00 38 00 00 bf ff e0 7f ff e0 bf ff e0 38 00 00 38 00 00 38 00 00
+    č:
+      height: 19
+      hex: 00 ff c0 01 ff e0 11 ff e0 19 80 60 09 80 60 19 c0 e0 11 c0 e0 00 c0 c0
+    ě:
+      height: 19
+      hex: 00 ff c0 01 ff e0 11 ff e0 19 8c 60 09 8c 60 19 fc e0 11 fc e0 00 fc c0
+    Ě:
+      height: 19
+      hex: 3f ff e0 3f ff e0 bf ff e0 78 70 e0 78 70 e0 b8 70 e0 38 70 e0 38 00 e0
+    Ĺ:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 00 00 e0 40 00 e0 80 00 e0 00 00 e0
+    Í:
+      height: 19
+      hex: 3f ff e0 7f ff e0 bf ff e0
+    ľ:
+      height: 19
+      hex: ff ff c0 ff ff e0 ff ff e0 00 00 20 e0 00 00 c0 00 00
+    Ä:
+      height: 19
+      hex: 1f ff e0 3f ff e0 bf ff e0 38 70 00 38 70 00 bf ff e0 3f ff e0 1f ff e0
+    Á:
+      height: 19
+      hex: 1f ff e0 3f ff e0 3f ff e0 38 70 00 78 70 00 bf ff e0 3f ff e0 1f ff e0
+    É:
+      height: 19
+      hex: 3f ff e0 3f ff e0 3f ff e0 38 70 e0 78 70 e0 b8 70 e0 38 70 e0 38 00 e0
+    ž:
+      height: 19
+      hex: 01 83 e0 11 87 e0 19 8f e0 09 9e 60 19 fc 60 11 f8 60 01 f0 60
+    Ž:
+      height: 19
+      hex: 38 07 e0 38 0f e0 38 1f e0 b8 3c e0 78 78 e0 78 f0 e0 b9 e0 e0 3f c0 e0 3f 80 e0 3f 00 e0
+    ô:
+      height: 19
+      hex: 00 ff c0 09 ff e0 19 ff e0 31 80 60 31 80 60 19 ff e0 09 ff e0 00 ff c0
+    ö:
+      height: 19
+      hex: 00 ff c0 19 ff e0 19 ff e0 01 80 60 01 80 60 19 ff e0 19 ff e0 00 ff c0
+    Ó:
+      height: 19
+      hex: 1f ff c0 3f ff e0 3f ff e0 38 00 e0 78 00 e0 bf ff e0 3f ff e0 1f ff c0
+    ů:
+      height: 19
+      hex: 01 ff c0 01 ff e0 19 ff e0 24 00 60 24 00 60 19 ff e0 01 ff e0 01 ff c0
+    Ú:
+      height: 19
+      hex: 3f ff c0 3f ff e0 3f ff e0 00 00 e0 40 00 e0 bf ff e0 3f ff e0 3f ff c0
+    ý:
+      height: 19
+      hex: 01 fc 40 01 fe 60 09 fe 60 18 06 60 38 06 60 31 ff e0 21 ff e0 01 ff c0
+    Ö:
+      height: 19
+      hex: 1f ff c0 3f ff e0 bf ff e0 38 00 e0 38 00 e0 bf ff e0 3f ff e0 1f ff c0
+    Ü:
+      height: 19
+      hex: 3f ff c0 3f ff e0 bf ff e0 00 00 e0 00 00 e0 bf ff e0 3f ff e0 3f ff c0
+    Š:
+      height: 19
+      hex: 1f e1 c0 3f f1 e0 bf f1 e0 78 70 e0 78 70 e0 bc 7f e0 3c 7f e0 1c 3f c0
+    Ľ:
+      height: 19
+      hex: 03 f8 00 03 f8 00 03 18 00 03 18 00 03 18 00 03 18 00 ff 1f e0 ff 1f e0 c0 00 60 c0 00 60 c0 00 60 ff 1f e0 ff 1f e0 03 18 00 03 18 00 03 18 00 03 18 00 03 f8 00 03 f8 00
+    Ý:
+      height: 19
+      hex: 7f 80 00 7f c0 00 7f e0 00 01 ff e0 40 ff e0 81 ff e0 7f e0 00 7f c0 00 7f 80 00
+    Ř:
+      height: 19
+      hex: 3f ff e0 3f ff e0 bf ff e0 78 78 00 78 7c 00 bf ff e0 3f ef e0 1f c7 e0
+    ť:
+      height: 19
+      hex: 01 80 00 ff ff c0 ff ff e0 ff ff e0 01 80 20 e0 00 00 c0 00 00
+    á:
+      height: 19
+      hex: 00 cf c0 01 df e0 01 9f e0 09 9c 60 19 9c 60 39 ff e0 31 ff e0 20 ff e0
+    í:
+      height: 19
+      hex: 09 ff e0 19 ff e0 39 ff e0 30 00 00 20 00 00
+    ó:
+      height: 19
+      hex: 00 ff c0 01 ff e0 01 ff e0 09 80 60 19 80 60 39 ff e0 31 ff e0 20 ff c0
+    ú:
+      height: 19
+      hex: 01 ff c0 01 ff e0 01 ff e0 08 00 60 18 00 60 39 ff e0 31 ff e0 21 ff c0
+    ň:
+      height: 19
+      hex: 01 ff e0 01 ff e0 11 ff e0 19 80 00 09 80 00 19 ff e0 11 ff e0 00 ff e0
+    Ň:
+      height: 19
+      hex: 7f ff e0 7f ff e0 7f ff e0 87 80 00 43 c0 00 81 e0 00 7f ff e0 7f ff e0 7f ff e0
+    Ů:
+      height: 19
+      hex: 3f ff c0 3f ff e0 3f ff e0 c0 00 e0 c0 00 e0 3f ff e0 3f ff e0 3f ff c0
+    Ô:
+      height: 19
+      hex: 1f ff c0 3f ff e0 7f ff e0 b8 00 e0 b8 00 e0 7f ff e0 3f ff e0 1f ff c0
+    š:
+      height: 19
+      hex: 00 f8 c0 01 fc e0 11 fc e0 19 8c 60 09 8c 60 19 cf e0 11 cf e0 00 c7 c0
+    ř:
+      height: 19
+      hex: 01 ff e0 11 ff e0 19 ff e0 08 70 00 18 e0 00 11 c0 00 01 c0 00
+    "#AE":
+      height: 19
+      hex: 01 e0 00 07 f1 c0 0f fa 20 1f fa a0 3f fa 20 3f f9 c0 7f fc 00 7f fa 80 00 f9 00 00 fa 80 00 fc 00 00 f9 c0 00 fa 20 00 fa a0 01 fa 20 02 f9 c0 04 f0 00 08 00 00 10 00 00 10 00 00
+    "#AF":
+      height: 19
+      hex: 00 00 00 00 00 00 00 00 c0 00 00 a0 00 02 a0 00 06 a0 00 0e a0 00 1e a0 00 3e a0 00 7e a0 00 fe a0 01 fe a0 03 fe a0 07 fe a0 0f fe a0 1f fe a0 3f fe a0 7f fe a0 ff ff a0 00 00 a0 00 00 a0 00
+        00 a0 00 00 a0 00 00 c0 00 00 80 00 00 00 00 00 00 00 00 00
+    "#F0":
+      height: 19
+      hex: 00 00 00 23 c4 00 23 c6 00 23 c7 00 23 c7 00 23 c7 80 23 c7 80 23 c7 80 23 c7 80 23 c7 00 23 c7 00 23 c6 00 23 c4 00 02 38 00 02 38 00 22 38 00 32 38 80 3a 39 80 3a 3b 80 3a 3b 80 3b 3b 80 1b
+        bb 00 0b ba 00 03 b8 00 03 b8 00 01 b0 00 00 a0 00 00 00 00
+    "#F1":
+      height: 19
+      hex: 00 08 20 00 18 60 00 32 c0 00 67 80 18 ef 00 3d fe 00 3f fe 00 3f fe 00 19 ff 00 0c ef 80 0c 66 c0 02 32 60 00 18 20 00 18 60 00 18 c0 06 31 80 0f 7f 00 0f fe 00 0f fe 00 06 7f 00 00 31 80 00
+        18 c0 00 0c 60 00 04 00
+    "#F2":
+      height: 19
+      hex: 01 01 00 03 03 40 07 03 80 07 03 e0 07 0f c0 07 1e 00 07 3e 00 07 7c 00 07 f8 00 0f f0 00 07 e0 00 07 ff e0 0f ff c0 1f ff 80 3e 40 00 7c 00 00 78 00 00 f0 00 00 c0 00 00
+    "#F3":
+      height: 19
+      hex: 00 3e 00 00 c1 80 01 80 c0 01 00 40 02 00 20 7f e0 20 ff f0 20 f1 b0 20 61 b0 20 01 b0 40 01 b0 c0 01 31 80 00 1e 00 00 0c 00 00 06 00 00 03 00 00 01 80 00 00 c0 00 01 80
+    "#F4":
+      height: 19
+      hex: 00 01 80 00 03 80 00 07 80 00 0f 80 00 1d 80 00 39 80 00 71 80 00 e1 80 01 c1 80 03 81 80 07 01 80 0e 01 80 1c 01 80 39 ed 80 39 ed 80 1c 01 80 0e 01 80 07 01 80 03 81 80 01 c1 80 00 e1 80 00
+        71 80 00 39 80 00 1d 80 00 0f 80 00 07 80 00 03 80 00 01 80
+    "#F5":
+      height: 19
+      hex: 00 00 00 1f ff 00 1f ff 00 1f ff 00 1f ff 00 1f ff 00 00 00 00 00 00 00 1f ff 00 1f ff 00 1f ff 00 1f ff 00 1f ff 00 01 f0 00 03 f8 00 07 fc 00 0f fe 00 1f bf 00 1f 1f 00 1e 0f 00 1c 07 00 18
+        03 00 10 01 00 00 00 00 00 00 00 1f ff 00 1f ff 00 1f ff 00 1f ff 00 1e ef 00 1e ef 00 1e ef 00 1e ef 00 1e ef 00 1e ef 00 1e 0f 00 00 00 00 00 00 00 00 03 00 00 0f 00 00 3f 00 00 ff 00 03 ff 00
+        0f fe 00 1f f8 00 1f f8 00 1f 98 00 1f f8 00 1f f8 00 0f fe 00 03 ff 00 00 ff 00 00 3f 00 00 0f 00 00 03 00 00 00 00
+    "#F6":
+      height: 19
+      hex: ff ff e0 c0 00 60 c0 00 60 cf f0 60 cf f8 60 c0 0c 60 c0 06 60 c0 0c 60 cf f8 60 cf f0 60 c0 00 60 c3 f8 60 c7 fc 60 cc 06 60 cc 06 60 cc 06 60 c7 fc 60 c3 f8 60 c0 00 60 cc 1e 60 cc 3e 60 cc
+        66 60 cc c6 60 cf 86 60 cf 06 60 c0 00 60 c0 00 60 ff ff e0
+    "#F7":
+      height: 19
+      hex: 01 cc 00 03 ee 00 03 26 00 03 26 00 03 be 00 01 9c 00 00 00 00 03 fe 00 03 fe 00 00 06 00 00 06 00 00 06 00 00 00 00 03 fc 00 03 fe 00 00 06 00 00 06 00 03 fe 00 03 fc 00 00 00 00 03 0e 00 13
+        1e 00 1b 36 00 0b 66 00 1b c6 00 13 86 00 00 00 00 00 06 00
+    "#F8":
+      height: 19
+      hex: 00 00 40 00 00 80 00 01 00 0f fe 00 3f ff 00 7f ff 80 60 11 80 c0 20 c0 c0 40 c0 c0 80 c0 c1 00 c0 62 01 80 7f ff 80 3f ff 00 1f fc 00 20 00 00 40 00 00 80 00 00
+    "#F9":
+      height: 19
+      hex: ff fe 00 8f 83 00 8f 83 80 8f 83 80 8f 83 c0 8f 83 c0 8f 83 e0 8f 83 e0 8f 83 e0 8f 83 e0 8f 83 c0 8f 83 c0 8f 83 80 8f 83 80 8f 83 00 ff fe 00
+    "#FA":
+      height: 19
+      hex: ff ff e0 80 00 20 80 00 20 80 00 20 80 00 20 80 00 20 80 00 20 80 00 20 80 00 20 bf ff a0 bf ff a0 bf ff a0 bf ff a0 bf ff a0 80 0f a0 80 0f a0 80 0f a0 80 0f a0 80 0f a0 80 00 20 80 00 20 80
+        00 20 80 00 20 80 00 20 80 00 20 80 00 20 80 00 20 ff ff e0
+    "#FB":
+      height: 28
+      hex: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+        00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    "#FC":
+      height: 28
+      hex: ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0
+        ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0 ff ff ff f0
+    "#FD":
+      height: 28
+      hex: 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0
+        55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0
+    "#FE":
+      height: 28
+      hex: aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50
+        aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50 aa aa aa a0 55 55 55 50
+- id: 9
+  glyphs:
+    "#20":
+      height: 19
+      hex: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    '''': |
+      .#
+      .#
+      #.
+      ..
+      ..
+      ..
+      ..
+      ..
+    (: |
+      ..
+      .#
+      #.
+      #.
+      #.
+      #.
+      #.
+      .#
+    ): |
+      ..
+      #.
+      .#
+      .#
+      .#
+      .#
+      .#
+      #.
+    +: |
+      ...
+      ...
+      ...
+      .#.
+      ###
+      .#.
+      ...
+      ...
+    ',': |
+      .
+      .
+      .
+      .
+      .
+      #
+      #
+      #
+    '-': |
+      ...
+      ...
+      ...
+      ...
+      ###
+      ...
+      ...
+      ...
+    .: |
+      .
+      .
+      .
+      .
+      .
+      .
+      .
+      #
+    /: |
+      .....
+      .....
+      ....#
+      ...#.
+      ..#..
+      .#...
+      #....
+      .....
+    "0":
+      height: 19
+      hex: 3f ff 80 7f ff c0 ff ff e0 e0 00 e0 e0 00 e0 e0 00 e0 ff ff e0 7f ff c0 3f ff 80
+    "1":
+      height: 19
+      hex: 38 00 00 70 00 00 ff ff e0 ff ff e0 ff ff e0
+    "2":
+      height: 19
+      hex: 30 07 e0 70 0f e0 f0 1f e0 e0 3c e0 e0 78 e0 e0 f0 e0 ff e0 e0 7f c0 e0 3f 80 e0
+    "3":
+      height: 19
+      hex: 30 01 80 70 01 c0 f0 01 e0 e0 40 e0 e0 e0 e0 e0 e0 e0 ff ff e0 7f bf c0 3f 1f 80
+    "4":
+      height: 19
+      hex: 00 e0 00 03 e0 00 0f e0 00 3f 60 00 fc 60 00 f0 ff e0 c1 ff e0 01 ff e0 00 60 00
+    "5":
+      height: 19
+      hex: ff c1 80 ff e1 c0 ff e1 e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 ff e0 e0 7f c0 00 3f 80
+    "6":
+      height: 19
+      hex: 3f ff 80 7f ff c0 ff ff e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 f0 ff e0 70 7f c0 30 3f 80
+    "7":
+      height: 19
+      hex: e0 00 00 e0 00 00 e0 1f e0 e0 7f e0 e1 ff e0 e7 e0 00 ff 80 00 fe 00 00 f8 00 00
+    "8":
+      height: 19
+      hex: 3f 1f 80 7f bf c0 ff ff e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 ff ff e0 7f bf c0 3f 1f 80
+    "9":
+      height: 19
+      hex: 3f 81 80 7f c1 c0 ff e1 e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 ff ff e0 7f ff c0 3f ff 80
+    ":": |
+      .
+      .
+      .
+      #
+      .
+      #
+      .
+      .
+    ;: |
+      .
+      .
+      .
+      .
+      #
+      .
+      #
+      #
+    '=': |
+      ...
+      ...
+      ...
+      ###
+      ...
+      ###
+      ...
+      ...
+    '?': |
+      .##.
+      #..#
+      ...#
+      ..#.
+      .#..
+      .#..
+      ....
+      .#..
+    A:
+      height: 19
+      hex: 07 ff e0 0f ff e0 1f ff e0 1e 38 00 1c 38 00 1c 38 00 1e 38 00 1f ff e0 0f ff e0 07 ff e0
+    B:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 1c 70 e0 1c 70 e0 1c 70 e0 1e f9 e0 1f ff c0 0f df c0 07 8f 80
+    C:
+      height: 19
+      hex: 07 ff 80 0f ff c0 1f ff e0 1e 01 e0 1c 00 e0 1c 00 e0 1c 00 e0 1e 01 e0 0e 01 c0 06 01 80
+    D:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 1c 00 e0 1c 00 e0 1c 00 e0 1e 01 e0 1f ff e0 0f ff c0 07 ff 80
+    E:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 1c 38 e0 1c 38 e0 1c 38 e0 1c 38 e0 1c 00 e0 1c 00 e0
+    F:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 1c 38 00 1c 38 00 1c 38 00 1c 38 00 1c 00 00 1c 00 00
+    G:
+      height: 19
+      hex: 07 ff 80 0f ff c0 1f ff e0 1e 01 e0 1c 00 e0 1c 0c e0 1c 0c e0 1e 0f e0 0e 0f c0 06 0f 80
+    H:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 00 70 00 00 70 00 00 70 00 00 70 00 1f ff e0 1f ff e0 1f ff e0
+    I:
+      height: 19
+      hex: 18 00 60 1f ff e0 1f ff e0 1f ff e0 18 00 60
+    J:
+      height: 19
+      hex: 00 01 80 1c 01 c0 1c 01 e0 1c 00 e0 1c 00 e0 1c 01 e0 1f ff e0 1f ff c0 1f ff 80
+    K:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 03 fe 00 07 8f 00 0f 07 80 1e 03 c0 1c 01 e0 18 00 e0 10 00 60
+    L:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 00 00 e0 00 00 e0 00 00 e0 00 00 e0 00 00 e0 00 00 e0
+    M:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 0f 00 00 07 80 00 03 c0 00 07 80 00 0f 00 00 1f ff e0 1f ff e0 1f ff e0
+    N:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 03 c0 00 01 e0 00 00 f0 00 00 78 00 1f ff e0 1f ff e0 1f ff e0
+    O:
+      height: 19
+      hex: 07 ff 80 0f ff c0 1f ff e0 1e 01 e0 1c 00 e0 1c 00 e0 1e 01 e0 1f ff e0 0f ff c0 07 ff 80
+    P:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 1c 38 00 1c 38 00 1c 38 00 1e 78 00 1f f8 00 0f f0 00 07 e0 00
+    Q:
+      height: 19
+      hex: 07 ff 80 0f ff c0 1f ff e0 1e 01 e0 1c 00 e0 1c 00 e0 1e 03 60 1f fd a0 0f fe c0 07 ff 60
+    R:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 1c 38 00 1c 3e 00 1c 3f 00 1e 7f 80 1f fb c0 0f f1 e0 07 e0 e0
+    S:
+      height: 19
+      hex: 07 c3 80 0f e3 c0 1f f3 e0 1e f1 e0 1c 70 e0 1c 70 e0 1c 79 e0 1e 7f e0 0e 3f c0 06 1f 80
+    T:
+      height: 19
+      hex: 1c 00 00 1c 00 00 1c 00 00 1f ff e0 1f ff e0 1f ff e0 1c 00 00 1c 00 00 1c 00 00
+    U:
+      height: 19
+      hex: 1f ff 80 1f ff c0 1f ff e0 00 01 e0 00 00 e0 00 00 e0 00 01 e0 1f ff e0 1f ff c0 1f ff 80
+    V:
+      height: 19
+      hex: 1f fe 00 1f ff 00 1f ff 80 00 01 c0 00 00 e0 00 00 e0 00 01 c0 1f ff 80 1f ff 00 1f fe 00
+    W:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 00 03 c0 00 07 80 00 0f 00 00 07 80 00 03 c0 1f ff e0 1f ff e0 1f ff e0
+    X:
+      height: 19
+      hex: 1f 87 e0 1f cf e0 1f ff e0 00 fc 00 00 78 00 00 fc 00 1f ff e0 1f cf e0 1f 87 e0
+    Y:
+      height: 19
+      hex: 1f f0 00 1f f8 00 1f f8 00 00 3f e0 00 1f e0 00 3f e0 1f f8 00 1f f8 00 1f f0 00
+    Z:
+      height: 19
+      hex: 1e 07 e0 1e 0f e0 1e 1f e0 1c 3c e0 1c 78 e0 1c f0 e0 1d e0 e0 1f c1 e0 1f 81 e0 1f 01 e0
+    a: |
+      ....
+      ....
+      ....
+      .##.
+      ...#
+      .###
+      #..#
+      .###
+    b: |
+      ....
+      ....
+      #...
+      #...
+      ###.
+      #..#
+      #..#
+      ###.
+    c: |
+      ....
+      ....
+      ....
+      .##.
+      #..#
+      #...
+      #..#
+      .##.
+    d: |
+      ....
+      ....
+      ...#
+      ...#
+      .###
+      #..#
+      #..#
+      .###
+    e: |
+      ....
+      ....
+      ....
+      .##.
+      #..#
+      ####
+      #...
+      .##.
+    f: |
+      ...
+      ...
+      .#.
+      #.#
+      #..
+      ##.
+      #..
+      #..
+    g: |
+      ....
+      ....
+      .##.
+      #..#
+      #..#
+      .###
+      ...#
+      ###.
+    h: |
+      ....
+      ....
+      #...
+      #...
+      ###.
+      #..#
+      #..#
+      #..#
+    i: |
+      .
+      #
+      .
+      #
+      #
+      #
+      #
+      #
+    j: |
+      ..
+      .#
+      ..
+      .#
+      .#
+      .#
+      .#
+      #.
+    k: |
+      ...
+      ...
+      #..
+      #..
+      #.#
+      ##.
+      #.#
+      #.#
+    l: |
+      ..
+      ..
+      #.
+      #.
+      #.
+      #.
+      #.
+      ##
+    m: |
+      .....
+      .....
+      .....
+      .....
+      ##.#.
+      #.#.#
+      #.#.#
+      #.#.#
+    n: |
+      ...
+      ...
+      ...
+      ...
+      ##.
+      #.#
+      #.#
+      #.#
+    o: |
+      ....
+      ....
+      ....
+      ....
+      .##.
+      #..#
+      #..#
+      .##.
+    p: |
+      ....
+      ....
+      ....
+      ###.
+      #..#
+      ###.
+      #...
+      #...
+    q: |
+      ....
+      ....
+      ....
+      .###
+      #..#
+      .###
+      ...#
+      ...#
+    r: |
+      ...
+      ...
+      ...
+      ...
+      ##.
+      #.#
+      #..
+      #..
+    s: |
+      ....
+      ....
+      ....
+      .###
+      #...
+      .##.
+      ...#
+      ###.
+    t: |
+      ..
+      ..
+      ..
+      #.
+      ##
+      #.
+      #.
+      .#
+    u: |
+      ....
+      ....
+      ....
+      ....
+      #..#
+      #..#
+      #..#
+      .##.
+    v: |
+      ...
+      ...
+      ...
+      ...
+      #.#
+      #.#
+      #.#
+      .#.
+    w: |
+      .....
+      .....
+      .....
+      .....
+      #.#.#
+      #.#.#
+      #.#.#
+      .#.#.
+    x: |
+      ...
+      ...
+      ...
+      ...
+      ...
+      #.#
+      .#.
+      #.#
+    y: |
+      ...
+      ...
+      ...
+      #.#
+      #.#
+      .##
+      ..#
+      ##.
+    z: |
+      ....
+      ....
+      ....
+      ####
+      ...#
+      .##.
+      #...
+      ####
+    '|': |
+      #
+      #
+      #
+      #
+      #
+      #
+      #
+      #
+    Č:
+      height: 19
+      hex: 07 ff 80 0f ff c0 1f ff e0 9e 01 e0 dc 00 e0 5c 00 e0 dc 00 e0 9e 01 e0 0e 01 c0 06 01 80
+    ü: |
+      ....
+      ....
+      .##.
+      ....
+      #..#
+      #..#
+      #..#
+      .##.
+    é: |
+      ....
+      ...#
+      ..#.
+      .##.
+      #..#
+      ####
+      #...
+      .##.
+    ď: |
+      ....
+      #.#.
+      .#.#
+      ...#
+      .###
+      #..#
+      #..#
+      .###
+    ä: |
+      ....
+      .##.
+      ....
+      .##.
+      ...#
+      .###
+      #..#
+      .###
+    Ď:
+      height: 19
+      hex: 1f ff e0 1f ff e0 9f ff e0 dc 00 e0 5c 00 e0 dc 00 e0 9e 01 e0 1f ff e0 0f ff c0 07 ff 80
+    Ť: |
+      #.#
+      .#.
+      ###
+      .#.
+      .#.
+      .#.
+      .#.
+      .#.
+    č: |
+      ....
+      .#.#
+      ..#.
+      .##.
+      #..#
+      #...
+      #..#
+      .##.
+    ě: |
+      ....
+      .#.#
+      ..#.
+      .##.
+      #..#
+      ####
+      #...
+      .##.
+    Ě:
+      height: 19
+      hex: 1f ff e0 1f ff e0 9f ff e0 dc 38 e0 5c 38 e0 dc 38 e0 9c 38 e0 1c 00 e0 1c 00 e0
+    Ĺ: |
+      ...
+      #.#
+      ##.
+      #..
+      #..
+      #..
+      #..
+      ###
+    Í:
+      height: 19
+      hex: 18 00 60 5f ff e0 df ff e0 9f ff e0 18 00 60
+    ľ: |
+      ....
+      ....
+      ##.#
+      #.#.
+      #...
+      #...
+      #...
+      ##..
+    ĺ: |
+      ...
+      ...
+      #.#
+      ##.
+      #..
+      #..
+      #..
+      ##.
+    Ä:
+      height: 19
+      hex: 07 ff e0 0f ff e0 df ff e0 de 38 00 1c 38 00 1c 38 00 de 38 00 df ff e0 0f ff e0 07 ff e0
+    Á:
+      height: 19
+      hex: 07 ff e0 0f ff e0 1f ff e0 1e 38 00 5c 38 00 dc 38 00 9e 38 00 1f ff e0 0f ff e0 07 ff e0
+    É:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 5c 38 e0 dc 38 e0 9c 38 e0 1c 38 e0 1c 00 e0 1c 00 e0
+    ž: |
+      ...
+      #.#
+      .#.
+      ...
+      ###
+      ..#
+      .#.
+      ###
+    Ž:
+      height: 19
+      hex: 1e 07 e0 1e 0f e0 1e 1f e0 9c 3c e0 dc 78 e0 5c f0 e0 dd e0 e0 9f c1 e0 1f 81 e0 1f 01 e0
+    ô: |
+      ....
+      ..#.
+      .#.#
+      ....
+      .##.
+      #..#
+      #..#
+      .##.
+    ö: |
+      ....
+      ....
+      .##.
+      ....
+      .##.
+      #..#
+      #..#
+      .##.
+    Ó: |
+      ....
+      ...#
+      ..#.
+      ....
+      .##.
+      #..#
+      #..#
+      .##.
+    ů: |
+      ....
+      .##.
+      .##.
+      ....
+      #..#
+      #..#
+      #..#
+      .##.
+    Ú:
+      height: 19
+      hex: 1f ff 80 1f ff c0 1f ff e0 00 01 e0 40 00 e0 c0 00 e0 80 01 e0 1f ff e0 1f ff c0 1f ff 80
+    ý: |
+      ...
+      ..#
+      .#.
+      #.#
+      #.#
+      .##
+      ..#
+      ##.
+    Ö: |
+      .##.
+      ....
+      .##.
+      #..#
+      #..#
+      #..#
+      #..#
+      .##.
+    Ü:
+      height: 19
+      hex: 1f ff 80 1f ff c0 df ff e0 c0 01 e0 00 00 e0 00 00 e0 c0 01 e0 df ff e0 1f ff c0 1f ff 80
+    Š:
+      height: 19
+      hex: 07 c3 80 0f e3 c0 1f f3 e0 9e f1 e0 dc 70 e0 5c 70 e0 dc 79 e0 9e 7f e0 0e 3f c0 06 1f 80
+    Ľ: |
+      ...
+      #.#
+      ##.
+      #..
+      #..
+      #..
+      #..
+      ###
+    Ý:
+      height: 19
+      hex: 1f f0 00 1f f8 00 1f f8 00 40 3f e0 c0 1f e0 80 3f e0 1f f8 00 1f f8 00 1f f0 00
+    Ř:
+      height: 19
+      hex: 1f ff e0 1f ff e0 9f ff e0 dc 38 00 5c 3e 00 dc 3f 00 9e 7f 80 1f fb c0 0f f1 e0 07 e0 e0
+    ť: |
+      ...
+      ..#
+      #.#
+      #..
+      ##.
+      #..
+      #..
+      .#.
+    á: |
+      ....
+      ...#
+      ..#.
+      .##.
+      ...#
+      .###
+      #..#
+      .###
+    í: |
+      ..
+      .#
+      #.
+      ..
+      #.
+      #.
+      #.
+      #.
+    ó: |
+      ....
+      ...#
+      ..#.
+      ....
+      .##.
+      #..#
+      #..#
+      .##.
+    ú: |
+      ....
+      ...#
+      ..#.
+      ....
+      #..#
+      #..#
+      #..#
+      .##.
+    ň: |
+      ....
+      .#.#
+      ..#.
+      ....
+      ###.
+      #..#
+      #..#
+      #..#
+    Ň:
+      height: 19
+      hex: 1f ff e0 1f ff e0 1f ff e0 83 c0 00 c1 e0 00 40 f0 00 c0 78 00 9f ff e0 1f ff e0 1f ff e0
+    Ů:
+      height: 19
+      hex: 1f ff 80 1f ff c0 1f ff e0 40 01 e0 a0 00 e0 a0 00 e0 40 01 e0 1f ff e0 1f ff c0 1f ff 80
+    Ô: |
+      ....
+      ....
+      .##.
+      .##.
+      #..#
+      #..#
+      #..#
+      .##.
+    š: |
+      ....
+      .#.#
+      ..#.
+      .###
+      #...
+      .##.
+      ...#
+      ###.
+    ř: |
+      ...
+      #.#
+      .#.
+      ...
+      ##.
+      #.#
+      #..
+      #..
+    "#AA": |
+      ...
+      ..#
+      .#.
+      ...
+      ##.
+      #.#
+      #..
+      #..
+    "#AB": |
+      ...#
+      ..#.
+      ###.
+      #..#
+      #..#
+      ###.
+      #.#.
+      #..#
+    "#AF": |
+      .......
+      ...#...
+      ....#..
+      .....#.
+      #######
+      .....#.
+      ....#..
+      ...#...
+    "#B2": |
+      #####
+      #####
+      #####
+      #####
+      #####
+      #####
+      #####
+      #####
+- id: 10
+  glyphs:
+    "#20":
+      height: 19
+      hex: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+    "#23":
+      height: 28
+      hex: 00 00 00 00 7f ff c0 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00
+        40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 40 00 7f ff c0 00 00 00 00 00
+    "0":
+      height: 19
+      hex: 3f ff 80 7f ff c0 ff ff e0 f0 01 e0 e0 00 e0 e0 00 e0 e0 00 e0 f0 01 e0 ff ff e0 7f ff c0 3f ff 80
+    "1":
+      height: 19
+      hex: 0e 00 00 1e 00 00 3c 00 00 78 00 00 ff ff e0 ff ff e0 ff ff e0
+    "2":
+      height: 19
+      hex: 38 03 e0 78 07 e0 f8 0f e0 f0 1e e0 e0 3c e0 e0 78 e0 e0 f0 e0 f1 e0 e0 ff c0 e0 7f 80 e0 3f 00 e0
+    "3":
+      height: 19
+      hex: 38 03 80 78 03 c0 f8 03 e0 f0 01 e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 f1 f1 e0 ff ff e0 7f bf c0 3f 1f 80
+    "4":
+      height: 19
+      hex: 00 f8 00 03 f8 00 0f f8 00 3f 38 00 fc 38 00 f0 38 00 c0 ff e0 01 ff e0 01 ff e0 00 38 00 00 38 00
+    "5":
+      height: 19
+      hex: ff c3 80 ff e3 c0 ff e3 e0 e0 e1 e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 f1 e0 e0 ff e0 e0 7f c0 00 3f 80
+    "6":
+      height: 19
+      hex: 3f ff 80 7f ff c0 ff ff e0 f0 71 e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 f0 f1 e0 f8 ff e0 78 7f c0 38 3f 80
+    "7":
+      height: 19
+      hex: e0 00 00 e0 00 00 e0 00 00 e0 07 e0 e0 1f e0 e0 7f e0 e1 f8 00 e7 e0 00 ff 80 00 fe 00 00 f8 00 00
+    "8":
+      height: 19
+      hex: 3f 1f 80 7f bf c0 ff ff e0 f1 f1 e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 f1 f1 e0 ff ff e0 7f bf c0 3f 1f 80
+    "9":
+      height: 19
+      hex: 3f 83 80 7f c3 c0 ff e3 e0 f1 e1 e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 f1 c1 e0 ff ff e0 7f ff c0 3f ff 80
+    A:
+      height: 19
+      hex: 3f ff e0 7f ff e0 7f ff e0 f0 70 00 e0 70 00 e0 70 00 e0 70 00 f0 70 00 7f ff e0 7f ff e0 3f ff e0
+    B:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 f1 f1 e0 ff ff e0 7f bf c0 3f 1f 80
+    C:
+      height: 19
+      hex: 3f ff 80 7f ff c0 ff ff e0 f0 01 e0 e0 00 e0 e0 00 e0 e0 00 e0 f0 01 e0 f8 03 e0 78 03 c0 38 03 80
+    D:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 e0 00 e0 e0 00 e0 e0 00 e0 e0 00 e0 f0 01 e0 ff ff e0 7f ff c0 3f ff 80
+    E:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 00 e0 e0 00 e0
+    F:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 e0 e0 00 e0 e0 00 e0 e0 00 e0 e0 00 e0 00 00 e0 00 00
+    G:
+      height: 19
+      hex: 3f ff 80 7f ff c0 ff ff e0 f0 01 e0 e0 00 e0 e0 00 e0 e0 18 e0 f0 19 e0 f8 1f e0 78 1f c0 38 1f 80
+    H:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 00 e0 00 00 e0 00 00 e0 00 00 e0 00 00 e0 00 ff ff e0 ff ff e0 ff ff e0
+    I:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0
+    J:
+      height: 19
+      hex: 00 03 80 e0 03 c0 e0 03 e0 e0 01 e0 e0 00 e0 e0 00 e0 e0 00 e0 e0 01 e0 ff ff e0 ff ff c0 ff ff 80
+    K:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 01 f0 00 03 f8 00 07 bc 00 0f 1e 00 fe 0f e0 fc 07 e0 f8 03 e0
+    L:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 00 00 e0 00 00 e0 00 00 e0 00 00 e0 00 00 e0 00 00 e0
+    M:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 78 00 00 3c 00 00 1e 00 00 3c 00 00 78 00 00 ff ff e0 ff ff e0 ff ff e0
+    N:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 0f 00 00 07 80 00 03 c0 00 01 e0 00 00 f0 00 ff ff e0 ff ff e0 ff ff e0
+    O:
+      height: 19
+      hex: 3f ff 80 7f ff c0 ff ff e0 f0 01 e0 e0 00 e0 e0 00 e0 e0 00 e0 f0 01 e0 ff ff e0 7f ff c0 3f ff 80
+    P:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 e0 e0 00 e0 e0 00 e0 e0 00 f1 e0 00 ff e0 00 7f c0 00 3f 80 00
+    Q:
+      height: 19
+      hex: 3f ff 80 7f ff c0 ff ff e0 f0 01 e0 e0 00 e0 e0 00 e0 e0 00 e0 f0 07 60 ff fb a0 7f fd c0 3f fe e0
+    R:
+      height: 19
+      hex: ff ff e0 ff ff e0 ff ff e0 e0 fc 00 e0 fe 00 e0 ef 00 e0 e7 80 f1 e3 c0 ff e1 e0 7f c0 e0 3f 80 60
+    S:
+      height: 19
+      hex: 3f 03 80 7f 83 c0 ff c3 e0 f1 e1 e0 e0 e0 e0 e0 e0 e0 e0 e0 e0 f0 f1 e0 f8 7f e0 78 3f c0 38 1f 80
+    T:
+      height: 19
+      hex: e0 00 00 e0 00 00 e0 00 00 e0 00 00 ff ff e0 ff ff e0 ff ff e0 e0 00 00 e0 00 00 e0 00 00 e0 00 00
+    U:
+      height: 19
+      hex: ff ff 80 ff ff c0 ff ff e0 00 01 e0 00 00 e0 00 00 e0 00 00 e0 00 01 e0 ff ff e0 ff ff c0 ff ff 80
+    V:
+      height: 19
+      hex: ff fc 00 ff fe 00 ff ff 00 00 0f 80 00 07 c0 00 03 e0 00 07 c0 00 0f 80 ff ff 00 ff fe 00 ff fc 00
+    W:
+      height: 19
+      hex: ff ff 00 ff ff 80 ff ff c0 00 01 e0 00 03 c0 00 07 80 00 07 80 00 03 c0 00 01 e0 ff ff c0 ff ff 80 ff ff 00
+    X:
+      height: 19
+      hex: fc 07 e0 fe 0f e0 ff 1f e0 07 bc 00 03 f8 00 01 f0 00 01 f0 00 03 f8 00 07 bc 00 ff 1f e0 fe 0f e0 fc 07 e0
+    Y:
+      height: 19
+      hex: ff 00 00 ff 80 00 ff c0 00 03 c0 00 01 ff e0 01 ff e0 01 ff e0 03 c0 00 ff c0 00 ff 80 00 ff 00 00
+    Z:
+      height: 19
+      hex: e0 0f e0 e0 1f e0 e0 3f e0 e0 78 e0 e0 f0 e0 e1 e0 e0 e3 c0 e0 ff 80 e0 ff 00 e0 fe 00 e0
+    ľ:
+      height: 19
+      hex: 00 40 00 1f ff 00 1f ff 00 1f ff 00 00 40 00 1f ff 00 1f ff 00 ff ff e0 1c 07 00 1c 07 00 1f ff 00 0f fe 00 07 fc 00 00 40 00 1f ff 00 1f ff 00 1f ff 00 1c e7 00 1c e7 00 1c e7 00 00 40 00 1c
+        40 00 1c 40 00 1f ff 00 1f ff 00 1f ff 00 1c 40 00 1c 40 00
+    Ö:
+      height: 19
+      hex: 03 ff 00 07 ff 80 0e 01 c0 1c fc e0 19 fe 60 db 87 60 db 03 60 db 03 60 db 03 60 db 03 60 db 03 60 db 03 60 00 03 60 ff fb 60 ff fb 60 c0 03 60 df fb 60 df fb 60 d8 03 60 d8 03 60 d8 03 60 d8
+        03 60 dc 07 60 cf fe 60 e7 fc e0 70 01 c0 3f ff 80 1f ff 00
+    Ľ:
+      height: 19
+      hex: ff ff e0 80 00 20 80 00 20 80 00 20 80 00 20 bf ff a0 bf ff a0 bf ff a0 b8 e0 20 b8 e0 20 b8 e0 20 bd e0 20 9f c0 20 8f 80 20 80 00 20 80 00 20 80 00 20 80 00 20 ff ff e0
+    "#AF":
+      height: 19
+      hex: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01 00 80 21 ff 80 11 00 80 19 00 80 15 bf 80 34 50 80 44 28 00 34 14 80 15 fb 80 19 00 80 11 00 80 21 ff 80 01 00 80 00 00 00 00
+        00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+- id: 11
+  glyphs:
+    "#20": |
+      ...
+      ...
+      ...
+      ...
+      ...
+      ...
+      ...
+      ...
+    '!': |
+      .
+      #
+      #
+      #
+      #
+      #
+      .
+      #
+    (: |
+      .#
+      #.
+      #.
+      #.
+      #.
+      #.
+      #.
+      .#
+    ): |
+      #.
+      .#
+      .#
+      .#
+      .#
+      .#
+      .#
+      #.
+    +: |
+      ...
+      ...
+      ...
+      .#.
+      ###
+      .#.
+      ...
+      ...
+    ',': |
+      .
+      .
+      .
+      .
+      .
+      .
+      #
+      #
+    '-': |
+      ...
+      ...
+      ...
+      ...
+      ###
+      ...
+      ...
+      ...
+    .: |
+      .
+      .
+      .
+      .
+      .
+      .
+      .
+      #
+    "0": |
+      ....
+      .##.
+      #..#
+      #..#
+      #..#
+      #..#
+      #..#
+      .##.
+    "1": |
+      ....
+      ..#.
+      .##.
+      #.#.
+      ..#.
+      ..#.
+      ..#.
+      ..#.
+    "2": |
+      ....
+      .##.
+      #..#
+      ...#
+      ..#.
+      .#..
+      #...
+      ####
+    "3": |
+      ....
+      .##.
+      #..#
+      ...#
+      ..#.
+      ...#
+      #..#
+      .##.
+    "4": |
+      ....
+      #...
+      #...
+      #.#.
+      ####
+      ..#.
+      ..#.
+      ..#.
+    "5": |
+      ....
+      ####
+      #...
+      #...
+      .##.
+      ...#
+      #..#
+      .##.
+    "6": |
+      ....
+      .##.
+      #..#
+      #...
+      ###.
+      #..#
+      #..#
+      .##.
+    "7": |
+      ....
+      ####
+      ...#
+      ...#
+      ..#.
+      .#..
+      .#..
+      .#..
+    "8": |
+      ....
+      .##.
+      #..#
+      #..#
+      .##.
+      #..#
+      #..#
+      .##.
+    "9": |
+      ....
+      .##.
+      #..#
+      #..#
+      .###
+      ...#
+      #..#
+      .##.
+    ":": |
+      .
+      .
+      .
+      #
+      .
+      #
+      .
+      .
+    A: |
+      .....
+      .###.
+      #...#
+      #...#
+      #####
+      #...#
+      #...#
+      #...#
+    B: |
+      .....
+      ####.
+      #...#
+      #...#
+      ####.
+      #...#
+      #...#
+      ####.
+    C: |
+      .....
+      .###.
+      #...#
+      #....
+      #....
+      #....
+      #...#
+      .###.
+    D: |
+      .....
+      ####.
+      #...#
+      #...#
+      #...#
+      #...#
+      #...#
+      ####.
+    E: |
+      ....
+      ####
+      #...
+      #...
+      ###.
+      #...
+      #...
+      ####
+    F: |
+      ....
+      ####
+      #...
+      #...
+      ###.
+      #...
+      #...
+      #...
+    G: |
+      .....
+      .###.
+      #...#
+      #....
+      #.###
+      #...#
+      #...#
+      .###.
+    H: |
+      .....
+      #...#
+      #...#
+      #...#
+      #####
+      #...#
+      #...#
+      #...#
+    I: |
+      .
+      #
+      #
+      #
+      #
+      #
+      #
+      #
+    J: |
+      .....
+      .####
+      ....#
+      ....#
+      ....#
+      ....#
+      #...#
+      .###.
+    K: |
+      .....
+      #...#
+      #..#.
+      #.#..
+      ##...
+      #.#..
+      #..#.
+      #...#
+    L: |
+      ....
+      #...
+      #...
+      #...
+      #...
+      #...
+      #...
+      ####
+    M: |
+      .....
+      #...#
+      ##.##
+      #.#.#
+      #...#
+      #...#
+      #...#
+      #...#
+    N: |
+      .....
+      #...#
+      ##..#
+      #.#.#
+      #..##
+      #...#
+      #...#
+      #...#
+    O: |
+      .....
+      .###.
+      #...#
+      #...#
+      #...#
+      #...#
+      #...#
+      .###.
+    P: |
+      .....
+      ####.
+      #...#
+      #...#
+      ####.
+      #....
+      #....
+      #....
+    Q: |
+      .....
+      .###.
+      #...#
+      #...#
+      #...#
+      #.#.#
+      #..#.
+      .##.#
+    R: |
+      .....
+      ####.
+      #...#
+      #...#
+      ####.
+      #.#..
+      #..#.
+      #...#
+    S: |
+      .....
+      .###.
+      #...#
+      #....
+      .###.
+      ....#
+      #...#
+      .###.
+    T: |
+      .....
+      #####
+      ..#..
+      ..#..
+      ..#..
+      ..#..
+      ..#..
+      ..#..
+    U: |
+      .....
+      #...#
+      #...#
+      #...#
+      #...#
+      #...#
+      #...#
+      .###.
+    V: |
+      .....
+      #...#
+      #...#
+      #...#
+      #...#
+      #...#
+      .#.#.
+      ..#..
+    W: |
+      .....
+      #...#
+      #...#
+      #...#
+      #...#
+      #.#.#
+      #.#.#
+      .#.#.
+    X: |
+      .....
+      #...#
+      #...#
+      .#.#.
+      ..#..
+      .#.#.
+      #...#
+      #...#
+    Y: |
+      .....
+      #...#
+      #...#
+      #...#
+      .###.
+      ..#..
+      ..#..
+      ..#..
+    Z: |
+      .....
+      #####
+      ....#
+      ...#.
+      ..#..
+      .#...
+      #....
+      #####
+    a: |
+      ....
+      ....
+      ....
+      .###
+      #..#
+      #..#
+      #..#
+      .###
+    b: |
+      ....
+      #...
+      #...
+      ###.
+      #..#
+      #..#
+      #..#
+      ###.
+    c: |
+      ....
+      ....
+      ....
+      .##.
+      #..#
+      #...
+      #...
+      .##.
+    d: |
+      ....
+      ...#
+      ...#
+      .###
+      #..#
+      #..#
+      #..#
+      .###
+    e: |
+      ....
+      ....
+      ....
+      .##.
+      #..#
+      ####
+      #...
+      .##.
+    f: |
+      ..
+      .#
+      #.
+      ##
+      #.
+      #.
+      #.
+      #.
+    g: |
+      ....
+      ....
+      ....
+      .###
+      #..#
+      .###
+      ...#
+      .##.
+    h: |
+      ....
+      #...
+      #...
+      ###.
+      #..#
+      #..#
+      #..#
+      #..#
+    i: |
+      .
+      #
+      .
+      #
+      #
+      #
+      #
+      #
+    j: |
+      ..
+      .#
+      ..
+      .#
+      .#
+      .#
+      .#
+      #.
+    k: |
+      ....
+      #...
+      #...
+      #..#
+      #.#.
+      ##..
+      #.#.
+      #..#
+    l: |
+      ..
+      #.
+      #.
+      #.
+      #.
+      #.
+      #.
+      .#
+    m: |
+      .......
+      .......
+      .......
+      ###.##.
+      #..#..#
+      #..#..#
+      #..#..#
+      #..#..#
+    n: |
+      ....
+      ....
+      ....
+      ###.
+      #..#
+      #..#
+      #..#
+      #..#
+    o: |
+      ....
+      ....
+      ....
+      .##.
+      #..#
+      #..#
+      #..#
+      .##.
+    p: |
+      ....
+      ....
+      ....
+      ###.
+      #..#
+      #..#
+      ###.
+      #...
+    q: |
+      ....
+      ....
+      ....
+      .###
+      #..#
+      #..#
+      .###
+      ...#
+    r: |
+      ....
+      ....
+      ....
+      ###.
+      #..#
+      #...
+      #...
+      #...
+    s: |
+      ....
+      ....
+      ....
+      .###
+      #...
+      .##.
+      ...#
+      ###.
+    t: |
+      ...
+      .#.
+      .#.
+      ###
+      .#.
+      .#.
+      .#.
+      ..#
+    u: |
+      ....
+      ....
+      ....
+      #..#
+      #..#
+      #..#
+      #..#
+      .###
+    v: |
+      ....
+      ....
+      ....
+      #..#
+      #..#
+      #..#
+      #.#.
+      .#..
+    w: |
+      .....
+      .....
+      .....
+      #...#
+      #...#
+      #.#.#
+      #.#.#
+      .#.#.
+    x: |
+      .....
+      .....
+      .....
+      #...#
+      .#.#.
+      ..#..
+      .#.#.
+      #...#
+    y: |
+      ....
+      ....
+      ....
+      #..#
+      #..#
+      .###
+      ...#
+      .##.
+    z: |
+      ....
+      ....
+      ....
+      ####
+      ...#
+      .##.
+      #...
+      ####
+    Č: |
+      .#.#.
+      ..#..
+      .###.
+      #...#
+      #....
+      #....
+      #...#
+      .###.
+    ü: |
+      ....
+      #..#
+      ....
+      #..#
+      #..#
+      #..#
+      #..#
+      .##.
+    é: |
+      ..#.
+      .#..
+      ....
+      .##.
+      #..#
+      ####
+      #...
+      .##.
+    ď: |
+      #.#.
+      .#.#
+      ...#
+      .###
+      #..#
+      #..#
+      #..#
+      .###
+    Ď: |
+      .#.#.
+      #.#..
+      #...#
+      #...#
+      #...#
+      #...#
+      #...#
+      ####.
+    Ť: |
+      .#.#.
+      ..#..
+      #####
+      ..#..
+      ..#..
+      ..#..
+      ..#..
+      ..#..
+    č: |
+      .#.#
+      ..#.
+      ....
+      .##.
+      #..#
+      #...
+      #...
+      .##.
+    ě: |
+      .#.#
+      ..#.
+      ....
+      .##.
+      #..#
+      ####
+      #...
+      .##.
+    Ě: |
+      .#.#
+      ..#.
+      ####
+      #...
+      ###.
+      #...
+      #...
+      ####
+    Ĺ: |
+      ..#.
+      #.#.
+      #.#.
+      #...
+      #...
+      #...
+      #...
+      ####
+    Í: |
+      .#
+      #.
+      #.
+      #.
+      #.
+      #.
+      #.
+      #.
+    ľ: |
+      ..#
+      ..#
+      #..
+      #..
+      #..
+      #..
+      #..
+      .#.
+    Ä: |
+      .#.#.
+      .###.
+      #...#
+      #...#
+      #####
+      #...#
+      #...#
+      #...#
+    Á: |
+      ..#..
+      .###.
+      #...#
+      #...#
+      #####
+      #...#
+      #...#
+      #...#
+    É: |
+      ..#.
+      ####
+      #...
+      #...
+      ###.
+      #...
+      #...
+      ####
+    ž: |
+      .#.#
+      ..#.
+      ....
+      ####
+      ...#
+      .##.
+      #...
+      ####
+    Ž: |
+      .#.#.
+      ..#..
+      #####
+      ....#
+      ...#.
+      ..#..
+      .#...
+      #####
+    ô: |
+      .##.
+      #..#
+      ....
+      .##.
+      #..#
+      #..#
+      #..#
+      .##.
+    ö: |
+      ....
+      #..#
+      ....
+      .##.
+      #..#
+      #..#
+      #..#
+      .##.
+    Ó: |
+      ...#.
+      .###.
+      #...#
+      #...#
+      #...#
+      #...#
+      #...#
+      .###.
+    ů: |
+      .##.
+      .##.
+      ....
+      #..#
+      #..#
+      #..#
+      #..#
+      .##.
+    Ú: |
+      ..#..
+      #.#.#
+      #...#
+      #...#
+      #...#
+      #...#
+      #...#
+      .###.
+    ý: |
+      ..#.
+      .#..
+      ....
+      #..#
+      #..#
+      .###
+      ...#
+      .##.
+    Ö: |
+      .#.#.
+      .###.
+      #...#
+      #...#
+      #...#
+      #...#
+      #...#
+      .###.
+    Ü: |
+      .#.#.
+      #...#
+      #...#
+      #...#
+      #...#
+      #...#
+      #...#
+      .###.
+    Š: |
+      .#.#.
+      ..#..
+      .####
+      #....
+      .###.
+      ....#
+      #...#
+      .###.
+    Ý: |
+      ...#.
+      #.#.#
+      #...#
+      #...#
+      .###.
+      ..#..
+      ..#..
+      ..#..
+    Ř: |
+      .#.#.
+      ..#..
+      ####.
+      #...#
+      #...#
+      ####.
+      #..#.
+      #...#
+    ť: |
+      #.#
+      .#.
+      .#.
+      ###
+      .#.
+      .#.
+      .#.
+      ..#
+    á: |
+      ..#.
+      .#..
+      ....
+      .###
+      #..#
+      #..#
+      #..#
+      .###
+    í: |
+      .#
+      #.
+      ..
+      #.
+      #.
+      #.
+      #.
+      #.
+    ó: |
+      ...#
+      ..#.
+      ....
+      .##.
+      #..#
+      #..#
+      #..#
+      .##.
+    ú: |
+      ..#.
+      .#..
+      ....
+      #..#
+      #..#
+      #..#
+      #..#
+      .##.
+    ň: |
+      .#.#
+      ..#.
+      ....
+      ###.
+      #..#
+      #..#
+      #..#
+      #..#
+    Ň: |
+      .#.#.
+      #.#.#
+      ##..#
+      #.#.#
+      #..##
+      #...#
+      #...#
+      #...#
+    Ů: |
+      ..#..
+      .#.#.
+      #.#.#
+      #...#
+      #...#
+      #...#
+      #...#
+      .###.
+    š: |
+      .#.#
+      ..#.
+      ....
+      .###
+      #...
+      .##.
+      ...#
+      ###.
+    ř: |
+      #.#.
+      .#..
+      ....
+      ###.
+      #..#
+      #...
+      #...
+      #...
+- id: 12
+  glyphs:
+    "0":
+      height: 19
+      hex: 1f ff 00 3f ff 80 7f ff c0 70 01 c0 70 01 c0 70 01 c0 7f ff c0 3f ff 80 1f ff 00
+    "1":
+      height: 19
+      hex: 1c 00 00 38 00 00 7f ff c0 7f ff c0 7f ff c0
+    "2":
+      height: 19
+      hex: 18 07 c0 38 0f c0 78 1f c0 70 3d c0 70 79 c0 70 f1 c0 7f e1 c0 3f c1 c0 1f 81 c0
+    "3":
+      height: 19
+      hex: 18 03 00 38 03 80 78 03 c0 70 41 c0 70 e1 c0 70 e1 c0 7f ff c0 3f bf 80 1f 1f 00
+    "4":
+      height: 19
+      hex: 00 e0 00 03 e0 00 0f e0 00 3f e0 00 7c e0 00 70 ff c0 41 ff c0 01 ff c0 00 e0 00
+    "5":
+      height: 19
+      hex: 7f c3 00 7f e3 80 7f e3 c0 70 e1 c0 70 e1 c0 70 e1 c0 70 ff c0 70 7f 80 00 3f 00
+    "6":
+      height: 19
+      hex: 1f ff 00 3f ff 80 7f ff c0 70 e1 c0 70 e1 c0 70 e1 c0 78 ff c0 38 7f 80 18 3f 00
+    "7":
+      height: 19
+      hex: 70 00 00 70 07 c0 70 1f c0 70 7f c0 71 f8 00 77 e0 00 7f 80 00 7e 00 00 78 00 00
+    "8":
+      height: 19
+      hex: 1f 1f 00 3f bf 80 7f ff c0 70 e1 c0 70 e1 c0 70 e1 c0 7f ff c0 3f bf 80 1f 1f 00
+    "9":
+      height: 19
+      hex: 1f 83 00 3f c3 80 7f e3 c0 70 e1 c0 70 e1 c0 70 e1 c0 7f ff c0 3f ff 80 1f ff 00
+    X:
+      height: 19
+      hex: 40 00 40 60 00 c0 70 01 c0 7c 03 c0 7e 0f c0 5f 1f 40 0f be 00 03 f8 00 01 f0 00 01 f0 00 03 f8 00 0f be 00 5f 1f 40 7e 0f c0 7c 03 c0 70 01 c0 60 00 c0 40 00 40

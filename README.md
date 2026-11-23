@@ -5,7 +5,7 @@ Ověřeno na vnitřním panelu **BS 120**. Běží na Windows, Linuxu i macOS.
 
 > Projekt nijak nesouvisí s firmou BUSE ani s jejími nástupci. Protokol a formát dat byly zjištěny
 > analýzou kvůli interoperabilitě. Popis je v [docs/PROTOKOL.md](docs/PROTOKOL.md).
-> Repozitář neobsahuje žádná data dopravců ani původní software. Obsahuje originální font gBUSE (fonty 0–3 a 15), výchozí pro univerzální databázi; volitelně vestavěný font (`--font builtin`).
+> Repozitář neobsahuje žádná data dopravců ani původní software. Obsahuje originální font gBUSE (fonty 0–3 a 15), výchozí pro univerzální databázi, a originální fonty gBUSE0 (0–12) pro vnější panely; volitelně vestavěný font (`--font builtin`).
 
 ## Co umí
 
@@ -14,7 +14,7 @@ Ověřeno na vnitřním panelu **BS 120**. Běží na Windows, Linuxu i macOS.
 | **gBUSE** | gBUSE1 | Editor dat panelu: linky, cíle, zastávky, konfigurace, fonty a ikony, import z CSV/Excelu. Data jsou v čitelném YAML a převádějí se z/do HEX beze ztráty. |
 | **Loader** | BSLoader | Vyhledání panelu, nahrání dat s kontrolou, záloha, konzole IBIS povelů. |
 | **Živě** | – | Panel jako displej: volný text, hodiny, odjezdová tabule. |
-| **Simulace** | – | Trasa linky, vozidlo s více panely, překlápění stránek (příští zastávka, směr, zóna, čas), mimořádnosti, API pro externí řízení a WebSocket pro ESP brány. |
+| **Simulace** | – | Linka se směry a kurzy, vozidlo s libovolným počtem periferií (vnitřní BS120, vnější DOT-LED v1–v4, LCD), překlápění stránek (příští zastávka, směr, zóna, čas), mimořádnosti, API pro externí řízení a WebSocket pro ESP brány. |
 
 ## Instalace
 
@@ -49,6 +49,9 @@ busepanel serve                     # otevře http://127.0.0.1:8090
 - `databaze/univerzalni/projekt.yaml`: univerzální databázi s originálním fontem gBUSE (tenký 0, normální 3; `--font builtin` = vestavěný font), ikonami (přímo v textových fontech na kódech 0xAA–0xAE, 0xF0, 0xF5–0xFE) a čísly linek. Ostatní texty pak aplikace posílá dynamicky volným textem.
 - `trasy/`: ukázkovou trasu regionální linky 607 Pardubice → Chlumec nad Cidlinou s tarifními zónami IDS IREDO. Zdroj: veřejná data CIS JŘ a IREDO.
 - `vozidla/autobus.yaml`: vozidlo s náhledem a se skutečným panelem na nalezeném převodníku.
+
+Vozidla lze třídit do libovolných podsložek `vozidla/` (např. zvlášť testovací jen v počítači a zvlášť
+s fyzickým panelem); v seznamu vozidel se podsložky zobrazí jako skupiny.
 
 Pak v prohlížeči: **Simulace** → načíst trasu → **▶ Start**. Mezerníkem posouváš jízdu, šipkou ← jdeš zpět, A je příjezd, D odjezd.
 
@@ -97,16 +100,68 @@ Port lze zadat přes `-p`, například `-p /dev/ttyUSB0` nebo `-p COM5`, přípa
 
 ## Další typy panelů
 
-Profily jsou v [`busepanel/panels/profiles.yaml`](busepanel/panels/profiles.yaml). BS 220 (dvouřádkový) a BS 210 (vnější) jsou zatím jen odhad. Formát gBUSE0 (vnější panely) ani gBUSE1 1.12 s cykly zatím podporovaný není.
+Profily jsou v [`busepanel/panels/profiles.yaml`](busepanel/panels/profiles.yaml). BS 220 (dvouřádkový) je zatím jen
+odhad. gBUSE1 1.12 s cykly zatím podporovaný není.
+
+**Vnější panely (BS 210, gBUSE0)** se v simulaci emulují: čtení databáze gBUSE0 (`.hex`) a interpret záznamů
+([`busepanel/gbuse0/`](busepanel/gbuse0)). Bez databáze se použije varianta v1 čelní 140×19, v2 boční s číslem
+110×19 nebo v4 zadní 28×19 s originálními fonty gBUSE0. Zápis databáze gBUSE0 zatím není.
+Co je ověřené a co odhad, popisuje [docs/PROTOKOL.md](docs/PROTOKOL.md), kap. 4.6 a 10.
+
+## Simulace: vozidlo, linka a skladba textů
+
+Vozidlo (`vozidla/*.yaml`) má libovolný počet panelů. Každý panel je buď fyzický (COM port + adresa IBIS),
+na síti (ESP), nebo virtuální náhled. Panely na stejném COM portu nebo ESP zařízení sdílejí jednu linku IBIS.
+Typy panelů jsou v [`busepanel/peripherals/`](busepanel/peripherals/__init__.py).
+
+```yaml
+panels:
+  - {name: Vnitřní, type: BS120, role: interior, output: serial, port: "", address: 10}   # "" = nalezený převodník
+  - {name: Čelní, type: BS210, variant: v1, role: front, output: serial, port: ""}
+  - {name: Boční, type: BS210, variant: v2, stop_field: bottom, role: side, output: virtual}
+  - {name: Zadní, type: BS210, variant: v4, role: rear, output: virtual}
+  - {name: LCD, type: LCD, role: interior, http_port: 8091}
+```
+
+`stop_field: top | bottom` přidá vnějšímu panelu řádek nácestných zastávek nad nebo pod cíl (`stop_rows` = výška).
+
+Linka (`trasy/*.yaml`) může mít **směry** a **kurzy**, podobně jako je zná BS100. Kurz je řada spojů a spoj může
+jet jen část trasy. Stará „plochá“ trasa se načte jako jeden směr. „Přes“ jsou zastávky označené `via: true`
+(starý textový údaj `via: "A - B"` se při načtení převede na označení zastávek).
+
+```yaml
+line: "3"
+directions:
+  A: {destination: LÁZNĚ BOHDANEČ, stops: [{name: Hlavní nádraží}, {name: "Semtín, zastávka", via: true}, ...]}
+  B: {destination: HLAVNÍ NÁDRAŽÍ, stops: [...]}
+courses:
+  "1":
+    - {direction: A, departure: "05:12"}
+    - {direction: B, departure: "06:05"}
+    - {direction: A, departure: "07:00", to: "Semtín, zastávka"}   # zkrácený spoj – cíl = poslední zastávka
+```
+
+V kartě **Linka** se edituje celý soubor: záložky směrů (cíl, kód cíle, zastávky; „Obrácený směr“ založí
+protisměr), kurzy se seznamem spojů (směr, odjezd, Od / Do pro zkrácený spoj, vlastní cíl) a mimořádnosti
+společné pro linku. Simulovaný spoj se vybírá nahoře nebo tlačítkem ▶ u spoje; jeho zastávky jsou v editoru
+směru podbarvené. Tlačítko **Další spoj** (událost `next_trip`) přejde na další spoj kurzu. Stará plochá trasa
+se uloží zase plochá, dokud nepřibude druhý směr nebo kurz. API: `POST /api/sim/trip` s
+`{"course": "1", "index": 0}` nebo `{"direction": "A"}`; `POST /api/sim/line/update` / `line/save` s celou linkou.
+
+**Skladba textů** (formáty) je v YAML: vestavěné v [`busepanel/sim/formats/`](busepanel/sim/formats), vlastní ve
+složce `formaty/` pracovní složky (stejná struktura). Sekvence `exterior` (případně `exterior_side`,
+`exterior_rear`) určuje cíl na vnějších panelech, sekvence `via` řádek nácestných zastávek. Stránka s
+`{via_stop}` se zopakuje pro každou zbývající nácestnou zastávku a panel je sám překlápí. Bez fontu si vnější
+panel text naformátuje sám.
 
 ## Doplňky
 
 Doplňky nejsou součástí hlavní funkce BUSE Studia (náhrada gBUSE a BSLoaderu, panely BUSE). Jsou to volitelné
 rozšíření, každé ve vlastním balíčku v `busepanel/extras/` s vlastním kódem i webovými soubory.
 
-### LCD panel PID (`busepanel/extras/lcd`)
+### LCD panel (`busepanel/extras/lcd`)
 
-Výstup simulace „LCD“ není panel BUSE, ale webová stránka ve stylu informačních LCD PID: číslo linky, pásmo,
+Výstup simulace „LCD“ není panel BUSE, ale webová stránka ve stylu informačních LCD panelů: číslo linky, pásmo,
 příští zastávky s minutami, čas a konečná; zastávka, ve které vůz stojí, je zvýrazněná, zastávka na znamení
 má zvonek.
 Hodí se třeba pro OMSI nebo tablet ve vozidle. Každý LCD panel vozidla má vlastní HTTP port:

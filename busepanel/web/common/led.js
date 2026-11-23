@@ -16,6 +16,22 @@ export function drawCols(canvas, cols, columns = 135, rows = 8, upper = null) {
   ctx.shadowBlur = 0;
 }
 
+// Exterior DOT-LED matrix (gBUSE0 emulator): bits[x] = column, bit y = row from the TOP.
+// The dot size is the same for every panel width up to `ref` columns, so v1 … v4 keep their proportions.
+export function drawMatrix(canvas, bits, columns, rows, ref = 140) {
+  const ctx = canvas.getContext("2d");
+  const s = Math.max(2, Math.floor(canvas.width / Math.max(columns, ref))), r = s * 0.38;
+  canvas.height = s * rows + 4;
+  ctx.fillStyle = "#0b0907"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  for (let x = 0; x < columns; x++) for (let y = 0; y < rows; y++) {
+    const on = ((bits[x] || 0) >> y) & 1;
+    ctx.fillStyle = on ? "#ffb02e" : "#2a2118";
+    ctx.shadowBlur = on ? s * 0.6 : 0; ctx.shadowColor = "#ff9d00";
+    ctx.beginPath(); ctx.arc(x * s + s / 2 + 2, y * s + s / 2 + 2, r, 0, 7); ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+}
+
 function blit(frame, item, start, lo, hi) {
   item.cols.forEach((v, i) => {
     const x = start + i;
@@ -27,6 +43,14 @@ export class LedView {
   constructor(canvas) { this.canvas = canvas; this.anim = null; this.key = null; }
 
   show(frame, g) {
+    if (frame.matrix) {                    // exterior panel: the server sends the finished picture
+      const key = JSON.stringify(frame.bits);
+      if (key === this.key) return;
+      this.key = key;
+      if (this.anim) cancelAnimationFrame(this.anim), (this.anim = null);
+      drawMatrix(this.canvas, frame.bits, g.columns, g.rows);
+      return;
+    }
     const key = JSON.stringify([frame.line && frame.line.bytes, frame.dest && frame.dest.bytes, frame.heading && frame.heading.bytes, frame.mode]);
     if (key === this.key) return;          // unchanged – keep the running animation
     this.key = key;

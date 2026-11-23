@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from ..core.project import Project, load_yaml, dump_yaml
 from ..sim.engine import DEFAULT_SETTINGS, SimEngine, merge_settings
+from ..sim.line import Line
 from ..sim.route import Route
 from ..sim.universal_db import build_universal
 from ..sim.vehicle import Vehicle
@@ -39,7 +40,9 @@ EXAMPLE_VEHICLE = {
 class Sim:
     def __init__(self):
         self.workdir = "."
-        self.route = Route.from_dict(EXAMPLE_ROUTE)
+        self.line = Line.from_dict(EXAMPLE_ROUTE)      # line = directions + courses (flat route = 1 direction)
+        self.sel = {}                                  # selected trip: {course, index} or {direction}
+        self.route = self.line.route()                 # the trip being simulated
         self.route_path = None
         self.vehicle_cfg = json.loads(json.dumps(EXAMPLE_VEHICLE))
         self.vehicle_path = None
@@ -107,24 +110,62 @@ class RouteSave(BaseModel):
     route: dict
 
 
+def _route_info():
+    return {"path": SIM.route_path, "route": SIM.route.to_dict(), "line": SIM.line.summary(), "selection": SIM.sel,
+            "data": SIM.line.to_dict(full=True)}
+
+
 @router.get("/api/sim/route")
 def route_get():
-    return {"path": SIM.route_path, "route": SIM.route.to_dict()}
+    return _route_info()
+
+
+def _default_sel(line: Line) -> dict:
+    if line.courses:
+        return {"course": next(iter(line.courses)), "index": 0}
+    return {"direction": next(iter(line.directions), "1")} if not line.flat else {}
+
+
+def _select(sel: dict):
+    route = SIM.line.route(**sel)
+    SIM.sel, SIM.route = sel, route
 
 
 @router.post("/api/sim/route/load")
 def route_load(r: PathReq):
-    SIM.route = Route.load(SIM.path(r.path))
+    try:
+        line = Line.load(SIM.path(r.path))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    SIM.line = line
+    _select(_default_sel(line))
     SIM.route_path = r.path
-    _rebuild()
+    _rebuild(keep_state=False)
     return route_get()
+
+
+def _put(route: dict):
+    """Route edited in the UI -> back into the line (direction); a shortened trip only for this run."""
+    rt = Route.from_dict(route)
+    try:
+        SIM.line.put_route(rt, **SIM.sel)
+        SIM.route = SIM.line.route(**SIM.sel)
+    except ValueError:
+        if not SIM.sel.get("course"):
+            raise
+        SIM.route = rt
 
 
 @router.post("/api/sim/route/save")
 def route_save(r: RouteSave):
-    SIM.route = Route.from_dict(r.route)
+    try:
+        _put(r.route)
+        if SIM.sel.get("course") and not SIM.line.is_full(SIM.sel["course"], SIM.sel.get("index", 0)):
+            raise ValueError("zkrácený spoj nelze uložit z editoru – upravte směr (celý spoj) nebo soubor linky")
+    except ValueError as e:
+        raise HTTPException(400, str(e))
     os.makedirs(os.path.dirname(SIM.path(r.path)), exist_ok=True)
-    SIM.route.save(SIM.path(r.path))
+    SIM.line.save(SIM.path(r.path))
     SIM.route_path = r.path
     _rebuild()
     return route_get()
@@ -132,9 +173,79 @@ def route_save(r: RouteSave):
 
 @router.post("/api/sim/route/update")
 def route_update(r: RouteSave):
-    SIM.route = Route.from_dict(r.route)
+    try:
+        _put(r.route)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
     _rebuild()
     return route_get()
+
+
+class LineReq(BaseModel):
+    line: dict
+    path: str | None = None
+    selection: dict | None = None
+
+
+def _put_line(r: LineReq):
+    """Whole line edited in the UI (directions, courses, messages) -> SIM.line + the simulated trip."""
+    try:
+        line = Line.from_dict(r.line)
+    except (ValueError, TypeError, KeyError, AttributeError) as e:
+        raise HTTPException(400, str(e))
+    if not line.directions:
+        raise HTTPException(400, "linka musí mít aspoň jeden směr")
+    if SIM.line.flat and len(line.directions) == 1 and not line.courses:
+        line.flat = True                               # an old flat file stays flat
+    SIM.line = line
+    sel = r.selection if r.selection is not None else SIM.sel
+    try:
+        _select(sel or _default_sel(line))
+    except ValueError:
+        _select(_default_sel(line))
+
+
+@router.get("/api/sim/line")
+def line_get():
+    return _route_info()
+
+
+@router.post("/api/sim/line/update")
+def line_update(r: LineReq):
+    _put_line(r)
+    _rebuild()
+    return {**_route_info(), "state": state()}
+
+
+@router.post("/api/sim/line/save")
+def line_save(r: LineReq):
+    _put_line(r)
+    if not r.path:
+        raise HTTPException(400, "chybí cesta souboru")
+    os.makedirs(os.path.dirname(SIM.path(r.path)) or ".", exist_ok=True)
+    SIM.line.save(SIM.path(r.path))
+    SIM.route_path = r.path
+    _rebuild()
+    return {**_route_info(), "state": state()}
+
+
+class TripReq(BaseModel):
+    course: str | None = None
+    index: int = 0
+    direction: str | None = None
+
+
+@router.post("/api/sim/trip")
+def trip_select(r: TripReq):
+    """Select the trip to simulate: course + index (kurz, spoj) or a whole direction."""
+    sel = {"course": r.course, "index": r.index} if r.course else ({"direction": r.direction} if r.direction else {})
+    try:
+        _select(sel)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    SIM._log("spoj " + (f"kurz {r.course} / {r.index + 1}" if r.course else f"směr {r.direction or '-'}"))
+    _rebuild(keep_state=False)
+    return {**_route_info(), "state": state()}
 
 
 class CsvReq(BaseModel):
@@ -145,9 +256,8 @@ class CsvReq(BaseModel):
 
 @router.post("/api/sim/route/import-csv")
 def route_csv(r: CsvReq):
-    SIM.route = Route.from_csv(r.csv, r.line, r.destination)
-    _rebuild()
-    return route_get()
+    """CSV -> stops (the UI puts them into the edited direction)."""
+    return {"route": Route.from_csv(r.csv, r.line, r.destination).to_dict()}
 
 
 # ------------------------------------------------------------------ vehicle
@@ -158,9 +268,12 @@ class VehicleSave(BaseModel):
 
 @router.get("/api/sim/defaults")
 def defaults():
-    from ..sim.engine import DEFAULT_SEQUENCES, PRESETS, preset_settings
-    return {"sequences": DEFAULT_SEQUENCES,
-            "presets": {k: {"title": v["title"], "interior": preset_settings(k)} for k, v in PRESETS.items()}}
+    from ..peripherals import describe
+    from ..sim.engine import DEFAULT_SEQUENCES, load_formats, preset_settings
+    extra = SIM.path("formaty")                       # own text formats of the working folder
+    formats = load_formats(extra)
+    return {"sequences": DEFAULT_SEQUENCES, "peripherals": describe(),
+            "presets": {k: {"title": v["title"], "interior": preset_settings(k, extra)} for k, v in formats.items()}}
 
 
 @router.get("/api/sim/vehicle")
@@ -236,7 +349,7 @@ def _rebuild(keep_state: bool = True):
         SIM.engine.message, SIM.engine.message_key = old.message, old.message_key
     cfg = dict(SIM.vehicle_cfg)
     cfg["panels"] = [p for p in cfg.get("panels") or [] if p.get("enabled", True)]
-    SIM.vehicle = Vehicle.from_config(cfg, SIM.engine, SIM.db, log=SIM._log)
+    SIM.vehicle = Vehicle.from_config(cfg, SIM.engine, SIM.db, log=SIM._log, base_dir=SIM.workdir)
     _sync_lcd()
     if running:
         SIM.vehicle.start()
@@ -283,6 +396,17 @@ def _event(e: dict):
     _need_db()
     if SIM.engine is None:
         _rebuild()
+    if e["type"] == "next_trip":            # next trip of the course (BS100: after the terminal)
+        c = SIM.sel.get("course")
+        nxt = SIM.line.next_trip(c, SIM.sel.get("index", 0)) if c else None
+        if nxt is None:
+            raise ValueError("kurz nemá další spoj" if c else "není vybrán kurz")
+        _select({"course": c, "index": nxt})
+        SIM._log(f"událost next_trip → kurz {c} / spoj {nxt + 1}")
+        _rebuild(keep_state=False)
+        if SIM.vehicle:
+            SIM.vehicle.tick(virtual_only=not SIM.vehicle.running)
+        return
     kw = {k: v for k, v in e.items() if k != "type" and v is not None}
     SIM.engine.event(e["type"], **kw)
     SIM._log("událost " + e["type"] + (f" {kw}" if kw else ""))
@@ -301,7 +425,6 @@ def event(r: EventReq):
 
 @router.get("/api/sim/state")
 def state():
-    from ..outputs.virtual import VirtualPanel
     eng = SIM.engine
     panels = []
     if SIM.vehicle:
@@ -309,11 +432,9 @@ def state():
             SIM.vehicle.tick(virtual_only=True)   # stopped: refresh previews only, never real panels
         for s in SIM.vehicle.panels:
             st = s.status()
-            if isinstance(s.output, VirtualPanel):
-                st["frame"] = s.output.frame()
-            elif s.shadow is not None and s.shadow.sent:
-                st["frame"] = s.shadow.frame()       # what the real panel shows (sent telegrams)
-                st["frame"]["mirror"] = True
+            fr = s.frame()                        # emulator image; mirror=True for a real panel
+            if fr is not None:
+                st["frame"] = fr
             panels.append(st)
     return {"running": bool(SIM.vehicle and SIM.vehicle.running), "engine": eng.state() if eng else None,
             "panels": panels, "log": SIM.log[-30:], "db": SIM.db_path, "route_path": SIM.route_path,
