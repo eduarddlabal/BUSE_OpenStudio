@@ -69,9 +69,9 @@ def spec_telegrams(spec: dict, prof, fonts, line_map: dict | None = None) -> lis
             # two-line panel: heading on the upper line, text below (LF separator – NOT verified on hardware);
             # a line number missing in the database goes in front of the heading
             htext = spec.get("heading") or ""
-            if spec.get("line") and not lk:
-                htext = f"{spec['line']}  {htext}"
             head, _ = text_payload(fonts, htext, spec.get("heading_font"), spec.get("spacing"))
+            if spec.get("line") and not lk:
+                head = _line_segment(str(spec["line"]), g, fonts) + head
             payload = head + b"\n" + payload
         # The real BS120 shows the previously stored text right after a mode switch and takes
         # the new one only with the next v -> send v again after the switch (verified issue).
@@ -83,6 +83,36 @@ def spec_telegrams(spec: dict, prof, fonts, line_map: dict | None = None) -> lis
     line = spec.get("line")
     lk = line_key(line, line_map) if line else None
     return [f"l{lk or '000'}"]
+
+
+def _col(x: int) -> bytes:
+    """ESC s – continue at column x (gBUSE1 {x:N})."""
+    return bytes([0x1B, 0x73, x + 0x10])
+
+
+def _line_segment(line: str, g, fonts) -> bytes:
+    """A line number without a database record (e.g. a three-digit line without line_map) on a two-line
+    panel: centred in the line segment of the upper row, in the biggest font of the row height that fits
+    the segment; the heading then starts at the destination column. [ODHAD] – BS220 not verified."""
+    seg = g.line_right - g.line_left + 1
+    best = None
+    for f in sorted(fonts.fonts, key=lambda f: f.id):
+        if not f.glyphs:
+            continue
+        h = max((gl.height for gl in f.glyphs.values()), default=0)
+        if h > g.rows // 2:
+            continue
+        for sp in (1, 0):
+            p, _ = text_payload(fonts, line, f.id, sp)
+            w = _width(p, fonts)
+            if w <= seg and (best is None or h > best[0] or (h == best[0] and w > best[2])):
+                best = (h, p, w)
+                break
+    if best is None:                                   # nothing fits: the narrowest attempt, cut by the segment
+        p, _ = text_payload(fonts, line, None, 0)
+        best = (0, p, min(seg, _width(p, fonts)))
+    _h, p, w = best
+    return _col(g.line_left + max(0, (seg - w) // 2)) + p + _col(g.dest_left)
 
 
 def _width(payload: bytes, fonts) -> int:

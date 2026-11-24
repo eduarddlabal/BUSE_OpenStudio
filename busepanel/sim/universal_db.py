@@ -262,3 +262,4 @@ def build_universal_bundle(
         "vehicle_data": {"name": name, "panels": sim_panels},
     }
     return ProjectBundle(meta={"name": name, "description": description}, panels=entries, simulation=sim_cfg)
+

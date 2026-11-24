@@ -72,7 +72,7 @@ def _json(method: str, path: str, body: dict | None = None) -> tuple[int, dict[s
 
 def test_http_static_and_end_to_end_contracts(tmp_path):
     old_s = srv.S.workdir
-    old_sim = (sim_api.SIM.workdir, sim_api.SIM.db, sim_api.SIM.db_path, sim_api.SIM.vehicle_cfg, sim_api.SIM.vehicle_path)
+    old_sim = (sim_api.SIM.workdir, sim_api.SIM.project, sim_api.SIM.vehicle_cfg, sim_api.SIM.vehicle_path)
     srv.S.reset(str(tmp_path))
     sim_api.SIM.vehicle_path = None
     sim_api.init(str(tmp_path))
@@ -197,7 +197,7 @@ def test_http_static_and_end_to_end_contracts(tmp_path):
         assert code == 200 and set(sdf_res) >= {"sequences", "peripherals", "sections"}
     finally:
         srv.S.reset(old_s)
-        sim_api.SIM.workdir, sim_api.SIM.db, sim_api.SIM.db_path, sim_api.SIM.vehicle_cfg, sim_api.SIM.vehicle_path = old_sim
+        sim_api.SIM.workdir, sim_api.SIM.project, sim_api.SIM.vehicle_cfg, sim_api.SIM.vehicle_path = old_sim
         sim_api._rebuild()
 
 

@@ -19,6 +19,7 @@ from ..sim.line import Line
 from ..sim.route import Route
 from ..sim.universal_db import build_universal, build_universal_bundle
 from ..sim.vehicle import Vehicle
+from .sim_project import OpenProject, load_project_file, strip_project_marks
 
 router = APIRouter()
 
@@ -51,9 +52,7 @@ class Sim:
         self.route_path = None
         self.vehicle_cfg = json.loads(json.dumps(EXAMPLE_VEHICLE))
         self.vehicle_path = None
-        self.db: Project | None = None
-        self.db_path = None
-        self.bundle: ProjectBundle | None = None          # open multi-panel project (its simulation: section)
+        self.project: OpenProject | None = None        # what is open: database (+ multi-panel project)
         self.engine: SimEngine | None = None
         self.vehicle: Vehicle | None = None
         self.log: list[str] = []
@@ -63,6 +62,19 @@ class Sim:
 
     def path(self, p):
         return os.path.abspath(os.path.join(self.workdir, p))
+
+    # read-only views of the open project (set it only through _open_project / _close_project)
+    @property
+    def db(self) -> Project | None:
+        return self.project.db if self.project is not None else None
+
+    @property
+    def db_path(self) -> str | None:
+        return self.project.path if self.project is not None else None
+
+    @property
+    def bundle(self) -> ProjectBundle | None:
+        return self.project.bundle if self.project is not None else None
 
 
 SIM = Sim()
@@ -75,21 +87,7 @@ _DEFAULT_DB_CANDIDATES = (
 DEFAULT_DB = "projekty/univerzalni/projekt.yaml"
 
 
-def _load_sim_project(abs_path: str) -> tuple[Project, ProjectBundle | None]:
-    low = abs_path.lower()
-    if low.endswith((".yaml", ".yml")):
-        if ProjectBundle.is_bundle_yaml(abs_path):
-            bundle = ProjectBundle.load(abs_path)
-            pe = next((p for p in bundle.panels if p.format == "gbuse1" and p.project is not None), None)
-            if pe is None:
-                pe = next((p for p in bundle.panels if p.project is not None), None)
-            if pe is None or pe.project is None:
-                raise ValueError(f"projekt {abs_path} neobsahuje žádnou databázi panelu")
-            return pe.project, bundle
-        return Project.load(abs_path), None
-    if low.endswith(".bin"):
-        return Project.from_bin(abs_path), None
-    return Project.from_hex(abs_path), None
+_load_sim_project = load_project_file           # (database, bundle) of a file
 
 
 def _is_sim_project_yaml(full: str) -> bool:
@@ -178,7 +176,7 @@ def init(workdir: str):
     appsettings.load(SIM.workdir)
     if SIM.vehicle:
         SIM.vehicle.stop()
-    SIM.db, SIM.db_path, SIM.bundle = None, None, None
+    SIM.project = None
     SIM.engine, SIM.vehicle = None, None
     SIM.line = Line.from_dict(EXAMPLE_ROUTE)
     SIM.sel = {}
@@ -210,10 +208,7 @@ def init(workdir: str):
     cand = _find_default_db()
     if cand and os.path.exists(SIM.path(cand)):
         try:
-            db, bundle = _load_sim_project(SIM.path(cand))
-            SIM.db, SIM.db_path, SIM.bundle = db, cand, bundle
-            if bundle is not None:
-                _apply_bundle_sim(bundle, apply_vehicle=True)
+            _open_project(cand, apply_vehicle=True)
             _rebuild(keep_state=False)
         except Exception as e:      # noqa: BLE001
             SIM._log(f"univerzální databázi nelze načíst: {e}")
@@ -251,25 +246,9 @@ def _route_sort_key(item: dict) -> tuple:
     return (1, 0, ln.lower(), item.get("group") or "", item["path"])
 
 
-def _bundle_routes(bundle) -> tuple[list[str], list[str]]:
-    """Routes named in a project's simulation: section -> (found paths relative to the workdir, missing).
-    A path is looked up in the project folder first, then in the working folder."""
-    found, missing = [], []
-    for r in (bundle.simulation or {}).get("routes") or [] if bundle is not None else []:
-        r = str(r)
-        for base in (bundle.base_dir, SIM.workdir):
-            full = os.path.abspath(os.path.join(base, r))
-            if os.path.isfile(full):
-                found.append(os.path.relpath(full, SIM.workdir).replace("\\", "/"))
-                break
-        else:
-            missing.append(r)
-    return found, missing
-
-
 def _route_paths() -> list[str]:
     """Routes offered in Jízda / Linky: those of the open project if it names any, else `trasy/`."""
-    found, _missing = _bundle_routes(SIM.bundle)
+    found = SIM.project.routes()[0] if SIM.project is not None else []
     return found if found else _list("trasy")
 
 
@@ -463,19 +442,38 @@ def codes_check(r: CodesReq):
                          for c in [pick(cand_st, route.stops[x["i"]].name, route.stops[x["i"]].short)] if c}}
     return {"panels": panels, "dest": dest, "stops": stops, "suggest": suggest}
 
-# ------------------------------------------------------------------ files
-def _apply_bundle_sim(bundle, apply_vehicle: bool = True):
-    """Use a project's own simulation setup: its vehicle (panel databases of the project), its display
-    system and its first route – not the files of the working folder."""
-    sim = bundle.simulation or {}
+# ------------------------------------------------------------------ open project
+def _open_project(path: str, apply_vehicle: bool = True) -> OpenProject:
+    """The only way to open a database / project in the simulation. A multi-panel project brings its own
+    simulation setup (vehicle when apply_vehicle, display system, routes)."""
+    SIM.project = OpenProject.load(SIM.workdir, path)
+    if SIM.project.bundle is not None:
+        _apply_project_sim(apply_vehicle)
+    return SIM.project
+
+
+def reload_project(abs_path: str):
+    """A project saved in the editor: if it is the one open in the simulation, read it again (keeps the
+    vehicle, route and system chosen in Jízda)."""
+    pr = SIM.project
+    if pr is None or not pr.path or os.path.abspath(SIM.path(pr.path)) != os.path.abspath(abs_path):
+        return
+    SIM.project = OpenProject.load(SIM.workdir, pr.path)
+    _rebuild()
+
+
+def _apply_project_sim(apply_vehicle: bool = True):
+    """Use the open project's own simulation setup: its vehicle (panel databases of the project), its
+    display system and its first route – not the files of the working folder."""
+    pr = SIM.project
     if apply_vehicle:
-        vcfg = bundle.resolved_vehicle_config(SIM.workdir)
+        vcfg = pr.vehicle_config()
         if vcfg:
             SIM.vehicle_cfg = _clean_vehicle(vcfg)
-            SIM.vehicle_path = _bundle_vehicle_path()
-    if sim.get("system"):
-        SIM.vehicle_cfg["system"] = str(sim["system"])
-    found, missing = _bundle_routes(bundle)
+            SIM.vehicle_path = pr.vehicle_path()
+    if pr.system:
+        SIM.vehicle_cfg["system"] = pr.system
+    found, missing = pr.routes()
     for m in missing:
         SIM._log(f"projekt: trasa {m} neexistuje")
     if found and SIM.route_path not in found:
@@ -490,19 +488,22 @@ def _apply_bundle_sim(bundle, apply_vehicle: bool = True):
 
 @router.get("/api/sim/files")
 def files():
+    pr = SIM.project
+    own = pr.vehicle_path() if pr is not None else None
     projects = _scan_project_entries()
     route_items = _scan_route_entries()
     return {"routes": [r["path"] for r in route_items], "route_items": route_items,
-            "vehicles": ([_bundle_vehicle_path()] if _bundle_vehicle_path() else [])
-            + [v for v in _list("vozidla") if v != _bundle_vehicle_path()],
-            "project_vehicle": _bundle_vehicle_path(),
-            "project_system": str((SIM.bundle.simulation or {}).get("system") or "") if SIM.bundle is not None else "",
+            "vehicles": ([own] if own else []) + [v for v in _list("vozidla") if v != own],
+            "project_vehicle": own,
+            "project_system": pr.system if pr is not None else "",
             "databases": [p["path"] for p in projects],
             "projects": projects,
             "db_codes": _collect_db_codes(),
             "route_path": SIM.route_path, "vehicle_path": SIM.vehicle_path, "db_path": SIM.db_path,
-            "project_routes_missing": _bundle_routes(SIM.bundle)[1],
-            "project_name": str((SIM.bundle.meta or {}).get("name") or "") if SIM.bundle is not None else ""}
+            "project_routes_missing": pr.routes()[1] if pr is not None else [],
+            "project_name": pr.name if pr is not None else "",
+            "project_dir": (os.path.relpath(pr.bundle.base_dir, SIM.workdir).replace("\\", "/")
+                            if pr is not None and pr.bundle is not None else "")}
 
 
 class PathReq(BaseModel):
@@ -589,6 +590,7 @@ class LineReq(BaseModel):
     line: dict
     path: str | None = None
     selection: dict | None = None
+    to_project: bool = False          # save into the open project (its trasy/, listed in simulation: routes)
 
 
 def _put_line(r: LineReq):
@@ -650,11 +652,29 @@ def line_save(r: LineReq):
     _put_line(r)
     if not r.path:
         raise HTTPException(400, "chybí cesta souboru")
-    os.makedirs(os.path.dirname(SIM.path(r.path)) or ".", exist_ok=True)
-    SIM.line.save(SIM.path(r.path))
-    SIM.route_path = r.path
+    pr = SIM.project if SIM.project is not None and SIM.project.bundle is not None else None
+    if r.to_project and pr is None:
+        raise HTTPException(400, "není otevřený vícepanelový projekt")
+    path = pr.route_target(r.path) if r.to_project else r.path
+    os.makedirs(os.path.dirname(SIM.path(path)) or ".", exist_ok=True)
+    SIM.line.save(SIM.path(path))
+    SIM.route_path = path
+    added = False
+    if pr is not None and (r.to_project or pr.contains(SIM.path(path))):
+        added = pr.add_route(path)                    # a route in the project folder belongs to the project
+        if added:
+            _sync_editor_routes(pr)
     _rebuild()
-    return {**_route_info(), "state": state()}
+    return {**_route_info(), "state": state(), "added_to_project": added}
+
+
+def _sync_editor_routes(pr):
+    """The same project open in the gBUSE editor gets the new route list too (its Uložit would drop it)."""
+    from .state import S
+    b = S.bundle
+    if b is not None and os.path.abspath(b.manifest_path) == os.path.abspath(pr.bundle.manifest_path):
+        b.simulation = dict(b.simulation or {})
+        b.simulation["routes"] = list(pr.bundle.simulation.get("routes") or [])
 
 
 class TripReq(BaseModel):
@@ -703,19 +723,12 @@ def defaults():
 def _formats() -> dict:
     """Display systems: the open project's own systemy/ first, then the working folder (systemy/, older
     folder formaty/ too)."""
-    own = os.path.join(SIM.bundle.base_dir, SYSTEMS_DIR) if SIM.bundle is not None else None
+    own = SIM.project.systems_dir(SYSTEMS_DIR) if SIM.project is not None else None
     return load_formats(own, SIM.path(SYSTEMS_DIR), *(SIM.path(d) for d in LEGACY_DIRS))
 
 
-def _bundle_vehicle_path() -> str | None:
-    """The open project's vehicle file relative to the working folder (None = no project / no file)."""
-    if SIM.bundle is None:
-        return None
-    v = (SIM.bundle.simulation or {}).get("vehicle")
-    if not isinstance(v, str) or v.startswith("template:"):
-        return None
-    full = os.path.abspath(os.path.join(SIM.bundle.base_dir, v))
-    return os.path.relpath(full, SIM.workdir).replace("\\", "/") if os.path.isfile(full) else None
+def _project_vehicle_path() -> str | None:
+    return SIM.project.vehicle_path() if SIM.project is not None else None
 
 
 def _clean_vehicle(cfg: dict) -> dict:
@@ -739,37 +752,15 @@ def vehicle_get():
 
 
 def _with_bundle_databases(cfg: dict) -> dict:
-    """Another vehicle while a project is open: its panels without their own database take the database
-    of the project's panel with the same role and type / variant (the project's code records stay in use)."""
-    if SIM.bundle is None:
-        return cfg
-    pv = SIM.bundle.resolved_vehicle_config(SIM.workdir) or {}
-    src = [p for p in pv.get("panels") or [] if p.get("database")]
-    if not src:
-        return cfg
-    cfg = dict(cfg)
-    out = []
-    for p in cfg.get("panels") or []:
-        p = dict(p)
-        if p.pop("database_from_project", False):
-            p.pop("database", None)
-        if not p.get("database") and p.get("output") != "lcd" and str(p.get("type", "")).upper() != "LCD":
-            same = [q for q in src if q.get("role") == p.get("role")
-                    and str(q.get("type", "")).upper() == str(p.get("type", "")).upper()
-                    and (q.get("variant") or "") == (p.get("variant") or "")]
-            if same:
-                p["database"] = same[0]["database"]
-                p["database_from_project"] = True          # not written into the vehicle file
-        out.append(p)
-    cfg["panels"] = out
-    return cfg
+    """Vehicle as built: panels without a database take the open project's (see OpenProject.with_databases)."""
+    return SIM.project.with_databases(cfg) if SIM.project is not None else strip_project_marks(cfg)
 
 
 @router.post("/api/sim/vehicle/load")
 def vehicle_load(r: PathReq):
-    if r.path == _bundle_vehicle_path():
+    if r.path == _project_vehicle_path():
         # the project's vehicle: its database paths are relative to the project folder
-        SIM.vehicle_cfg = _clean_vehicle(SIM.bundle.resolved_vehicle_config(SIM.workdir) or {})
+        SIM.vehicle_cfg = _clean_vehicle(SIM.project.vehicle_config() or {})
     else:
         SIM.vehicle_cfg = _clean_vehicle(load_yaml(SIM.path(r.path)))
     SIM.vehicle_path = r.path
@@ -783,15 +774,7 @@ def vehicle_save(r: VehicleSave):
     SIM.vehicle_cfg = cfg
     if r.path:
         os.makedirs(os.path.dirname(SIM.path(r.path)), exist_ok=True)
-        disk = dict(cfg)
-        disk["panels"] = [{k: v for k, v in p.items() if k != "database_from_project"
-                           and not (k == "database" and p.get("database_from_project"))}
-                          for p in cfg.get("panels") or []]
-        if r.path == _bundle_vehicle_path():
-            # back into the project: database paths relative to the project folder again
-            for q in disk["panels"]:
-                if isinstance(q.get("database"), str) and not os.path.isabs(q["database"]):
-                    q["database"] = os.path.relpath(SIM.path(q["database"]), SIM.bundle.base_dir).replace("\\", "/")
+        disk = SIM.project.vehicle_for_disk(cfg, r.path) if SIM.project is not None else strip_project_marks(cfg)
         dump_yaml(disk, SIM.path(r.path))
         SIM.vehicle_path = r.path
     _rebuild()
@@ -844,7 +827,7 @@ def formats_list():
                     "sections": [k for k in SECTIONS if f.get(k)]})
     return {"formats": out, "default_sequences": DEFAULT_SEQUENCES, "sections": SECTION_TITLES,
             "vehicle_format": vehicle_system(SIM.vehicle_cfg),
-            "project_system": str((SIM.bundle.simulation or {}).get("system") or "") if SIM.bundle is not None else ""}
+            "project_system": SIM.project.system if SIM.project is not None else ""}
 
 
 @router.get("/api/sim/format")
@@ -965,16 +948,8 @@ class OpenDbReq(BaseModel):
 
 @router.post("/api/sim/db/open")
 def db_open(r: OpenDbReq):
-    p = SIM.path(r.path)
-    db, bundle = _load_sim_project(p)
-    SIM.db = db
-    SIM.db_path = r.path
-    SIM.bundle = bundle
-    if bundle is not None:
-        _apply_bundle_sim(bundle, apply_vehicle=r.apply_vehicle)
-        _rebuild(keep_state=False)
-    else:
-        _rebuild()
+    bundle = _open_project(r.path, apply_vehicle=r.apply_vehicle).bundle
+    _rebuild(keep_state=bundle is None)
     return {
         "path": r.path,
         "kind": "bundle" if bundle is not None else "single",
@@ -1031,13 +1006,7 @@ def db_build(r: BuildReq):
             vehicle_cfg=SIM.vehicle_cfg,
         )
         bundle.save(SIM.path(out_path))
-        db, loaded = _load_sim_project(SIM.path(out_path))
-        SIM.db, SIM.db_path = db, out_path
-        if r.apply_vehicle and loaded is not None:
-            vcfg = loaded.resolved_vehicle_config(SIM.workdir)
-            if vcfg:
-                SIM.vehicle_cfg = _clean_vehicle(vcfg)
-                SIM.vehicle_path = None
+        loaded = _open_project(out_path, apply_vehicle=r.apply_vehicle).bundle
         _rebuild()
         return {
             "path": out_path,
@@ -1059,7 +1028,7 @@ def db_build(r: BuildReq):
         name=r.name.strip() or "Univerzální databáze (gBUSE1)",
     )
     db.save(SIM.path(r.out))
-    SIM.db, SIM.db_path = Project.load(SIM.path(r.out)), r.out
+    _open_project(r.out, apply_vehicle=False)
     _rebuild()
     return {
         "path": r.out,

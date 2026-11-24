@@ -193,7 +193,7 @@ def test_universal_bundle_and_exterior_formats(tmp_path):
 
 def test_sim_api_bundle_discovery_and_quickstart(tmp_path):
     from busepanel.server import sim_api as sim
-    old = (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+    old = (sim.SIM.workdir, sim.SIM.project, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
            sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle)
     try:
         wd = tmp_path / "qs"
@@ -231,7 +231,7 @@ def test_sim_api_bundle_discovery_and_quickstart(tmp_path):
         assert opened["kind"] == "bundle" and len(opened["panels"]) == 3
         assert any("database" in p for p in sim.SIM.vehicle_cfg["panels"])
     finally:
-        (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+        (sim.SIM.workdir, sim.SIM.project, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
          sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle) = old
         sim._rebuild()
 
@@ -254,7 +254,7 @@ def test_project_simulation_is_own(tmp_path):
     (proj / "trasy").mkdir(parents=True)
     dump_yaml({"line": "3", "destination": "MOJE", "stops": [{"name": "C"}, {"name": "D"}]}, str(proj / "trasy" / "l3.yaml"))
     b.save(str(proj / "projekt.yaml"))
-    old = (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.bundle, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+    old = (sim.SIM.workdir, sim.SIM.project, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
            sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle)
     try:
         sim.init(str(wd))
@@ -264,7 +264,7 @@ def test_project_simulation_is_own(tmp_path):
         f = sim.files()
         assert f["routes"] == ["projekty/demo/trasy/l3.yaml"] and f["project_routes_missing"] == ["trasy/neni.yaml"]
     finally:
-        (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.bundle, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+        (sim.SIM.workdir, sim.SIM.project, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
          sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle) = old
 
 
@@ -290,7 +290,7 @@ def test_code_check_per_panel_and_suggest(tmp_path):
                "stops": [{"name": "Hlavní nádraží"}, {"name": "Náměstí Republiky", "code": "0001"},
                          {"name": "Poliklinika"}, {"name": "Lázně Bohdaneč"}]}, str(proj / "trasy" / "l3.yaml"))
     b.save(str(proj / "projekt.yaml"))
-    old = (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.bundle, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+    old = (sim.SIM.workdir, sim.SIM.project, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
            sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle)
     try:
         sim.init(str(wd))
@@ -306,7 +306,7 @@ def test_code_check_per_panel_and_suggest(tmp_path):
         assert any(c.get("state") == "na" for c in side.values())            # the front panel has no stop line
         assert r["suggest"]["stops"].get("2") == "0002"                       # Poliklinika -> DRU 0002
     finally:
-        (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.bundle, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+        (sim.SIM.workdir, sim.SIM.project, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
          sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle) = old
 
 
@@ -321,7 +321,7 @@ def test_other_vehicle_keeps_project_databases(tmp_path):
     proj = wd / "projekty" / "demo"
     proj.mkdir(parents=True)
     b.save(str(proj / "projekt.yaml"))
-    old = (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.bundle, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+    old = (sim.SIM.workdir, sim.SIM.project, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
            sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle)
     try:
         sim.init(str(wd))
@@ -342,7 +342,7 @@ def test_other_vehicle_keeps_project_databases(tmp_path):
         sim.vehicle_save(sim.VehicleSave(config=sim.SIM.vehicle_cfg, path="vozidla/cizi.yaml"))
         assert not any(p.get("database") for p in load_yaml(str(wd / "vozidla" / "cizi.yaml"))["panels"])
     finally:
-        (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.bundle, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+        (sim.SIM.workdir, sim.SIM.project, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
          sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle) = old
 
 
@@ -360,12 +360,12 @@ def test_project_vehicle_listed_loaded_and_saved_back(tmp_path):
     dump_yaml(b.simulation.pop("vehicle_data"), str(proj / "vozidlo.yaml"))
     b.simulation["vehicle"] = "vozidlo.yaml"
     b.save(str(proj / "projekt.yaml"))
-    old = (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.bundle, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+    old = (sim.SIM.workdir, sim.SIM.project, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
            sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle)
     try:
         sim.init(str(wd))
         sim.db_open(sim.OpenDbReq(path="projekty/demo/projekt.yaml", apply_vehicle=True))
-        vp = sim._bundle_vehicle_path()
+        vp = sim._project_vehicle_path()
         assert vp == "projekty/demo/vozidlo.yaml"
         f = sim.files()
         assert f["vehicles"][0] == vp == f["vehicle_path"] == f["project_vehicle"]
@@ -376,5 +376,25 @@ def test_project_vehicle_listed_loaded_and_saved_back(tmp_path):
         after = load_yaml(str(wd / vp))
         assert [p.get("database") for p in after["panels"]] == [p.get("database") for p in before["panels"]]
     finally:
-        (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.bundle, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+        (sim.SIM.workdir, sim.SIM.project, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
          sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle) = old
+
+
+def test_two_line_unmapped_three_digit_line_in_line_segment():
+    """A three-digit line without line_map on a two-line panel: number in the line segment (ESC s),
+    heading from the destination column – not glued in front of the heading."""
+    from busepanel.core.bundle import load_builtin_fonts
+    from busepanel.core.render import text_bitmap
+    from busepanel.panels.profile import profile
+    from busepanel.sim.vehicle import spec_telegrams
+    prof = profile("BS220")
+    fonts = load_builtin_fonts("gbuse1")
+    tel = spec_telegrams({"line": "166", "heading": "směr/direction:", "text": "KAVČÍ HORY"}, prof, fonts, {})
+    v = tel[-1]
+    head = v[1:].split(b"\n")[0]
+    assert b"166  " not in head
+    cols, _inv, info = text_bitmap(head, fonts)
+    g = prof.geometry
+    assert g.line_left <= info["x"] < g.dest_left
+    assert info["tabs"] and info["tabs"][-1][1] == g.dest_left
+    assert info["x"] + len(cols) > g.dest_left            # heading drawn from the destination column on

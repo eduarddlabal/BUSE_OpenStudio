@@ -358,7 +358,8 @@ def test_format_api_and_preview(tmp_path, univ):
     work = tmp_path / "w"
     shutil.copytree(DATA, work)
     A.init(str(work))
-    A.SIM.db = univ
+    from busepanel.server.sim_project import OpenProject
+    A.SIM.project = OpenProject(A.SIM.workdir, "", univ)
     A.route_load(A.PathReq(path="trasy/linka3_kurzy.yaml"))
     A.vehicle_load(A.PathReq(path="vozidla/test/autobus.yaml"))
     assert A.vehicle_get()["system"] == "pid_autobus" and "settings" not in A.SIM.vehicle_cfg
@@ -395,7 +396,8 @@ def test_pid_two_line_and_bus_width(tmp_path, univ):
     work = tmp_path / "w"
     shutil.copytree(DATA, work)
     A.init(str(work))
-    A.SIM.db = univ
+    from busepanel.server.sim_project import OpenProject
+    A.SIM.project = OpenProject(A.SIM.workdir, "", univ)
     A.route_load(A.PathReq(path="trasy/linka3_kurzy.yaml"))
     d = A.format_get("pid_autobus")
     assert d["interior_2"]["sequences"]["next"][0]["text"] == "příští zastávka/next:"
@@ -489,7 +491,7 @@ def test_dest_and_stop_codes_exterior_and_interior(univ):
 
 def test_sim_api_route_items_db_codes_and_new_line(tmp_path):
     from busepanel.server import sim_api as sim
-    old = (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path, sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel)
+    old = (sim.SIM.workdir, sim.SIM.project, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path, sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel)
     try:
         sim.SIM.workdir = str(tmp_path)
         (tmp_path / "trasy" / "mestske").mkdir(parents=True)
@@ -504,7 +506,8 @@ def test_sim_api_route_items_db_codes_and_new_line(tmp_path):
         p = build_universal(None)
         p.data["destinations"]["001"] = "HLAVNÍ NÁDRAŽÍ"
         p.data["stops"] = {"0042": "Náměstí"}
-        sim.SIM.db = p
+        from busepanel.server.sim_project import OpenProject
+        sim.SIM.project = OpenProject(sim.SIM.workdir, "", p)
         sim._rebuild()
         fl = sim.files()
         # Natural sort: line 2 comes before line 12
@@ -516,7 +519,7 @@ def test_sim_api_route_items_db_codes_and_new_line(tmp_path):
         nl = sim.line_new(sim.NewLineReq(line="99", destination="Konečná", back_destination="Výchozí"))
         assert nl["line"]["line"] == "99" and len(nl["line"]["directions"]) == 2
     finally:
-        (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+        (sim.SIM.workdir, sim.SIM.project, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
          sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel) = old
         sim._rebuild()
 
@@ -524,7 +527,7 @@ def test_sim_api_route_items_db_codes_and_new_line(tmp_path):
 def test_sim_init_autoloads_route_vehicle_and_root_project(tmp_path):
     from busepanel.core.project import dump_yaml
     from busepanel.server import sim_api as sim
-    old = (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+    old = (sim.SIM.workdir, sim.SIM.project, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
            sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle)
     try:
         (tmp_path / "trasy").mkdir()
@@ -551,7 +554,7 @@ def test_sim_init_autoloads_route_vehicle_and_root_project(tmp_path):
         assert fl["route_path"] == "trasy/linka7.yaml"
         assert fl["vehicle_path"] == "vozidla/autobus.yaml"
     finally:
-        (sim.SIM.workdir, sim.SIM.db, sim.SIM.db_path, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
+        (sim.SIM.workdir, sim.SIM.project, sim.SIM.vehicle_cfg, sim.SIM.vehicle_path,
          sim.SIM.line, sim.SIM.route, sim.SIM.route_path, sim.SIM.sel, sim.SIM.engine, sim.SIM.vehicle) = old
         sim._rebuild()
 

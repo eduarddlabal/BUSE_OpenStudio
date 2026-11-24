@@ -113,13 +113,24 @@ def project_save(r: SaveReq):
         S.bundle.save()
         _INSPECT_CACHE.pop(S.bundle.manifest_path, None)
         _INSPECT_CACHE.pop(S.path or "", None)
+        _reload_in_simulation(S.bundle.manifest_path)
         return {"saved": S.bundle.manifest_path, **_project_json(p)}
     if r.path:
         S.path = _safe_workdir_path(r.path)
     os.makedirs(os.path.dirname(S.path), exist_ok=True)
     p.save(S.path)
     _INSPECT_CACHE.pop(S.path, None)
+    _reload_in_simulation(S.path)
     return {"saved": S.path, **_project_json(p)}
+
+
+def _reload_in_simulation(abs_path: str):
+    """The saved project is the one open in the simulation -> it reads it again (new lines, records)."""
+    from . import sim_api
+    try:
+        sim_api.reload_project(abs_path)
+    except Exception as e:      # noqa: BLE001 – saving must not fail because of the simulation
+        sim_api.SIM._log(f"simulace: projekt nelze znovu načíst: {e}")
 
 
 @router.post("/api/project/update")

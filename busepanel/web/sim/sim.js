@@ -145,6 +145,11 @@ async function loadSimFiles() {
   sim.projectName = f.project_name || "";
   sim.projectSystem = f.project_system || "";
   sim.projectRoutes = !!f.project_name && (f.routes || []).length > 0;
+  sim.projectDir = f.project_dir || "";
+  if ($("#routeSaveProj")) {
+    $("#routeSaveProj").hidden = !sim.projectDir;
+    $("#routeSaveProj").textContent = sim.projectName ? `Uložit do projektu ${sim.projectName}` : "Uložit do projektu";
+  }
   sim.dbCodes = f.db_codes || { destinations: [], stops: [], lines: [] };
   renderCodeLists();
   updateDestCodeHint();
@@ -518,17 +523,22 @@ if ($("#routeSearch")) $("#routeSearch").oninput = renderRouteList;
 if ($("#routeNew")) $("#routeNew").onclick = guard(async () => {
   sim.dir = null;
   setRouteInfo(await api("/api/sim/line/new", { line: "1", destination: "Hlavní nádraží", back_destination: "Centrum" }));
-  $("#routePath").value = "trasy/linka1.yaml";
+  $("#routePath").value = (sim.projectDir ? sim.projectDir + "/" : "") + "trasy/linka1.yaml";
   sim.routePath = null;
   renderRouteList();
   toast("Nová linka připravena – nezapomeňte uložit");
 });
 if ($("#routeToSim")) $("#routeToSim").onclick = () => window.dispatchEvent(new CustomEvent("buse:goto", { detail: { module: "jizda" } }));
-$("#routeSave").onclick = guard(async () => {
+async function saveLine(toProject) {
   sim.data.line = $("#rLine").value;
-  await applyInfo(await api("/api/sim/line/save", { path: $("#routePath").value, line: sim.data, selection: sim.sel }), { courses: true });
-  toast("Linka uložena"); loadSimFiles();
-});
+  const r = await api("/api/sim/line/save", { path: $("#routePath").value, line: sim.data, selection: sim.sel, to_project: toProject });
+  await applyInfo(r, { courses: true });
+  $("#routePath").value = r.path || $("#routePath").value;
+  toast(r.added_to_project ? `Linka uložena do projektu ${sim.projectName}: ${r.path}` : `Linka uložena: ${r.path || ""}`);
+  loadSimFiles();
+}
+$("#routeSave").onclick = guard(() => saveLine(false));
+$("#routeSaveProj").onclick = guard(() => saveLine(true));
 $("#rCsvImport").onclick = guard(async () => {
   const d = dirOf();
   const r = await api("/api/sim/route/import-csv", { csv: $("#rCsv").value, line: sim.data.line, destination: d.destination || "" });
@@ -677,7 +687,8 @@ async function refreshAfterDbChange() {
 window.addEventListener("buse:project-opened", guard(async (e) => {
   const path = e.detail;
   const f = await api("/api/sim/files");
-  if (!path || f.db_path === path) return;
+  if (!path) return;
+  if (f.db_path === path) { await loadSimFiles(); return; }      // already open: refresh project info only
   const pr = (f.projects || []).find((p) => p.path === path);
   if (!pr || pr.kind !== "bundle") return;          // single-panel files do not change the simulation
   await api("/api/sim/db/open", { path, apply_vehicle: true });

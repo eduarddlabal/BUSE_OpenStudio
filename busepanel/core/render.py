@@ -20,6 +20,7 @@ def interpret(b: bytes, default_font: int = 3, default_spacing: int = 1):
     interval = None
     win_l = win_p = None
     segs = []           # (fid, spacing, codes, inverse)
+    tabs = []           # (index of the next segment, column): ESC s after some text – [ODHAD] continue there
     cur = bytearray()
 
     def flush():
@@ -46,7 +47,12 @@ def interpret(b: bytes, default_font: int = 3, default_spacing: int = 1):
                 run = (effect == 1) or (tb >= 0x10 and tb not in (0x10, 0x12, 0x13))
                 i += 2
             elif k == ord("s") and i + 2 < len(b):
-                x = b[i + 2] - 0x10; i += 2
+                flush()
+                if x is None and not segs:
+                    x = b[i + 2] - 0x10                 # start column of the text
+                else:
+                    tabs.append((len(segs), b[i + 2] - 0x10))
+                i += 2
             elif k == ord("z") and i + 2 < len(b):
                 interval = max(0.1, (b[i + 2] - 0x0F) / 10); i += 2
             elif k == ord("l") and i + 2 < len(b):
@@ -61,7 +67,7 @@ def interpret(b: bytes, default_font: int = 3, default_spacing: int = 1):
             cur.append(c)
         i += 1
     flush()
-    return {"segments": segs, "x": x, "run": run, "effect": effect, "blink": blink,
+    return {"segments": segs, "tabs": tabs, "x": x, "run": run, "effect": effect, "blink": blink,
             "interval": interval, "win_l": win_l, "win_p": win_p, "font": font, "spacing": spacing}
 
 
@@ -103,7 +109,14 @@ def text_bitmap(b: bytes, fonts, default_font=3, default_spacing=1):
     info = interpret(b, default_font, default_spacing)
     cols, inv = [], []
     first = True
-    for fid, sp, codes, inverse in info["segments"]:
+    tabs = dict(info.get("tabs") or [])
+    x0 = info["x"] or 0
+    for si, (fid, sp, codes, inverse) in enumerate(info["segments"]):
+        if si in tabs:                                 # ESC s inside the text: pad up to that column
+            pad = max(0, tabs[si] - x0 - len(cols))
+            cols += [0] * pad
+            inv += [False] * pad
+            first = True
         for c in codes:
             if not first:
                 cols += [0] * sp

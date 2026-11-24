@@ -294,19 +294,13 @@ def bundle_apply_sim():
         raise HTTPException(400, "aktivní projekt není vícepanelový")
     sim = S.bundle.simulation or {}
     from ..sim.line import Line
-    resolved = S.bundle.resolved_vehicle_config(S.workdir)
-    if resolved is not None:
-        sim_api.SIM.vehicle_cfg = sim_api._clean_vehicle(resolved)
+    manifest = os.path.relpath(S.bundle.manifest_path, sim_api.SIM.workdir).replace("\\", "/")
+    sim_api._open_project(manifest, apply_vehicle=True)      # database, vehicle, system, routes together
     if isinstance(sim.get("default_line"), str) and not sim["default_line"].startswith("template:"):
         lp = os.path.join(S.bundle.base_dir, sim["default_line"])
         if os.path.exists(lp):
             with open(lp, encoding="utf-8") as fh:
                 sim_api.SIM.line = Line.from_dict(yaml.safe_load(fh) or {})
                 sim_api.SIM.route = sim_api.SIM.line.route()
-    for pe in S.bundle.panels:
-        if pe.format == "gbuse1" and pe.project is not None:
-            sim_api.SIM.db = pe.project
-            sim_api.SIM.db_path = os.path.relpath(os.path.join(S.bundle.base_dir, pe.db), S.workdir).replace("\\", "/")
-            break
     sim_api._rebuild()
     return {"ok": True, "vehicle": sim_api.SIM.vehicle_cfg.get("name")}
